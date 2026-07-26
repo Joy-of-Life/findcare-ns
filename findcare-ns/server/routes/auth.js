@@ -168,4 +168,31 @@ router.get('/me', auth, async (req, res) => {
   }
 });
 
+// PATCH /api/auth/save-daycare
+router.patch('/save-daycare', auth, async (req, res) => {
+  try {
+    const { daycareId } = req.body;
+    const user = await User.findById(req.user.id);
+
+    const isSaved = user.savedDaycares.includes(daycareId);
+
+    if (isSaved) {
+      user.savedDaycares = user.savedDaycares.filter(
+        id => id.toString() !== daycareId
+      );
+    } else {
+      user.savedDaycares.push(daycareId);
+    }
+
+    await user.save();
+    res.json({
+      saved:         !isSaved,
+      savedDaycares: user.savedDaycares
+    });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

@@ -1,16 +1,19 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import SearchBar   from '../components/SearchBar';
-import AISearchBar from '../components/AISearchBar';
-import VoiceSearch from '../components/VoiceSearch';
-import MapView     from '../components/MapView';
+import { useAuth }   from '../context/AuthContext';
+import SearchBar     from '../components/SearchBar';
+import AISearchBar   from '../components/AISearchBar';
+import VoiceSearch   from '../components/VoiceSearch';
+import MapView       from '../components/MapView';
 
 export default function Home() {
   const [results, setResults]   = useState([]);
   const [searched, setSearched] = useState(false);
   const [loading, setLoading]   = useState(false);
   const [view, setView]         = useState('list');
-  const navigate = useNavigate();
+  const [saved, setSaved]       = useState({});
+  const navigate                = useNavigate();
+  const { user, token }         = useAuth();
 
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -40,6 +43,23 @@ export default function Home() {
       setResults([]);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleSave(daycareId) {
+    if (!user) { navigate('/login'); return; }
+    try {
+      await fetch(`${API_URL}/api/auth/save-daycare`, {
+        method:  'PATCH',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ daycareId })
+      });
+      setSaved(prev => ({ ...prev, [daycareId]: !prev[daycareId] }));
+    } catch (err) {
+      console.error(err);
     }
   }
 
@@ -84,7 +104,7 @@ export default function Home() {
         <AISearchBar onSearch={handleSearch} />
         <VoiceSearch onSearch={handleSearch} />
 
-        {/* View toggle — only shows after a search */}
+        {/* View toggle */}
         {searched && !loading && (
           <div style={styles.viewToggle}>
             <span style={styles.viewLabel}>View:</span>
@@ -138,7 +158,6 @@ export default function Home() {
               {daycare.language?.map(lang => (
                 <span key={lang} style={styles.tagPurple}>{lang}</span>
               ))}
-              {/* Availability badges */}
               {['infant','toddler','preschool'].map(age => {
                 const spots = daycare.availability?.[age];
                 if (spots === undefined) return null;
@@ -158,7 +177,16 @@ export default function Home() {
             <div style={styles.cardFooter}>
               <span style={styles.price}>${daycare.monthlyPrice}/month</span>
               <span style={styles.hours}>{daycare.openHours}</span>
-              <span style={styles.phone}>{daycare.phone}</span>
+              <button
+                onClick={() => handleSave(daycare._id)}
+                style={{
+                  ...styles.saveBtn,
+                  background: saved[daycare._id] ? '#1D9E75' : '#E1F5EE',
+                  color:      saved[daycare._id] ? '#fff'    : '#085041',
+                }}
+              >
+                {saved[daycare._id] ? '♥ Saved' : '♡ Save'}
+              </button>
             </div>
           </div>
         ))}
@@ -199,9 +227,9 @@ const styles = {
   tags:        { display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '10px' },
   tagGreen:    { fontSize: '12px', background: '#E1F5EE', color: '#0F6E56', padding: '2px 8px', borderRadius: '20px' },
   tagPurple:   { fontSize: '12px', background: '#EEEDFE', color: '#534AB7', padding: '2px 8px', borderRadius: '20px' },
-  cardFooter:  { display: 'flex', justifyContent: 'space-between', paddingTop: '10px', borderTop: '1px solid #F3F4F6', fontSize: '13px', color: '#6B7280' },
+  cardFooter:  { display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '10px', borderTop: '1px solid #F3F4F6', fontSize: '13px', color: '#6B7280' },
   price:       { fontWeight: '500', color: '#2C2C2A' },
   hours:       { color: '#6B7280' },
-  phone:       { color: '#6B7280' },
+  saveBtn:     { fontSize: '12px', padding: '4px 10px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: '500' },
   noResults:   { textAlign: 'center', padding: '40px', color: '#6B7280', fontSize: '14px', background: '#fff', borderRadius: '12px', border: '1px solid #E8E6E0' },
 };

@@ -28,17 +28,17 @@ export default function Login() {
       });
       const data = await res.json();
 
-      if (!res.ok) {
-        setError(data.error || 'Login failed');
-      } else {
-        login(data.user, data.token);
-        // Redirect based on role
-        if (data.user.role === 'owner') {
-          navigate('/portal');
-        } else {
-          navigate('/dashboard');
-        }
-      }
+     if (!res.ok) {
+  setError(data.error || 'Login failed');
+} else {
+  login(data.user, data.token);
+  // Redirect based on role
+  if (data.user.role === 'owner') {
+    navigate('/portal');
+  } else {
+    navigate('/dashboard');
+  }
+}
     } catch (err) {
       setError('Something went wrong. Please try again.');
     } finally {

@@ -19,7 +19,7 @@ const authLimiter = rateLimit({
   max: 10,
   message: { error: 'Too many attempts — please try again in 15 minutes' }
 });
-app.use('/api/auth', authLimiter);
+// app.use('/api/auth', authLimiter);
 
 // Routes
 app.use('/api/auth',     require('./routes/auth'));

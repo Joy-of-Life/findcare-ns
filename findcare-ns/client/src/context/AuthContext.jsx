@@ -7,10 +7,9 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 export function AuthProvider({ children }) {
   const [user, setUser]       = useState(null);
-  const [token, setToken]     = useState(localStorage.getItem('token'));
+  const [token, setToken]     = useState(() => localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
 
-  // Set axios default header whenever token changes
   useEffect(() => {
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -33,20 +32,22 @@ export function AuthProvider({ children }) {
   }
 
   function login(userData, userToken) {
+    localStorage.setItem('token', userToken);
     setToken(userToken);
     setUser(userData);
-    localStorage.setItem('token', userToken);
+    axios.defaults.headers.common['Authorization'] = `Bearer ${userToken}`;
   }
 
   function logout() {
+    localStorage.removeItem('token');
     setToken(null);
     setUser(null);
-    localStorage.removeItem('token');
+    delete axios.defaults.headers.common['Authorization'];
   }
 
   return (
     <AuthContext.Provider value={{ user, token, login, logout, loading }}>
-      {children}
+      {!loading && children}
     </AuthContext.Provider>
   );
 }
