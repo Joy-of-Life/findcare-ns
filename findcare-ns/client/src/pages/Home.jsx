@@ -13,32 +13,37 @@ export default function Home() {
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
   async function handleSearch(filters) {
-    setLoading(true);
-    setSearched(true);
+  setLoading(true);
+  setSearched(true);
 
-    try {
-      const params = new URLSearchParams();
-      if (filters.city)          params.append('city',          filters.city);
-      if (filters.ageRange)      params.append('ageRange',      filters.ageRange);
-      if (filters.language)      params.append('language',      filters.language);
-      if (filters.maxPrice)      params.append('maxPrice',      filters.maxPrice);
-      if (filters.rating)        params.append('rating',        filters.rating);
-      if (filters.availableOnly) params.append('availableOnly', 'true');
+  try {
+    const params = new URLSearchParams();
+    if (filters.city)          params.append('city',          filters.city);
+    if (filters.ageRange)      params.append('ageRange',      filters.ageRange);
+    if (filters.language)      params.append('language',      filters.language);
+    if (filters.maxPrice)      params.append('maxPrice',      filters.maxPrice);
+    if (filters.rating)        params.append('rating',        filters.rating);
+    if (filters.availableOnly) params.append('availableOnly', 'true');
 
-      // Handle voice/AI query
-      if (filters.voiceQuery || filters.query) {
-        params.append('city', filters.voiceQuery || filters.query);
-      }
-
-      const res  = await fetch(`${API_URL}/api/daycares?${params}`);
-      const data = await res.json();
-      setResults(data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
+    // Handle voice/AI query
+    if (filters.voiceQuery || filters.query) {
+      params.append('city', filters.voiceQuery || filters.query);
     }
+
+    const res  = await fetch(`${API_URL}/api/daycares?${params}`);
+    const data = await res.json();
+
+    // Make sure data is always an array
+    setResults(Array.isArray(data) ? data : []);
+
+  } catch (err) {
+    console.error(err);
+    setResults([]);
+  } finally {
+    setLoading(false);
   }
+}
+
 
   return (
     <div style={styles.page}>
