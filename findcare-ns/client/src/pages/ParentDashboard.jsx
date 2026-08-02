@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuth }    from '../context/AuthContext';
+import { useAuth }     from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
@@ -9,6 +9,7 @@ export default function ParentDashboard() {
   const navigate        = useNavigate();
   const [savedDaycares, setSavedDaycares] = useState([]);
   const [loading, setLoading]             = useState(true);
+  const [alertsOn, setAlertsOn]           = useState(false);
 
   useEffect(() => {
     if (user) fetchSavedDaycares();
@@ -20,6 +21,8 @@ export default function ParentDashboard() {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
+
+      if (data.alertPrefs?.email) setAlertsOn(true);
 
       if (data.savedDaycares?.length > 0) {
         const details = await Promise.all(
@@ -51,6 +54,35 @@ export default function ParentDashboard() {
       console.error(err);
     }
   }
+
+  async function toggleAlerts() {
+  try {
+    if (alertsOn) {
+      const res = await fetch(`${API_URL}/api/alerts/unsubscribe`, {
+        method:  'PATCH',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (res.ok) setAlertsOn(false);
+    } else {
+      const res = await fetch(`${API_URL}/api/alerts/subscribe`, {
+        method:  'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ageGroups: ['infant', 'toddler', 'preschool']
+        })
+      });
+      if (res.ok) setAlertsOn(true);
+    }
+  } catch (err) {
+    console.error(err);
+  }
+}
 
   function getAvailabilityStatus(daycare) {
     const total = (daycare.availability?.infant    || 0) +
@@ -100,10 +132,10 @@ export default function ParentDashboard() {
       {/* Metric cards */}
       <div style={styles.metrics}>
         {[
-          { icon: '❤️', label: 'Saved',     value: savedDaycares.length, sub: 'daycares'  },
-          { icon: '📋', label: 'Waitlists', value: 0,                    sub: 'active'    },
-          { icon: '🔔', label: 'Alerts',    value: 0,                    sub: 'unread'    },
-          { icon: '💬', label: 'Messages',  value: 0,                    sub: 'unread'    },
+          { icon: '❤️', label: 'Saved',     value: savedDaycares.length, sub: 'daycares' },
+          { icon: '📋', label: 'Waitlists', value: 0,                    sub: 'active'   },
+          { icon: '🔔', label: 'Alerts',    value: alertsOn ? 'On' : 'Off', sub: 'email alerts' },
+          { icon: '💬', label: 'Messages',  value: 0,                    sub: 'unread'   },
         ].map(m => (
           <div key={m.label} style={styles.metric}>
             <div style={styles.metricLabel}>{m.icon} {m.label}</div>
@@ -142,7 +174,12 @@ export default function ParentDashboard() {
           return (
             <div key={daycare._id} style={styles.daycareRow}>
               <div style={{ flex: 1 }}>
-                <div style={styles.daycareName}>{daycare.name}</div>
+                <div
+                  style={{ ...styles.daycareName, cursor: 'pointer', color: '#1D9E75' }}
+                  onClick={() => navigate(`/daycare/${daycare._id}`)}
+                >
+                  {daycare.name}
+                </div>
                 <div style={styles.daycareAddr}>
                   📍 {daycare.address}, {daycare.city}
                 </div>
@@ -174,17 +211,56 @@ export default function ParentDashboard() {
         })}
       </div>
 
-      {/* Coming soon sections */}
-      {[
-        { title: 'Waitlist tracker',  msg: 'Join a waitlist from any daycare profile to track your position here.' },
-        { title: 'Spot alerts',       msg: 'Set up alerts to get notified when a spot opens at your saved daycares.' },
-        { title: 'Messages',          msg: 'Messages from daycare owners will appear here.' },
-      ].map(section => (
-        <div key={section.title} style={styles.card}>
-          <div style={styles.sectionTitle}>{section.title}</div>
-          <p style={{ fontSize: '14px', color: '#6B7280' }}>{section.msg}</p>
+      {/* Waitlist tracker */}
+      <div style={styles.card}>
+        <div style={styles.sectionTitle}>Waitlist tracker</div>
+        <p style={{ fontSize: '14px', color: '#6B7280' }}>
+          Join a waitlist from any daycare profile to track your position here.
+        </p>
+      </div>
+
+      {/* Spot alerts */}
+      <div style={styles.card}>
+        <div style={styles.sectionTitle}>
+          <span>Spot alerts</span>
+          <span style={{
+            fontSize:     '12px',
+            background:   alertsOn ? '#E1F5EE' : '#F8F7F4',
+            color:        alertsOn ? '#085041' : '#6B7280',
+            padding:      '3px 10px',
+            borderRadius: '20px',
+            border:       '1px solid #E8E6E0'
+          }}>
+            {alertsOn ? '🔔 Alerts on' : '🔕 Alerts off'}
+          </span>
         </div>
-      ))}
+        <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '14px' }}>
+          Get an email when a spot opens at any of your saved daycares.
+        </p>
+        <button
+          onClick={toggleAlerts}
+          style={{
+            padding:      '8px 16px',
+            borderRadius: '8px',
+            border:       'none',
+            background:   alertsOn ? '#FCEBEB' : '#1D9E75',
+            color:        alertsOn ? '#A32D2D' : '#fff',
+            fontSize:     '13px',
+            cursor:       'pointer',
+            fontWeight:   '500'
+          }}
+        >
+          {alertsOn ? 'Turn off alerts' : 'Turn on alerts'}
+        </button>
+      </div>
+
+      {/* Messages */}
+      <div style={styles.card}>
+        <div style={styles.sectionTitle}>Messages</div>
+        <p style={{ fontSize: '14px', color: '#6B7280' }}>
+          Messages from daycare owners will appear here.
+        </p>
+      </div>
 
     </div>
   );

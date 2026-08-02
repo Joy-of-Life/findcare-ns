@@ -28,6 +28,17 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET /api/daycares/my — get current owner's daycare
+router.get('/my', auth, async (req, res) => {
+  try {
+    const daycare = await Daycare.findOne({ owner: req.user.id });
+    if (!daycare) return res.status(404).json({ error: 'No daycare found' });
+    res.json(daycare);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/daycares/:id — single daycare
 router.get('/:id', async (req, res) => {
   try {
@@ -74,16 +85,69 @@ router.patch('/:id', auth, async (req, res) => {
 router.patch('/:id/availability', auth, async (req, res) => {
   try {
     const { infant, toddler, preschool } = req.body;
-    const updated = await Daycare.findByIdAndUpdate(
-      req.params.id,
-      { $set: {
-        'availability.infant':    infant,
-        'availability.toddler':   toddler,
-        'availability.preschool': preschool,
-      }},
-      { new: true }
-    );
+
+    console.log('Availability update received:', { infant, toddler, preschool });
+
+    const current = await Daycare.findById(req.params.id);
+    if (!current) return res.status(404).json({ error: 'Daycare not found' });
+
+    const hadSpots = (current.availability?.infant    || 0) +
+                 (current.availability?.toddler   || 0) +
+                 (current.availability?.preschool || 0);
+
+const updated = await Daycare.findByIdAndUpdate(
+  req.params.id,
+  { $set: {
+    'availability.infant':    infant,
+    'availability.toddler':   toddler,
+    'availability.preschool': preschool,
+  }},
+  { new: true }
+);
+
+const nowHasSpots = (infant    || 0) +
+                    (toddler   || 0) +
+                    (preschool || 0);
+
+// Trigger alert if ANY age group went from 0 to having spots
+const infantOpened    = (current.availability?.infant    || 0) === 0 && (infant    || 0) > 0;
+const toddlerOpened   = (current.availability?.toddler   || 0) === 0 && (toddler   || 0) > 0;
+const preschoolOpened = (current.availability?.preschool || 0) === 0 && (preschool || 0) > 0;
+const spotsJustOpened = infantOpened || toddlerOpened || preschoolOpened;
+
+console.log('Spots just opened:', spotsJustOpened, { infantOpened, toddlerOpened, preschoolOpened });
+
+if (spotsJustOpened) {
+  try {
+    console.log('Triggering alert...');
+    await fetch(`http://localhost:${process.env.PORT || 5000}/api/alerts/notify`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ daycareId: req.params.id })
+    });
+    console.log('Alert triggered successfully!');
+  } catch (alertErr) {
+    console.log('Alert trigger failed:', alertErr.message);
+  }
+}
+
     res.json(updated);
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/daycares/:id — remove a daycare (admin only)
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const daycare = await Daycare.findById(req.params.id);
+    if (!daycare) return res.status(404).json({ error: 'Daycare not found' });
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+    await daycare.deleteOne();
+    res.json({ message: 'Daycare deleted' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
