@@ -20,7 +20,6 @@ export default function Home() {
   async function handleSearch(filters) {
     setLoading(true);
     setSearched(true);
-
     try {
       const params = new URLSearchParams();
       if (filters.city)          params.append('city',          filters.city);
@@ -29,15 +28,12 @@ export default function Home() {
       if (filters.maxPrice)      params.append('maxPrice',      filters.maxPrice);
       if (filters.rating)        params.append('rating',        filters.rating);
       if (filters.availableOnly) params.append('availableOnly', 'true');
-
       if (filters.voiceQuery || filters.query) {
         params.append('city', filters.voiceQuery || filters.query);
       }
-
       const res  = await fetch(`${API_URL}/api/daycares?${params}`);
       const data = await res.json();
       setResults(Array.isArray(data) ? data : []);
-
     } catch (err) {
       console.error(err);
       setResults([]);
@@ -97,6 +93,9 @@ export default function Home() {
           <button onClick={() => navigate('/portal')} style={styles.quickLink}>
             🏫 Provider portal
           </button>
+          <button onClick={() => navigate('/compare')} style={styles.quickLink}>
+            ⚖️ Compare daycares
+          </button>
         </div>
 
         {/* Search modes */}
@@ -125,9 +124,7 @@ export default function Home() {
         )}
 
         {/* Loading */}
-        {loading && (
-          <p style={styles.loading}>Searching daycares...</p>
-        )}
+        {loading && <p style={styles.loading}>Searching daycares...</p>}
 
         {/* Result count */}
         {!loading && searched && (
@@ -147,11 +144,10 @@ export default function Home() {
             <div style={styles.cardTop}>
               <h3
                 style={{ ...styles.cardName, cursor: 'pointer', color: '#1D9E75' }}
-                 onClick={() => navigate(`/daycare/${daycare._id}`)}
+                onClick={() => navigate(`/daycare/${daycare._id}`)}
               >
-              {daycare.name}
+                {daycare.name}
               </h3>
-
               <span style={styles.ratingBadge}>★ {daycare.rating || 'New'}</span>
             </div>
             <p style={styles.cardAddress}>

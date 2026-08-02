@@ -24,16 +24,23 @@ export default function Navbar() {
         <div style={styles.links}>
           {!user ? (
             <>
-              <Link to="/login" style={styles.link}>Login</Link>
+              <Link to="/login"    style={styles.link}>Login</Link>
               <Link to="/register" style={styles.registerBtn}>Get started</Link>
             </>
           ) : (
             <>
               {user.role === 'parent' && (
-                <Link to="/dashboard" style={styles.link}>My dashboard</Link>
+                <>
+                  <Link to="/dashboard" style={styles.link}>My dashboard</Link>
+                  <Link to="/messages"  style={styles.link}>Messages</Link>
+                  <Link to="/compare"   style={styles.link}>Compare</Link>
+                </>
               )}
               {user.role === 'owner' && (
-                <Link to="/portal" style={styles.link}>My portal</Link>
+                <>
+                  <Link to="/portal"   style={styles.link}>My portal</Link>
+                  <Link to="/messages" style={styles.link}>Messages</Link>
+                </>
               )}
               <span style={styles.userName}>Hi, {user.name.split(' ')[0]}</span>
               <button onClick={handleLogout} style={styles.logoutBtn}>
@@ -57,13 +64,13 @@ const styles = {
     zIndex:       100,
   },
   container: {
-    maxWidth:      '1100px',
-    margin:        '0 auto',
-    padding:       '0 16px',
-    height:        '60px',
-    display:       'flex',
-    alignItems:    'center',
-    justifyContent:'space-between',
+    maxWidth:       '1100px',
+    margin:         '0 auto',
+    padding:        '0 16px',
+    height:         '60px',
+    display:        'flex',
+    alignItems:     'center',
+    justifyContent: 'space-between',
   },
   logo: {
     display:    'flex',
@@ -102,6 +109,7 @@ const styles = {
     color:        '#374151',
     padding:      '6px 12px',
     borderRadius: '8px',
+    cursor:       'pointer',
   },
   userName: {
     fontSize: '14px',
