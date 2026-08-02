@@ -10,13 +10,16 @@ export default function DaycareProfile() {
   const { id }              = useParams();
   const { user, token }     = useAuth();
   const navigate            = useNavigate();
-  const [daycare, setDaycare]   = useState(null);
-  const [reviews, setReviews]   = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [form, setForm]         = useState({ rating: 5, text: '' });
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError]       = useState('');
-  const [success, setSuccess]   = useState('');
+  const [daycare, setDaycare]         = useState(null);
+  const [reviews, setReviews]         = useState([]);
+  const [loading, setLoading]         = useState(true);
+  const [form, setForm]               = useState({ rating: 5, text: '' });
+  const [submitting, setSubmitting]   = useState(false);
+  const [error, setError]             = useState('');
+  const [success, setSuccess]         = useState('');
+  const [waitlistForm, setWaitlistForm] = useState({ ageGroup: '', notes: '' });
+  const [waitlistMsg, setWaitlistMsg] = useState('');
+  const [onWaitlist, setOnWaitlist]   = useState(false);
 
   useEffect(() => {
     fetchDaycare();
@@ -50,7 +53,6 @@ export default function DaycareProfile() {
     setError('');
     setSuccess('');
     setSubmitting(true);
-
     try {
       const res  = await fetch(`${API_URL}/api/reviews/${id}`, {
         method:  'POST',
@@ -61,7 +63,6 @@ export default function DaycareProfile() {
         body: JSON.stringify(form)
       });
       const data = await res.json();
-
       if (!res.ok) {
         setError(data.error || 'Failed to submit review');
       } else {
@@ -70,7 +71,7 @@ export default function DaycareProfile() {
         setForm({ rating: 5, text: '' });
       }
     } catch (err) {
-      setError('Something went wrong. Please try again.');
+      setError('Something went wrong.');
     } finally {
       setSubmitting(false);
     }
@@ -85,6 +86,34 @@ export default function DaycareProfile() {
       setReviews(prev => prev.filter(r => r._id !== reviewId));
     } catch (err) {
       console.error(err);
+    }
+  }
+
+  async function joinWaitlist() {
+    if (!user) { navigate('/login'); return; }
+    if (!waitlistForm.ageGroup) {
+      setWaitlistMsg('Please select an age group.');
+      return;
+    }
+    setWaitlistMsg('');
+    try {
+      const res  = await fetch(`${API_URL}/api/waitlist/${id}`, {
+        method:  'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(waitlistForm)
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setWaitlistMsg(data.error || 'Failed to join waitlist');
+      } else {
+        setOnWaitlist(true);
+        setWaitlistMsg(`You are on the waitlist at position #${data.position}!`);
+      }
+    } catch (err) {
+      setWaitlistMsg('Something went wrong.');
     }
   }
 
@@ -129,12 +158,8 @@ export default function DaycareProfile() {
             {daycare.language?.map(lang => (
               <span key={lang} style={styles.tagPurple}>{lang}</span>
             ))}
-            {daycare.licensed && (
-              <span style={styles.tagBlue}>✓ Licensed</span>
-            )}
-            {daycare.verified && (
-              <span style={styles.tagBlue}>✓ Verified</span>
-            )}
+            {daycare.licensed && <span style={styles.tagBlue}>✓ Licensed</span>}
+            {daycare.verified && <span style={styles.tagBlue}>✓ Verified</span>}
           </div>
         </div>
         <div style={styles.ratingBlock}>
@@ -144,13 +169,13 @@ export default function DaycareProfile() {
         </div>
       </div>
 
-      {/* Key info cards */}
+      {/* Key info */}
       <div style={styles.infoGrid}>
         {[
-          { label: 'Monthly price', value: `$${daycare.monthlyPrice}` },
-          { label: 'Open hours',    value: daycare.openHours          },
-          { label: 'Phone',         value: daycare.phone              },
-          { label: 'Open spots',    value: totalSpots > 0 ? `${totalSpots} available` : 'Waitlist only' },
+          { label: 'Monthly price', value: `$${daycare.monthlyPrice}`                                    },
+          { label: 'Open hours',    value: daycare.openHours                                              },
+          { label: 'Phone',         value: daycare.phone                                                  },
+          { label: 'Open spots',    value: totalSpots > 0 ? `${totalSpots} available` : 'Waitlist only'  },
         ].map(info => (
           <div key={info.label} style={styles.infoCard}>
             <div style={styles.infoLabel}>{info.label}</div>
@@ -200,45 +225,104 @@ export default function DaycareProfile() {
         </div>
       )}
 
+      {/* Waitlist */}
+      <div style={styles.card}>
+        <h2 style={styles.cardTitle}>Join the waitlist</h2>
+        <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '14px' }}>
+          No spots available right now? Join the waitlist and you'll be notified when one opens up.
+        </p>
+
+        {!onWaitlist ? (
+          <>
+            <div style={{ marginBottom: '12px' }}>
+              <label style={styles.label}>Age group needed</label>
+              <select
+                value={waitlistForm.ageGroup}
+                onChange={e => setWaitlistForm({ ...waitlistForm, ageGroup: e.target.value })}
+                style={styles.input}
+              >
+                <option value="">Select age group</option>
+                <option value="infant">Infant (0–18mo)</option>
+                <option value="toddler">Toddler (18mo–3yr)</option>
+                <option value="preschool">Preschool (3–5yr)</option>
+              </select>
+            </div>
+
+            <div style={{ marginBottom: '12px' }}>
+              <label style={styles.label}>Notes (optional)</label>
+              <textarea
+                value={waitlistForm.notes}
+                onChange={e => setWaitlistForm({ ...waitlistForm, notes: e.target.value })}
+                placeholder="Any special requirements or notes for the daycare..."
+                style={{ ...styles.input, height: '70px', resize: 'none' }}
+              />
+            </div>
+
+            {waitlistMsg && (
+              <div style={{
+                padding:      '10px 14px',
+                borderRadius: '8px',
+                fontSize:     '13px',
+                marginBottom: '12px',
+                background:   waitlistMsg.includes('position') ? '#E1F5EE' : '#FCEBEB',
+                color:        waitlistMsg.includes('position') ? '#085041' : '#A32D2D',
+              }}>
+                {waitlistMsg}
+              </div>
+            )}
+
+            <button onClick={joinWaitlist} style={styles.btnGreen}>
+              Join waitlist
+            </button>
+          </>
+        ) : (
+          <div style={{ background: '#E1F5EE', padding: '16px', borderRadius: '10px' }}>
+            <p style={{ fontSize: '14px', color: '#085041', fontWeight: '500' }}>
+              ✅ You are on the waitlist!
+            </p>
+            <p style={{ fontSize: '13px', color: '#085041', marginTop: '4px' }}>
+              {waitlistMsg}
+            </p>
+            <p style={{ fontSize: '13px', color: '#085041', marginTop: '4px' }}>
+              Track your position in your <span
+                onClick={() => navigate('/dashboard')}
+                style={{ textDecoration: 'underline', cursor: 'pointer' }}
+              >parent dashboard</span>.
+            </p>
+          </div>
+        )}
+      </div>
+
       {/* Reviews */}
       <div style={styles.card}>
         <h2 style={styles.cardTitle}>
           Parent reviews ({reviews.length})
         </h2>
 
-        {/* Submit review form */}
         {user && user.role === 'parent' && (
           <div style={styles.reviewForm}>
             <h3 style={styles.reviewFormTitle}>Leave a review</h3>
-
             <div style={{ marginBottom: '12px' }}>
               <label style={styles.label}>Your rating</label>
               <div style={{ display: 'flex', gap: '4px', marginTop: '6px' }}>
                 {renderStars(form.rating, true)}
               </div>
             </div>
-
             <div style={{ marginBottom: '12px' }}>
               <label style={styles.label}>Your review</label>
               <textarea
                 value={form.text}
                 onChange={e => setForm({ ...form, text: e.target.value })}
-                placeholder="Share your experience with this daycare (minimum 20 characters)..."
+                placeholder="Share your experience (minimum 20 characters)..."
                 style={styles.textarea}
               />
               <div style={{ fontSize: '11px', color: '#6B7280', marginTop: '4px' }}>
                 {form.text.length} / 1000 characters
               </div>
             </div>
-
             {error   && <div style={styles.errorMsg}>{error}</div>}
             {success && <div style={styles.successMsg}>{success}</div>}
-
-            <button
-              onClick={submitReview}
-              disabled={submitting}
-              style={styles.submitBtn}
-            >
+            <button onClick={submitReview} disabled={submitting} style={styles.btnGreen}>
               {submitting ? 'Submitting...' : 'Submit review'}
             </button>
           </div>
@@ -255,7 +339,6 @@ export default function DaycareProfile() {
           </div>
         )}
 
-        {/* Review list */}
         {reviews.length === 0 ? (
           <p style={{ fontSize: '14px', color: '#6B7280', marginTop: '16px' }}>
             No reviews yet — be the first to review this daycare!
@@ -279,37 +362,37 @@ export default function DaycareProfile() {
 }
 
 const styles = {
-  page:          { maxWidth: '720px', margin: '0 auto', padding: '24px 16px', background: '#F8F7F4', minHeight: '100vh' },
-  loading:       { textAlign: 'center', padding: '60px', color: '#6B7280', fontSize: '14px' },
-  backBtn:       { fontSize: '13px', color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', marginBottom: '16px', padding: '0' },
-  header:        { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' },
-  title:         { fontSize: '24px', fontWeight: '500', color: '#2C2C2A', marginBottom: '6px' },
-  address:       { fontSize: '14px', color: '#6B7280', marginBottom: '10px' },
-  tags:          { display: 'flex', gap: '6px', flexWrap: 'wrap' },
-  tagGreen:      { fontSize: '12px', background: '#E1F5EE', color: '#085041', padding: '3px 10px', borderRadius: '20px' },
-  tagPurple:     { fontSize: '12px', background: '#EEEDFE', color: '#534AB7', padding: '3px 10px', borderRadius: '20px' },
-  tagBlue:       { fontSize: '12px', background: '#E6F1FB', color: '#185FA5', padding: '3px 10px', borderRadius: '20px' },
-  ratingBlock:   { textAlign: 'center' },
-  ratingNumber:  { fontSize: '36px', fontWeight: '700', color: '#2C2C2A' },
-  reviewCount:   { fontSize: '12px', color: '#6B7280', marginTop: '2px' },
-  infoGrid:      { display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '10px', marginBottom: '16px' },
-  infoCard:      { background: '#fff', border: '1px solid #E8E6E0', borderRadius: '10px', padding: '14px' },
-  infoLabel:     { fontSize: '12px', color: '#6B7280', marginBottom: '4px' },
-  infoValue:     { fontSize: '15px', fontWeight: '500', color: '#2C2C2A' },
-  card:          { background: '#fff', border: '1px solid #E8E6E0', borderRadius: '12px', padding: '20px', marginBottom: '16px' },
-  cardTitle:     { fontSize: '16px', fontWeight: '500', color: '#2C2C2A', marginBottom: '14px' },
-  availGrid:     { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' },
-  availItem:     { border: '1px solid #E8E6E0', borderRadius: '10px', padding: '14px', textAlign: 'center' },
-  availAge:      { fontSize: '12px', color: '#6B7280', marginBottom: '6px', textTransform: 'capitalize' },
-  availCount:    { fontSize: '28px', fontWeight: '500', color: '#2C2C2A' },
-  availBadge:    { fontSize: '11px', marginTop: '4px', padding: '2px 8px', borderRadius: '20px', display: 'inline-block' },
-  reviewForm:    { background: '#F8F7F4', borderRadius: '10px', padding: '16px', marginBottom: '16px', border: '1px solid #E8E6E0' },
+  page:           { maxWidth: '720px', margin: '0 auto', padding: '24px 16px', background: '#F8F7F4', minHeight: '100vh' },
+  loading:        { textAlign: 'center', padding: '60px', color: '#6B7280', fontSize: '14px' },
+  backBtn:        { fontSize: '13px', color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', marginBottom: '16px', padding: '0' },
+  header:         { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' },
+  title:          { fontSize: '24px', fontWeight: '500', color: '#2C2C2A', marginBottom: '6px' },
+  address:        { fontSize: '14px', color: '#6B7280', marginBottom: '10px' },
+  tags:           { display: 'flex', gap: '6px', flexWrap: 'wrap' },
+  tagGreen:       { fontSize: '12px', background: '#E1F5EE', color: '#085041', padding: '3px 10px', borderRadius: '20px' },
+  tagPurple:      { fontSize: '12px', background: '#EEEDFE', color: '#534AB7', padding: '3px 10px', borderRadius: '20px' },
+  tagBlue:        { fontSize: '12px', background: '#E6F1FB', color: '#185FA5', padding: '3px 10px', borderRadius: '20px' },
+  ratingBlock:    { textAlign: 'center' },
+  ratingNumber:   { fontSize: '36px', fontWeight: '700', color: '#2C2C2A' },
+  reviewCount:    { fontSize: '12px', color: '#6B7280', marginTop: '2px' },
+  infoGrid:       { display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '10px', marginBottom: '16px' },
+  infoCard:       { background: '#fff', border: '1px solid #E8E6E0', borderRadius: '10px', padding: '14px' },
+  infoLabel:      { fontSize: '12px', color: '#6B7280', marginBottom: '4px' },
+  infoValue:      { fontSize: '15px', fontWeight: '500', color: '#2C2C2A' },
+  card:           { background: '#fff', border: '1px solid #E8E6E0', borderRadius: '12px', padding: '20px', marginBottom: '16px' },
+  cardTitle:      { fontSize: '16px', fontWeight: '500', color: '#2C2C2A', marginBottom: '14px' },
+  availGrid:      { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' },
+  availItem:      { border: '1px solid #E8E6E0', borderRadius: '10px', padding: '14px', textAlign: 'center' },
+  availAge:       { fontSize: '12px', color: '#6B7280', marginBottom: '6px', textTransform: 'capitalize' },
+  availCount:     { fontSize: '28px', fontWeight: '500', color: '#2C2C2A' },
+  availBadge:     { fontSize: '11px', marginTop: '4px', padding: '2px 8px', borderRadius: '20px', display: 'inline-block' },
+  label:          { fontSize: '13px', color: '#374151', fontWeight: '500', display: 'block', marginBottom: '6px' },
+  input:          { width: '100%', padding: '8px 10px', borderRadius: '8px', border: '1px solid #E8E6E0', fontSize: '13px', color: '#2C2C2A', background: '#F8F7F4' },
+  reviewForm:     { background: '#F8F7F4', borderRadius: '10px', padding: '16px', marginBottom: '16px', border: '1px solid #E8E6E0' },
   reviewFormTitle:{ fontSize: '14px', fontWeight: '500', color: '#2C2C2A', marginBottom: '14px' },
-  label:         { fontSize: '13px', color: '#374151', fontWeight: '500' },
-  textarea:      { width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #E8E6E0', fontSize: '13px', color: '#2C2C2A', background: '#fff', height: '100px', resize: 'vertical', marginTop: '6px', fontFamily: 'inherit' },
-  errorMsg:      { background: '#FCEBEB', color: '#A32D2D', padding: '10px 14px', borderRadius: '8px', fontSize: '13px', marginBottom: '12px' },
-  successMsg:    { background: '#E1F5EE', color: '#085041', padding: '10px 14px', borderRadius: '8px', fontSize: '13px', marginBottom: '12px' },
-  submitBtn:     { padding: '10px 20px', borderRadius: '8px', border: 'none', background: '#1D9E75', color: '#fff', fontSize: '14px', fontWeight: '500', cursor: 'pointer' },
-  loginPrompt:   { background: '#F8F7F4', borderRadius: '10px', padding: '16px', marginBottom: '16px', textAlign: 'center' },
-  btnGreen:      { padding: '8px 16px', borderRadius: '8px', border: 'none', background: '#1D9E75', color: '#fff', fontSize: '13px', cursor: 'pointer' },
+  textarea:       { width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #E8E6E0', fontSize: '13px', color: '#2C2C2A', background: '#fff', height: '100px', resize: 'vertical', marginTop: '6px', fontFamily: 'inherit' },
+  errorMsg:       { background: '#FCEBEB', color: '#A32D2D', padding: '10px 14px', borderRadius: '8px', fontSize: '13px', marginBottom: '12px' },
+  successMsg:     { background: '#E1F5EE', color: '#085041', padding: '10px 14px', borderRadius: '8px', fontSize: '13px', marginBottom: '12px' },
+  loginPrompt:    { background: '#F8F7F4', borderRadius: '10px', padding: '16px', marginBottom: '16px', textAlign: 'center' },
+  btnGreen:       { padding: '10px 20px', borderRadius: '8px', border: 'none', background: '#1D9E75', color: '#fff', fontSize: '14px', fontWeight: '500', cursor: 'pointer' },
 };
