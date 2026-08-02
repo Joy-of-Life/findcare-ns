@@ -145,7 +145,13 @@ export default function Home() {
         {!loading && view === 'list' && results.map(daycare => (
           <div key={daycare._id} style={styles.card}>
             <div style={styles.cardTop}>
-              <h3 style={styles.cardName}>{daycare.name}</h3>
+              <h3
+                style={{ ...styles.cardName, cursor: 'pointer', color: '#1D9E75' }}
+                 onClick={() => navigate(`/daycare/${daycare._id}`)}
+              >
+              {daycare.name}
+              </h3>
+
               <span style={styles.ratingBadge}>★ {daycare.rating || 'New'}</span>
             </div>
             <p style={styles.cardAddress}>
