@@ -273,39 +273,85 @@ export default function ParentDashboard() {
       </div>
 
       {/* Spot alerts */}
-      <div style={styles.card}>
-        <div style={styles.sectionTitle}>
-          <span>Spot alerts</span>
-          <span style={{
-            fontSize:     '12px',
-            background:   alertsOn ? '#E1F5EE' : '#F8F7F4',
-            color:        alertsOn ? '#085041' : '#6B7280',
-            padding:      '3px 10px',
-            borderRadius: '20px',
-            border:       '1px solid #E8E6E0'
-          }}>
-            {alertsOn ? '🔔 Alerts on' : '🔕 Alerts off'}
-          </span>
-        </div>
-        <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '14px' }}>
-          Get an email when a spot opens at any of your saved daycares.
-        </p>
-        <button
-          onClick={toggleAlerts}
-          style={{
-            padding:      '8px 16px',
-            borderRadius: '8px',
-            border:       'none',
-            background:   alertsOn ? '#FCEBEB' : '#1D9E75',
-            color:        alertsOn ? '#A32D2D' : '#fff',
-            fontSize:     '13px',
-            cursor:       'pointer',
-            fontWeight:   '500'
-          }}
+<div style={styles.card}>
+  <div style={styles.sectionTitle}>
+    <span>Spot alerts</span>
+    <span style={{
+      fontSize:     '12px',
+      background:   alertsOn ? '#E1F5EE' : '#F8F7F4',
+      color:        alertsOn ? '#085041' : '#6B7280',
+      padding:      '3px 10px',
+      borderRadius: '20px',
+      border:       '1px solid #E8E6E0'
+    }}>
+      {alertsOn ? '🔔 Alerts on' : '🔕 Alerts off'}
+    </span>
+  </div>
+  <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '14px' }}>
+    Get an email when a spot opens at any of your saved daycares.
+  </p>
+
+  {/* Helper message — shows when alerts on but no saved daycares */}
+  {alertsOn && savedDaycares.length === 0 && (
+    <div style={{
+      background:   '#FAEEDA',
+      border:       '1px solid #FAC775',
+      borderRadius: '8px',
+      padding:      '10px 14px',
+      marginBottom: '14px',
+      display:      'flex',
+      alignItems:   'flex-start',
+      gap:          '8px',
+    }}>
+      <span style={{ fontSize: '16px', flexShrink: 0 }}>💡</span>
+      <p style={{ fontSize: '13px', color: '#633806', margin: 0, lineHeight: '1.5' }}>
+        Alerts are on but you haven't saved any daycares yet.
+        You'll only receive alerts for daycares you save.{' '}
+        <span
+          onClick={() => navigate('/')}
+          style={{ color: '#854F0B', fontWeight: '500', cursor: 'pointer', textDecoration: 'underline' }}
         >
-          {alertsOn ? 'Turn off alerts' : 'Turn on alerts'}
-        </button>
-      </div>
+          Find and save daycares →
+        </span>
+      </p>
+    </div>
+  )}
+
+  {/* Helper message — shows when alerts on and has saved daycares */}
+  {alertsOn && savedDaycares.length > 0 && (
+    <div style={{
+      background:   '#E1F5EE',
+      border:       '1px solid #5DCAA5',
+      borderRadius: '8px',
+      padding:      '10px 14px',
+      marginBottom: '14px',
+      display:      'flex',
+      alignItems:   'center',
+      gap:          '8px',
+    }}>
+      <span style={{ fontSize: '16px' }}>✅</span>
+      <p style={{ fontSize: '13px', color: '#085041', margin: 0 }}>
+        You'll receive email alerts when spots open at your {savedDaycares.length} saved daycare{savedDaycares.length !== 1 ? 's' : ''}.
+      </p>
+    </div>
+  )}
+
+  <button
+    onClick={toggleAlerts}
+    style={{
+      padding:      '8px 16px',
+      borderRadius: '8px',
+      border:       'none',
+      background:   alertsOn ? '#FCEBEB' : '#1D9E75',
+      color:        alertsOn ? '#A32D2D' : '#fff',
+      fontSize:     '13px',
+      cursor:       'pointer',
+      fontWeight:   '500'
+    }}
+  >
+    {alertsOn ? 'Turn off alerts' : 'Turn on alerts'}
+  </button>
+</div>
 
       {/* Messages */}
       <div style={styles.card}>
