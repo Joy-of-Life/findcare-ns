@@ -171,6 +171,11 @@ router.get('/me', auth, async (req, res) => {
 // PATCH /api/auth/save-daycare
 router.patch('/save-daycare', auth, async (req, res) => {
   try {
+    // Only parents can save daycares
+    if (req.user.role !== 'parent') {
+      return res.status(403).json({ error: 'Only parents can save daycares' });
+    }
+
     const { daycareId } = req.body;
     const user = await User.findById(req.user.id);
 

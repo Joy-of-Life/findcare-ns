@@ -225,73 +225,75 @@ export default function DaycareProfile() {
         </div>
       )}
 
-      {/* Waitlist */}
-      <div style={styles.card}>
-        <h2 style={styles.cardTitle}>Join the waitlist</h2>
-        <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '14px' }}>
-          No spots available right now? Join the waitlist and you'll be notified when one opens up.
-        </p>
+      {/* Waitlist — parents only */}
+        {(!user || user.role === 'parent') && (
+          <div style={styles.card}>
+            <h2 style={styles.cardTitle}>Join the waitlist</h2>
+            <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '14px' }}>
+              No spots available right now? Join the waitlist and you'll be notified when one opens up.
+            </p>
 
-        {!onWaitlist ? (
-          <>
-            <div style={{ marginBottom: '12px' }}>
-              <label style={styles.label}>Age group needed</label>
-              <select
-                value={waitlistForm.ageGroup}
-                onChange={e => setWaitlistForm({ ...waitlistForm, ageGroup: e.target.value })}
-                style={styles.input}
-              >
-                <option value="">Select age group</option>
-                <option value="infant">Infant (0–18mo)</option>
-                <option value="toddler">Toddler (18mo–3yr)</option>
-                <option value="preschool">Preschool (3–5yr)</option>
-              </select>
-            </div>
-
-            <div style={{ marginBottom: '12px' }}>
-              <label style={styles.label}>Notes (optional)</label>
-              <textarea
-                value={waitlistForm.notes}
-                onChange={e => setWaitlistForm({ ...waitlistForm, notes: e.target.value })}
-                placeholder="Any special requirements or notes for the daycare..."
-                style={{ ...styles.input, height: '70px', resize: 'none' }}
-              />
-            </div>
-
-            {waitlistMsg && (
-              <div style={{
-                padding:      '10px 14px',
-                borderRadius: '8px',
-                fontSize:     '13px',
-                marginBottom: '12px',
-                background:   waitlistMsg.includes('position') ? '#E1F5EE' : '#FCEBEB',
-                color:        waitlistMsg.includes('position') ? '#085041' : '#A32D2D',
-              }}>
-                {waitlistMsg}
+            {!onWaitlist ? (
+              <>
+                <div style={{ marginBottom: '12px' }}>
+                  <label style={styles.label}>Age group needed</label>
+                  <select
+                    value={waitlistForm.ageGroup}
+                    onChange={e => setWaitlistForm({ ...waitlistForm, ageGroup: e.target.value })}
+                    style={styles.input}
+                  >
+                    <option value="">Select age group</option>
+                    <option value="infant">Infant (0–18mo)</option>
+                    <option value="toddler">Toddler (18mo–3yr)</option>
+                    <option value="preschool">Preschool (3–5yr)</option>
+                  </select>
+                </div>
+                <div style={{ marginBottom: '12px' }}>
+                  <label style={styles.label}>Notes (optional)</label>
+                  <textarea
+                    value={waitlistForm.notes}
+                    onChange={e => setWaitlistForm({ ...waitlistForm, notes: e.target.value })}
+                    placeholder="Any special requirements or notes for the daycare..."
+                    style={{ ...styles.input, height: '70px', resize: 'none' }}
+                  />
+                </div>
+                {waitlistMsg && (
+                  <div style={{
+                    padding:      '10px 14px',
+                    borderRadius: '8px',
+                    fontSize:     '13px',
+                    marginBottom: '12px',
+                    background:   waitlistMsg.includes('position') ? '#E1F5EE' : '#FCEBEB',
+                    color:        waitlistMsg.includes('position') ? '#085041' : '#A32D2D',
+                  }}>
+                    {waitlistMsg}
+                  </div>
+                )}
+                <button onClick={joinWaitlist} style={styles.btnGreen}>
+                  Join waitlist
+                </button>
+              </>
+            ) : (
+              <div style={{ background: '#E1F5EE', padding: '16px', borderRadius: '10px' }}>
+                <p style={{ fontSize: '14px', color: '#085041', fontWeight: '500' }}>
+                  ✅ You are on the waitlist!
+                </p>
+                <p style={{ fontSize: '13px', color: '#085041', marginTop: '4px' }}>
+                  {waitlistMsg}
+                </p>
+                <p style={{ fontSize: '13px', color: '#085041', marginTop: '4px' }}>
+                  Track your position in your{' '}
+                  <span
+                    onClick={() => navigate('/dashboard')}
+                    style={{ textDecoration: 'underline', cursor: 'pointer' }}
+                  >
+                    parent dashboard
+                  </span>.
+                </p>
               </div>
             )}
-
-            <button onClick={joinWaitlist} style={styles.btnGreen}>
-              Join waitlist
-            </button>
-          </>
-        ) : (
-          <div style={{ background: '#E1F5EE', padding: '16px', borderRadius: '10px' }}>
-            <p style={{ fontSize: '14px', color: '#085041', fontWeight: '500' }}>
-              ✅ You are on the waitlist!
-            </p>
-            <p style={{ fontSize: '13px', color: '#085041', marginTop: '4px' }}>
-              {waitlistMsg}
-            </p>
-            <p style={{ fontSize: '13px', color: '#085041', marginTop: '4px' }}>
-              Track your position in your <span
-                onClick={() => navigate('/dashboard')}
-                style={{ textDecoration: 'underline', cursor: 'pointer' }}
-              >parent dashboard</span>.
-            </p>
           </div>
-        )}
-      </div>
+)}
 
       {/* Reviews */}
       <div style={styles.card}>

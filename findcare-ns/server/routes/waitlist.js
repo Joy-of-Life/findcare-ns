@@ -37,6 +37,10 @@ router.get('/:daycareId', auth, async (req, res) => {
 // POST /api/waitlist/:daycareId — join waitlist
 router.post('/:daycareId', auth, async (req, res) => {
   try {
+     // Only parents can join waitlists
+    if (req.user.role !== 'parent') {
+      return res.status(403).json({ error: 'Only parents can join waitlists' });
+    }
     const { ageGroup, expectedStartDate, notes } = req.body;
 
     if (!ageGroup) {

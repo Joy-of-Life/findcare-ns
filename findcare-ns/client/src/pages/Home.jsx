@@ -187,16 +187,18 @@ export default function Home() {
                   <div style={styles.cardFooter}>
                     <span style={styles.price}>${daycare.monthlyPrice}/month</span>
                     <span style={styles.hours}>{daycare.openHours}</span>
-                    <button
-                      onClick={() => handleSave(daycare._id)}
-                      style={{
-                        ...styles.saveBtn,
-                        background: saved[daycare._id] ? '#1D9E75' : '#E1F5EE',
-                        color:      saved[daycare._id] ? '#fff'    : '#085041',
-                      }}
-                    >
-                      {saved[daycare._id] ? '♥ Saved' : '♡ Save'}
-                    </button>
+                    {(!user || user.role === 'parent') && (
+                      <button
+                        onClick={() => handleSave(daycare._id)}
+                        style={{
+                          ...styles.saveBtn,
+                          background: saved[daycare._id] ? '#1D9E75' : '#E1F5EE',
+                          color:      saved[daycare._id] ? '#fff'    : '#085041',
+                        }}
+                      >
+                        {saved[daycare._id] ? '♥ Saved' : '♡ Save'}
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
