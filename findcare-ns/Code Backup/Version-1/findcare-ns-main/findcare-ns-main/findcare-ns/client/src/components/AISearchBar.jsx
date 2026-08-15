@@ -30,6 +30,10 @@ export default function AISearchBar({ onSearch }) {
     }
   }
 
+  function fillExample(text) {
+    setQuery(text);
+  }
+
   function handleKeyDown(e) {
     if (e.key === 'Enter') handleAISearch();
   }
@@ -57,7 +61,7 @@ export default function AISearchBar({ onSearch }) {
       <p style={styles.exampleLabel}>Try:</p>
       <div style={styles.chips}>
         {EXAMPLE_SEARCHES.map((ex, i) => (
-          <span key={i} onClick={() => setQuery(ex)} style={styles.chip}>
+          <span key={i} onClick={() => fillExample(ex)} style={styles.chip}>
             "{ex}"
           </span>
         ))}
@@ -80,20 +84,20 @@ export default function AISearchBar({ onSearch }) {
 }
 
 const styles = {
-  wrap:        { background: '#EDE7F6', borderRadius: '12px', padding: '14px', flex: 1, border: '1.5px solid #B39DDB' },
+  wrap:        { background: '#EEEDFE', borderRadius: '12px', padding: '14px', flex: 1 },
   header:      { display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' },
   sparkle:     { fontSize: '16px' },
-  title:       { fontSize: '14px', fontWeight: '500', color: '#5C35CC' },
-  badge:       { fontSize: '10px', padding: '2px 7px', borderRadius: '20px', background: '#7C4DFF', color: '#fff', fontWeight: '500' },
+  title:       { fontSize: '14px', fontWeight: '500', color: '#3C3489' },
+  badge:       { fontSize: '10px', padding: '2px 7px', borderRadius: '20px', background: '#534AB7', color: '#fff', fontWeight: '500' },
   inputRow:    { display: 'flex', gap: '6px', marginBottom: '8px' },
-  input:       { flex: 1, padding: '8px 10px', borderRadius: '8px', border: '1.5px solid #B39DDB', background: '#fff', fontSize: '13px', color: '#2C2C2A', outline: 'none' },
-  btn:         { padding: '8px 12px', borderRadius: '8px', border: 'none', background: '#7C4DFF', color: '#fff', fontSize: '14px', cursor: 'pointer' },
-  exampleLabel:{ fontSize: '11px', color: '#5C35CC', marginBottom: '6px' },
+  input:       { flex: 1, padding: '8px 10px', borderRadius: '8px', border: '1px solid #AFA9EC', background: '#fff', fontSize: '13px', color: '#2C2C2A' },
+  btn:         { padding: '8px 12px', borderRadius: '8px', border: 'none', background: '#534AB7', color: '#fff', fontSize: '14px', cursor: 'pointer' },
+  exampleLabel:{ fontSize: '11px', color: '#534AB7', marginBottom: '6px' },
   chips:       { display: 'flex', gap: '5px', flexWrap: 'wrap' },
-  chip:        { fontSize: '11px', padding: '3px 8px', borderRadius: '20px', border: '1px solid #B39DDB', background: '#fff', color: '#5C35CC', cursor: 'pointer' },
-  result:      { marginTop: '10px', padding: '10px', background: '#fff', borderRadius: '8px', border: '1px solid #B39DDB' },
-  resultTitle: { fontSize: '12px', fontWeight: '500', color: '#5C35CC', marginBottom: '6px' },
+  chip:        { fontSize: '11px', padding: '3px 8px', borderRadius: '20px', border: '1px solid #AFA9EC', background: '#fff', color: '#3C3489', cursor: 'pointer' },
+  result:      { marginTop: '10px', padding: '10px', background: '#fff', borderRadius: '8px', border: '1px solid #AFA9EC' },
+  resultTitle: { fontSize: '12px', fontWeight: '500', color: '#3C3489', marginBottom: '6px' },
   filterTags:  { display: 'flex', gap: '5px', flexWrap: 'wrap' },
-  filterTag:   { fontSize: '11px', padding: '2px 8px', borderRadius: '20px', background: '#EDE7F6', color: '#5C35CC', border: '1px solid #B39DDB' },
-  error:       { marginTop: '8px', fontSize: '12px', color: '#C62828' },
+  filterTag:   { fontSize: '11px', padding: '2px 8px', borderRadius: '20px', background: '#EEEDFE', color: '#3C3489', border: '1px solid #AFA9EC' },
+  error:       { marginTop: '8px', fontSize: '12px', color: '#A32D2D' },
 };

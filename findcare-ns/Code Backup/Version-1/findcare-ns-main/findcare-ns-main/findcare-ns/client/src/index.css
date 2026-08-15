@@ -1,19 +1,13 @@
-@import url('https://fonts.googleapis.com/css2?family=Recoleta:wght@400;700&display=swap');
-
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-html {
-  scroll-behavior: smooth;
-}
-
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
-  background: #F7F4EE;
-  color: #1F2937;
+  background: #F8F7F4;
+  color: #2C2C2A;
 }
 
 a {
@@ -28,9 +22,4 @@ button {
 
 input, select, textarea {
   font-family: inherit;
-}
-
-img {
-  max-width: 100%;
-  display: block;
 }

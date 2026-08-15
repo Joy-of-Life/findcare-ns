@@ -34,7 +34,7 @@ export default function Compare() {
 
   function renderStars(rating) {
     return Array.from({ length: 5 }, (_, i) => (
-      <span key={i} style={{ color: i < Math.round(rating) ? '#BA7517' : '#E8E6E0' }}>★</span>
+      <span key={i} style={{ color: i < Math.round(rating) ? '#FF6B35' : '#FFE0B2' }}>★</span>
     ));
   }
 
@@ -43,27 +43,27 @@ export default function Compare() {
                   (daycare.availability?.toddler   || 0) +
                   (daycare.availability?.preschool || 0);
     return total > 0
-      ? { text: `${total} open`, color: '#085041', bg: '#E1F5EE' }
-      : { text: 'Waitlist',      color: '#854F0B', bg: '#FAEEDA' };
+      ? { text: `${total} open`, color: '#2E7D32', bg: '#E8F5E9' }
+      : { text: 'Waitlist',      color: '#E65100', bg: '#FFF3E0' };
   }
 
   return (
     <div style={styles.page}>
       <button onClick={() => navigate(-1)} style={styles.backBtn}>← Back</button>
-      <h1 style={styles.title}>Compare daycares</h1>
+      <h1 style={styles.title}>⚖️ Compare daycares</h1>
       <p style={styles.sub}>Search and select up to 3 daycares to compare side by side.</p>
 
       {/* Search */}
       <div style={styles.searchRow}>
         <input
           type="text"
-          placeholder="Search by city e.g. Halifax..."
+          placeholder="🔍 Search by city e.g. Halifax..."
           value={search}
           onChange={e => setSearch(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && searchDaycares()}
           style={styles.input}
         />
-        <button onClick={searchDaycares} style={styles.btnGreen}>Search</button>
+        <button onClick={searchDaycares} style={styles.btnOrange}>Search</button>
       </div>
 
       {/* Selected badges */}
@@ -73,17 +73,16 @@ export default function Compare() {
           {selected.map(d => (
             <span key={d._id} style={styles.selectedBadge}>
               {d.name}
-              <span
-                onClick={() => toggleSelect(d)}
-                style={{ marginLeft: '6px', cursor: 'pointer', color: '#A32D2D' }}
-              >×</span>
+              <span onClick={() => toggleSelect(d)} style={{ marginLeft: '6px', cursor: 'pointer', color: '#C62828' }}>×</span>
             </span>
           ))}
         </div>
       )}
 
+      {/* Loading */}
+      {loading && <p style={styles.loading}>🔍 Searching...</p>}
+
       {/* Search results */}
-      {loading && <p style={styles.loading}>Searching...</p>}
       {results.length > 0 && (
         <div style={styles.resultsList}>
           {results.map(daycare => {
@@ -93,8 +92,8 @@ export default function Compare() {
                 key={daycare._id}
                 style={{
                   ...styles.resultItem,
-                  borderColor: isSelected ? '#1D9E75' : '#E8E6E0',
-                  background:  isSelected ? '#E1F5EE' : '#fff',
+                  borderColor: isSelected ? '#FF6B35' : '#FFE0B2',
+                  background:  isSelected ? '#FFF3E0' : '#fff',
                 }}
                 onClick={() => toggleSelect(daycare)}
               >
@@ -103,11 +102,11 @@ export default function Compare() {
                   <div style={styles.resultAddr}>📍 {daycare.city} · ${daycare.monthlyPrice}/mo</div>
                 </div>
                 <div style={{
-                  width: '20px', height: '20px', borderRadius: '50%',
-                  border: `2px solid ${isSelected ? '#1D9E75' : '#E8E6E0'}`,
-                  background: isSelected ? '#1D9E75' : 'transparent',
+                  width: '22px', height: '22px', borderRadius: '50%',
+                  border: `2px solid ${isSelected ? '#FF6B35' : '#FFCC80'}`,
+                  background: isSelected ? '#FF6B35' : 'transparent',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: '#fff', fontSize: '12px'
+                  color: '#fff', fontSize: '12px', fontWeight: '700',
                 }}>
                   {isSelected ? '✓' : ''}
                 </div>
@@ -120,53 +119,49 @@ export default function Compare() {
       {/* Comparison table */}
       {selected.length >= 2 && (
         <div style={styles.compareWrap}>
-          <h2 style={styles.compareTitle}>Side by side comparison</h2>
+          <h2 style={styles.compareTitle}>📊 Side by side comparison</h2>
           <div style={{
             display: 'grid',
-            gridTemplateColumns: `200px repeat(${selected.length}, minmax(0, 1fr))`,
+            gridTemplateColumns: `180px repeat(${selected.length}, minmax(0, 1fr))`,
             gap: '1px',
-            background: '#E8E6E0',
+            background: '#FFE0B2',
             borderRadius: '12px',
             overflow: 'hidden',
           }}>
 
-            {/* Header row */}
+            {/* Header */}
             <div style={styles.headerCell}>Criteria</div>
             {selected.map(d => (
-              <div key={d._id} style={{ ...styles.headerCell, color: '#1D9E75' }}>
-                {d.name}
-              </div>
+              <div key={d._id} style={{ ...styles.headerCell, color: '#FF6B35' }}>{d.name}</div>
             ))}
 
-            {/* Monthly price */}
-            <div style={styles.labelCell}>Monthly price</div>
+            {/* Price */}
+            <div style={styles.labelCell}>💰 Monthly price</div>
             {selected.map(d => (
               <div key={d._id} style={styles.valueCell}>
-                <span style={{ fontWeight: '500' }}>${d.monthlyPrice}</span>
+                <span style={{ fontWeight: '600' }}>${d.monthlyPrice}</span>
                 {d.monthlyPrice === Math.min(...selected.map(x => x.monthlyPrice)) && (
-                  <span style={styles.bestBadge}>Lowest</span>
+                  <span style={styles.bestBadge}>Lowest 🎉</span>
                 )}
               </div>
             ))}
 
             {/* Rating */}
-            <div style={styles.labelCell}>Rating</div>
+            <div style={styles.labelCell}>⭐ Rating</div>
             {selected.map(d => (
               <div key={d._id} style={styles.valueCell}>
-                <div style={{ display: 'flex', gap: '1px', fontSize: '14px' }}>
-                  {renderStars(d.rating)}
-                </div>
-                <span style={{ fontSize: '12px', color: '#6B7280' }}>{d.rating || 'New'}</span>
+                <div style={{ display: 'flex', gap: '1px', fontSize: '14px' }}>{renderStars(d.rating)}</div>
+                <span style={{ fontSize: '12px', color: '#9E9E9E' }}>{d.rating || 'New'}</span>
               </div>
             ))}
 
             {/* Availability */}
-            <div style={styles.labelCell}>Availability</div>
+            <div style={styles.labelCell}>🎈 Availability</div>
             {selected.map(d => {
               const s = spotStatus(d);
               return (
                 <div key={d._id} style={styles.valueCell}>
-                  <span style={{ background: s.bg, color: s.color, padding: '2px 8px', borderRadius: '20px', fontSize: '12px' }}>
+                  <span style={{ background: s.bg, color: s.color, padding: '2px 8px', borderRadius: '20px', fontSize: '12px', border: `1px solid ${s.color}30` }}>
                     {s.text}
                   </span>
                 </div>
@@ -174,11 +169,11 @@ export default function Compare() {
             })}
 
             {/* Age groups */}
-            <div style={styles.labelCell}>Age groups</div>
+            <div style={styles.labelCell}>👶 Age groups</div>
             {selected.map(d => (
               <div key={d._id} style={{ ...styles.valueCell, flexWrap: 'wrap', gap: '4px' }}>
                 {d.ageRange?.map(age => (
-                  <span key={age} style={{ background: '#E1F5EE', color: '#085041', padding: '2px 6px', borderRadius: '20px', fontSize: '11px' }}>
+                  <span key={age} style={{ background: '#FFF3E0', color: '#E65100', padding: '2px 6px', borderRadius: '20px', fontSize: '11px', border: '1px solid #FFCC80' }}>
                     {age}
                   </span>
                 ))}
@@ -186,27 +181,27 @@ export default function Compare() {
             ))}
 
             {/* Languages */}
-            <div style={styles.labelCell}>Languages</div>
+            <div style={styles.labelCell}>🗣️ Languages</div>
             {selected.map(d => (
               <div key={d._id} style={{ ...styles.valueCell, flexWrap: 'wrap', gap: '4px' }}>
                 {d.language?.map(lang => (
-                  <span key={lang} style={{ background: '#EEEDFE', color: '#534AB7', padding: '2px 6px', borderRadius: '20px', fontSize: '11px' }}>
+                  <span key={lang} style={{ background: '#EDE7F6', color: '#5C35CC', padding: '2px 6px', borderRadius: '20px', fontSize: '11px', border: '1px solid #B39DDB' }}>
                     {lang}
                   </span>
                 ))}
               </div>
             ))}
 
-            {/* Open hours */}
-            <div style={styles.labelCell}>Open hours</div>
+            {/* Hours */}
+            <div style={styles.labelCell}>🕐 Open hours</div>
             {selected.map(d => (
               <div key={d._id} style={styles.valueCell}>
-                <span style={{ fontSize: '13px' }}>{d.openHours}</span>
+                <span style={{ fontSize: '12px' }}>{d.openHours}</span>
               </div>
             ))}
 
             {/* Reviews */}
-            <div style={styles.labelCell}>Reviews</div>
+            <div style={styles.labelCell}>💬 Reviews</div>
             {selected.map(d => (
               <div key={d._id} style={styles.valueCell}>
                 <span style={{ fontSize: '13px' }}>{d.reviewCount || 0} reviews</span>
@@ -214,13 +209,10 @@ export default function Compare() {
             ))}
 
             {/* Action */}
-            <div style={styles.labelCell}>View profile</div>
+            <div style={styles.labelCell}>👀 View</div>
             {selected.map(d => (
               <div key={d._id} style={styles.valueCell}>
-                <button
-                  onClick={() => navigate(`/daycare/${d._id}`)}
-                  style={styles.btnGreen}
-                >
+                <button onClick={() => navigate(`/daycare/${d._id}`)} style={styles.btnOrange}>
                   View →
                 </button>
               </div>
@@ -231,10 +223,10 @@ export default function Compare() {
       )}
 
       {selected.length === 1 && (
-        <p style={styles.hint}>Select one more daycare to start comparing.</p>
+        <p style={styles.hint}>👆 Select one more daycare to start comparing.</p>
       )}
       {selected.length === 0 && results.length > 0 && (
-        <p style={styles.hint}>Click any daycare above to select it for comparison.</p>
+        <p style={styles.hint}>👆 Click any daycare above to select it for comparison.</p>
       )}
 
     </div>
@@ -242,26 +234,26 @@ export default function Compare() {
 }
 
 const styles = {
-  page:         { maxWidth: '900px', margin: '0 auto', padding: '24px 16px', background: '#F8F7F4', minHeight: '100vh' },
-  backBtn:      { fontSize: '13px', color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', marginBottom: '16px', padding: '0' },
-  title:        { fontSize: '24px', fontWeight: '500', color: '#2C2C2A', marginBottom: '4px' },
-  sub:          { fontSize: '14px', color: '#6B7280', marginBottom: '20px' },
-  searchRow:    { display: 'flex', gap: '8px', marginBottom: '16px' },
-  input:        { flex: 1, padding: '10px 12px', borderRadius: '8px', border: '1px solid #E8E6E0', fontSize: '14px', color: '#2C2C2A', background: '#fff' },
-  btnGreen:     { padding: '8px 16px', borderRadius: '8px', border: 'none', background: '#1D9E75', color: '#fff', fontSize: '13px', fontWeight: '500', cursor: 'pointer' },
-  selectedRow:  { display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '16px' },
-  selectedLabel:{ fontSize: '13px', color: '#6B7280' },
-  selectedBadge:{ fontSize: '13px', background: '#E1F5EE', color: '#085041', padding: '4px 10px', borderRadius: '20px', display: 'flex', alignItems: 'center' },
-  loading:      { textAlign: 'center', color: '#6B7280', padding: '20px' },
-  resultsList:  { display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '24px' },
-  resultItem:   { display: 'flex', alignItems: 'center', padding: '12px 14px', borderRadius: '10px', border: '1px solid', cursor: 'pointer' },
-  resultName:   { fontSize: '14px', fontWeight: '500', color: '#2C2C2A' },
-  resultAddr:   { fontSize: '12px', color: '#6B7280', marginTop: '2px' },
-  compareWrap:  { background: '#fff', borderRadius: '12px', border: '1px solid #E8E6E0', padding: '20px', marginTop: '8px' },
-  compareTitle: { fontSize: '16px', fontWeight: '500', color: '#2C2C2A', marginBottom: '16px' },
-  headerCell:   { background: '#2C2C2A', color: '#fff', padding: '12px 14px', fontSize: '13px', fontWeight: '500' },
-  labelCell:    { background: '#F8F7F4', padding: '12px 14px', fontSize: '13px', color: '#6B7280', fontWeight: '500' },
-  valueCell:    { background: '#fff', padding: '12px 14px', fontSize: '13px', color: '#2C2C2A', display: 'flex', alignItems: 'center', gap: '6px' },
-  bestBadge:    { fontSize: '10px', background: '#E1F5EE', color: '#085041', padding: '1px 6px', borderRadius: '20px', marginLeft: '4px' },
-  hint:         { textAlign: 'center', color: '#6B7280', fontSize: '14px', padding: '20px' },
+  page:          { maxWidth: '900px', margin: '0 auto', padding: '24px 16px', background: '#FFFDF9', minHeight: '100vh' },
+  backBtn:       { fontSize: '13px', color: '#9E9E9E', background: 'none', border: 'none', cursor: 'pointer', marginBottom: '16px', padding: '0' },
+  title:         { fontSize: '24px', fontWeight: '700', color: '#2C2C2A', marginBottom: '4px' },
+  sub:           { fontSize: '14px', color: '#9E9E9E', marginBottom: '20px' },
+  searchRow:     { display: 'flex', gap: '8px', marginBottom: '16px' },
+  input:         { flex: 1, padding: '10px 12px', borderRadius: '10px', border: '1.5px solid #FFCC80', fontSize: '14px', color: '#2C2C2A', background: '#fff', outline: 'none' },
+  btnOrange:     { padding: '8px 16px', borderRadius: '8px', border: 'none', background: '#FF6B35', color: '#fff', fontSize: '13px', fontWeight: '600', cursor: 'pointer' },
+  selectedRow:   { display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '16px' },
+  selectedLabel: { fontSize: '13px', color: '#9E9E9E' },
+  selectedBadge: { fontSize: '13px', background: '#FFF3E0', color: '#E65100', padding: '4px 10px', borderRadius: '20px', display: 'flex', alignItems: 'center', border: '1px solid #FFCC80' },
+  loading:       { textAlign: 'center', color: '#FF6B35', padding: '20px' },
+  resultsList:   { display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '24px' },
+  resultItem:    { display: 'flex', alignItems: 'center', padding: '12px 14px', borderRadius: '10px', border: '1.5px solid', cursor: 'pointer' },
+  resultName:    { fontSize: '14px', fontWeight: '600', color: '#2C2C2A' },
+  resultAddr:    { fontSize: '12px', color: '#9E9E9E', marginTop: '2px' },
+  compareWrap:   { background: '#fff', borderRadius: '16px', border: '1.5px solid #FFE0B2', padding: '20px', marginTop: '8px' },
+  compareTitle:  { fontSize: '16px', fontWeight: '600', color: '#2C2C2A', marginBottom: '16px' },
+  headerCell:    { background: '#2C2C2A', color: '#fff', padding: '12px 14px', fontSize: '13px', fontWeight: '600' },
+  labelCell:     { background: '#FFF3E0', padding: '12px 14px', fontSize: '13px', color: '#E65100', fontWeight: '500' },
+  valueCell:     { background: '#fff', padding: '12px 14px', fontSize: '13px', color: '#2C2C2A', display: 'flex', alignItems: 'center', gap: '6px' },
+  bestBadge:     { fontSize: '10px', background: '#E8F5E9', color: '#2E7D32', padding: '1px 6px', borderRadius: '20px', marginLeft: '4px', border: '1px solid #A5D6A7' },
+  hint:          { textAlign: 'center', color: '#9E9E9E', fontSize: '14px', padding: '20px' },
 };

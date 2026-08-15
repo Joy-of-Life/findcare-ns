@@ -40,7 +40,7 @@ export default function VoiceSearch({ onSearch }) {
   return (
     <div style={styles.wrap}>
       <div style={styles.header}>
-        <span>🎤</span>
+        <span style={styles.micIcon}>🎤</span>
         <h2 style={styles.title}>Voice search</h2>
         <span style={styles.badge}>AI powered</span>
       </div>
@@ -48,11 +48,7 @@ export default function VoiceSearch({ onSearch }) {
         <button
           onClick={startListening}
           disabled={listening}
-          style={{
-            ...styles.micBtn,
-            background:  listening ? '#E65100' : '#FF6B35',
-            animation:   listening ? 'pulse 1.2s infinite' : 'none',
-          }}
+          style={{ ...styles.micBtn, background: listening ? '#085041' : '#1D9E75' }}
           aria-label="Start voice search"
         >
           🎤
@@ -73,27 +69,22 @@ export default function VoiceSearch({ onSearch }) {
           </span>
         ))}
       </div>
-      <style>{`
-        @keyframes pulse {
-          0%,100% { box-shadow: 0 0 0 0 rgba(255,107,53,0.4); }
-          50%      { box-shadow: 0 0 0 12px rgba(255,107,53,0); }
-        }
-      `}</style>
     </div>
   );
 }
 
 const styles = {
-  wrap:        { background: '#FFF3E0', borderRadius: '12px', padding: '14px', textAlign: 'center', border: '1.5px solid #FFCC80', height: '100%' },
+  wrap:        { background: '#E1F5EE', borderRadius: '12px', padding: '14px', textAlign: 'center' },
   header:      { display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px', justifyContent: 'center' },
-  title:       { fontSize: '14px', fontWeight: '500', color: '#E65100' },
-  badge:       { fontSize: '10px', padding: '2px 7px', borderRadius: '20px', background: '#FF6B35', color: '#fff', fontWeight: '500' },
+  micIcon:     { fontSize: '16px' },
+  title:       { fontSize: '14px', fontWeight: '500', color: '#085041' },
+  badge:       { fontSize: '10px', padding: '2px 7px', borderRadius: '20px', background: '#0F6E56', color: '#fff', fontWeight: '500' },
   center:      { display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '8px' },
   micBtn:      { width: '44px', height: '44px', borderRadius: '50%', border: 'none', fontSize: '18px', color: '#fff', marginBottom: '6px', cursor: 'pointer' },
-  hint:        { fontSize: '11px', color: '#E65100' },
-  transcript:  { padding: '6px 10px', background: '#fff', borderRadius: '8px', border: '1px solid #FFCC80', fontSize: '12px', color: '#E65100', marginBottom: '6px' },
-  error:       { fontSize: '11px', color: '#C62828', marginBottom: '6px' },
-  exampleLabel:{ fontSize: '11px', color: '#E65100', marginBottom: '6px' },
+  hint:        { fontSize: '11px', color: '#085041' },
+  transcript:  { padding: '6px 10px', background: '#fff', borderRadius: '8px', border: '1px solid #5DCAA5', fontSize: '12px', color: '#085041', marginBottom: '6px' },
+  error:       { fontSize: '11px', color: '#A32D2D', marginBottom: '6px' },
+  exampleLabel:{ fontSize: '11px', color: '#085041', marginBottom: '6px' },
   chips:       { display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'center' },
-  chip:        { fontSize: '11px', padding: '3px 8px', borderRadius: '20px', border: '1px solid #FFCC80', background: '#fff', color: '#E65100', cursor: 'pointer' },
+  chip:        { fontSize: '11px', padding: '3px 8px', borderRadius: '20px', border: '1px solid #5DCAA5', background: '#fff', color: '#085041', cursor: 'pointer' },
 };
