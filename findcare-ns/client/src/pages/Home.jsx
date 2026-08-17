@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import SearchBar from '../components/SearchBar';
@@ -20,6 +20,13 @@ export default function Home() {
 
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
+  // Handle #discover hash to show all daycares
+  useEffect(() => {
+    if (window.location.hash === '#discover') {
+      handleSearch({});
+    }
+  }, []);
+
   async function handleSearch(filters) {
     setLoading(true);
     setSearched(true);
@@ -35,6 +42,11 @@ export default function Home() {
       if (filters.voiceQuery || filters.query) {
         params.append('city', filters.voiceQuery || filters.query);
       }
+      if (filters.lat && filters.lng) {
+        params.append('lat', filters.lat);
+        params.append('lng', filters.lng);
+        params.append('radius', filters.radius || 25);
+      }
       const res = await fetch(`${API_URL}/api/daycares?${params}`);
       const data = await res.json();
       setResults(Array.isArray(data) ? data : []);
@@ -44,6 +56,26 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function handleFindNearMe() {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser');
+      return;
+    }
+
+    setLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        handleSearch({ lat: latitude, lng: longitude });
+      },
+      (error) => {
+        console.error('Geolocation error:', error);
+        alert('Unable to get your location. Please enable location access.');
+        setLoading(false);
+      }
+    );
   }
 
   async function handleSave(daycareId) {
@@ -79,7 +111,7 @@ export default function Home() {
             </p>
             <div style={styles.heroActions}>
               <button 
-                onClick={() => setShowPopup(true)} 
+                onClick={handleFindNearMe} 
                 style={hoveredBtn === 'primaryHero' ? styles.primaryBtnHover : styles.primaryBtn}
                 onMouseEnter={() => setHoveredBtn('primaryHero')}
                 onMouseLeave={() => setHoveredBtn(null)}
@@ -117,19 +149,19 @@ export default function Home() {
           <div style={styles.statRow}>
             <div style={styles.statItem}>
               <div style={styles.metric}>0+</div>
-              <div style={styles.metricLabel}>families connected</div>
+              <div style={styles.metricLabel}>Families Connected</div>
             </div>
             <div style={styles.statItem}>
               <div style={styles.metric}>0+</div>
-              <div style={styles.metricLabel}>licensed daycares</div>
+              <div style={styles.metricLabel}>Licensed Daycares</div>
             </div>
             <div style={styles.statItem}>
-              <div style={styles.metric}>100km</div>
-              <div style={styles.metricLabel}>city wide coverage</div>
+              <div style={styles.metric}>All‑Area</div>
+              <div style={styles.metricLabel}>NS Wide Coverage</div>
             </div>
             <div style={styles.statItem}>
-              <div style={styles.metric}>24/7</div>
-              <div style={styles.metricLabel}>monitoring</div>
+              <div style={styles.metric}>Trusted</div>
+              <div style={styles.metricLabel}>Verified Daycares</div>
             </div>
           </div>
         </div>
@@ -307,6 +339,19 @@ export default function Home() {
 
               {!loading && view === 'map' && <MapView daycares={results} />}
 
+              {!loading && view === 'list' && results.length > 0 && results[0]?.distanceFromUser && (
+                <div style={{ 
+                  padding: '12px 16px', 
+                  background: '#FFF3E0', 
+                  borderBottom: '1px solid #FFCC80', 
+                  color: '#E65100',
+                  fontSize: '14px',
+                  fontWeight: '500'
+                }}>
+                  📍 Showing daycares within 25km of your location
+                </div>
+              )}
+
               {!loading && view === 'list' && results.map((daycare) => (
                 <div key={daycare._id} style={styles.card}>
                   <div style={styles.cardTop}>
@@ -322,6 +367,11 @@ export default function Home() {
                     <span style={styles.ratingBadge}>★ {daycare.rating || 'New'}</span>
                   </div>
                   <p style={styles.cardAddress}>📍 {daycare.address}, {daycare.city}</p>
+                  {daycare.distanceFromUser && (
+                    <p style={{ ...styles.cardAddress, color: '#FF6B35', fontSize: '12px', marginTop: '4px' }}>
+                      📍 {daycare.distanceFromUser} km away
+                    </p>
+                  )}
                   <div style={styles.tags}>
                     {daycare.ageRange?.map((age) => (
                       <span key={age} style={styles.tagOrange}>{age}</span>
@@ -428,7 +478,7 @@ const styles = {
     margin: '0 0 14px',
     letterSpacing: '-0.05em',
     textShadow: '0 3px 18px rgba(15, 23, 42, 0.12)',
-    fontFamily: 'Recoleta, Poppins, Montserrat, serif',
+    fontFamily: 'Poppins, Quicksand, Rubik, Raleway, sans-serif',
     whiteSpace: 'nowrap',
   },
   highlightWord: {
@@ -560,7 +610,7 @@ const styles = {
   },
   metric: {
     fontSize: '1.7rem',
-    fontWeight: 800,
+    fontWeight: 600,
     color: '#1D2A39',
     lineHeight: 1.1,
   },
@@ -569,7 +619,7 @@ const styles = {
     fontSize: '12px',
     marginTop: '6px',
     fontWeight: 600,
-    textTransform: 'lowercase',
+    textTransform: 'uppercase',
   },
   searchSection: {
     maxWidth: '1180px',

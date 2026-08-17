@@ -57,7 +57,7 @@ export default function WelcomePopup() {
         <h2 style={styles.heading}>Finding the perfect daycare just got easier!</h2>
         <p style={styles.subheading}>Nova Scotia families, we're here for you.</p>
         <p style={styles.description}>
-          FindCare NS connects Nova Scotia parents with licensed daycare centres.
+          FindCare NS connects Nova Scotia parents with licensed daycare centres.<br/>
           Search by city, age group, language and availability — all in one place.
         </p>
 
@@ -81,7 +81,7 @@ export default function WelcomePopup() {
           {[
             { value: daycareCount > 0 ? `${daycareCount}+` : '0+',   label: 'Daycares listed'  },
             { value: 'NS',   label: 'Nova Scotia only'  },
-            { value: '24/7', label: 'Always available'  },
+            { value: 'Verified', label: 'Trusted & Verified Listings'  },
           ].map(s => (
             <div key={s.label} style={{ textAlign: 'center' }}>
               <span style={styles.statValue}>{s.value}</span>
@@ -122,7 +122,7 @@ const styles = {
   featureTitle: { fontSize:'13px', fontWeight:'600', color:'#1F2937' },
   featureDesc:  { fontSize:'12px', color:'#9E9E9E', marginTop:'3px' },
   statsRow:     { display:'flex', justifyContent:'space-around', background:'linear-gradient(135deg, #FFF8E1, #FFF3E0)', borderRadius:'14px', padding:'20px', marginBottom:'24px', border:'1px solid #FFE0B2' },
-  statValue:    { display:'block', fontSize:'24px', fontWeight:'800', color:'#FF6B35' },
+  statValue:    { display:'block', fontSize:'24px', fontWeight:'500', color:'#FF6B35' },
   statLabel:    { display:'block', fontSize:'11px', color:'#6B7280', marginTop:'4px', fontWeight:'500' },
   btnRow:       { display:'flex', gap:'12px', flexWrap:'wrap' },
   btnPrimary:   { flex:1, padding:'14px 20px', borderRadius:'12px', border:'none', background:'#FF6B35', color:'#fff', fontSize:'15px', fontWeight:'700', cursor:'pointer', minWidth:'140px', boxShadow:'0 6px 20px rgba(255, 107, 53, 0.25)' },

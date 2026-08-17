@@ -6,8 +6,62 @@ const auth     = require('../middleware/auth');
 // GET /api/daycares — search with filters
 router.get('/', async (req, res) => {
   try {
-    const { city, ageRange, maxPrice, language, rating, availableOnly } = req.query;
+    const { city, ageRange, maxPrice, language, rating, availableOnly, lat, lng, radius } = req.query;
     const query = {};
+
+    // If lat/lng provided, filter by distance (hardcoded to 25km)
+    if (lat && lng) {
+      const userLat = parseFloat(lat);
+      const userLng = parseFloat(lng);
+      const SEARCH_RADIUS = 25; // Fixed 25km radius
+
+      console.log('🔍 GPS Search:', { userLat, userLng, SEARCH_RADIUS });
+
+      // Haversine formula to calculate distance
+      const daycares = await Daycare.find({ 'coordinates.lat': { $exists: true }, 'coordinates.lng': { $exists: true } });
+      
+      console.log(`📍 Found ${daycares.length} daycares with coordinates`);
+      
+      const nearby = daycares
+        .map(daycare => {
+          if (!daycare.coordinates || !daycare.coordinates.lat || !daycare.coordinates.lng) return null;
+          
+          const R = 6371; // Earth's radius in km
+          const dLat = (daycare.coordinates.lat - userLat) * Math.PI / 180;
+          const dLng = (daycare.coordinates.lng - userLng) * Math.PI / 180;
+          const a = 
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(userLat * Math.PI / 180) * Math.cos(daycare.coordinates.lat * Math.PI / 180) *
+            Math.sin(dLng / 2) * Math.sin(dLng / 2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+          const distance = R * c;
+          
+          console.log(`  ${daycare.name} (${daycare.city}): ${distance.toFixed(2)}km`);
+          
+          if (distance <= SEARCH_RADIUS) {
+            return {
+              ...daycare.toObject(),
+              distanceFromUser: Math.round(distance * 10) / 10 // Round to 1 decimal place
+            };
+          }
+          return null;
+        })
+        .filter(item => item !== null);
+
+      console.log(`✅ ${nearby.length} daycares within ${SEARCH_RADIUS}km`);
+
+      // Apply other filters
+      let result = nearby;
+      if (ageRange) result = result.filter(d => d.ageRange && d.ageRange.includes(ageRange));
+      if (maxPrice) result = result.filter(d => d.monthlyPrice <= Number(maxPrice));
+      if (language) result = result.filter(d => d.language && d.language.includes(language));
+      if (rating) result = result.filter(d => d.rating >= Number(rating));
+      if (availableOnly && ageRange) {
+        result = result.filter(d => (d.availability?.[ageRange] || 0) > 0);
+      }
+
+      return res.json(result.sort((a, b) => b.rating - a.rating));
+    }
 
     if (city)     query.city         = { $regex: city, $options: 'i' };
     if (maxPrice) query.monthlyPrice = { $lte: Number(maxPrice) };
