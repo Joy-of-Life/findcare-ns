@@ -187,7 +187,7 @@ export default function Home() {
       <div style={styles.section}>
         <div style={styles.sectionHeader}>
           <p style={styles.sectionEyebrow}>Why Parents Trust Findcare NS</p>
-          <h2 style={styles.sectionTitle}>Built by parents, for families.</h2>
+          <h2 style={styles.sectionTitle}>Helping Families Find Care</h2>
         </div>
         <div style={styles.featureGrid}>
           <div style={styles.featureCard}>
@@ -202,8 +202,8 @@ export default function Home() {
           </div>
           <div style={styles.featureCard}>
             <div style={styles.featureIcon}>💸</div>
-            <h3 style={styles.featureTitle}>Find $10/Day Spots</h3>
-            <p style={styles.featureText}>Instantly filter for affordable options and compare the best value near your home or work.</p>
+            <h3 style={styles.featureTitle}>Find Affordable Daycare Spots</h3>
+            <p style={styles.featureText}>Help parents compare licensed, local, budget‑friendly childcare options.</p>
           </div>
         </div>
       </div>
