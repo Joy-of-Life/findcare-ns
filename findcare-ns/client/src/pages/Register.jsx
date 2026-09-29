@@ -88,6 +88,7 @@ export default function Register() {
                 value={form.password}
                 onChange={handleChange}
                 placeholder="At least 6 characters"
+                minLength={6}
                 required
                 style={styles.input}
               />

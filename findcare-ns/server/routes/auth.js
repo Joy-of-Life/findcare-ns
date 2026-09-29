@@ -27,6 +27,10 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
+    if (typeof password !== 'string' || password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+
     // Check role is valid
     if (!['parent', 'owner'].includes(role)) {
       return res.status(400).json({ error: 'Role must be parent or owner' });
