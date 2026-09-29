@@ -1,89 +1,193 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth }     from '../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
+function getId(value) {
+  return typeof value === 'string' ? value : value?._id;
+}
+
+function groupMessages(messages) {
+  const groups = new Map();
+  messages.forEach(message => {
+    const participants = [getId(message.from), getId(message.to)].sort();
+    const daycareId = getId(message.daycare) || 'no-daycare';
+    const key = `${daycareId}:${participants.join(':')}`;
+    if (!groups.has(key)) {
+      groups.set(key, { key, daycare: message.daycare, messages: [] });
+    }
+    groups.get(key).messages.push(message);
+  });
+
+  return Array.from(groups.values())
+    .map(conversation => ({
+      ...conversation,
+      messages: conversation.messages.sort(
+        (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+      )
+    }))
+    .sort((a, b) => {
+      const aLatest = a.messages[a.messages.length - 1];
+      const bLatest = b.messages[b.messages.length - 1];
+      return new Date(bLatest.createdAt) - new Date(aLatest.createdAt);
+    });
+}
+
 export default function Messages() {
   const { user, token } = useAuth();
   const navigate        = useNavigate();
   const location        = useLocation();
-  const [messages, setMessages]       = useState([]);
+  const [messages, setMessages] = useState([]);
   const [savedDaycares, setSavedDaycares] = useState([]);
-  const [loading, setLoading]         = useState(true);
-  const [newMsg, setNewMsg]           = useState({ daycareId: '', text: '' });
-  const [sending, setSending]         = useState(false);
-  const [status, setStatus]           = useState('');
+  const [ownerDaycare, setOwnerDaycare] = useState(null);
+  const [parentContacts, setParentContacts] = useState([]);
+  const [composerError, setComposerError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [newMsg, setNewMsg] = useState({ daycareId: '', to: '', text: '' });
+  const [sending, setSending] = useState(false);
+  const [status, setStatus] = useState(null);
+  const [replyText, setReplyText] = useState('');
+  const [replyStatus, setReplyStatus] = useState('');
+  const [activeConversation, setActiveConversation] = useState('');
+  const pendingReadIds = useRef(new Set());
+  const userId = user?._id || user?.id;
+  const conversations = groupMessages(messages);
+  const selectedConversation = conversations.find(c => c.key === activeConversation) || conversations[0] || null;
 
   useEffect(() => {
-    if (user) {
-      fetchMessages();
-      fetchSavedDaycares();
+    if (!user || !token) {
+      setLoading(false);
+      return;
     }
-  }, [user]);
+
+    let mounted = true;
+    async function loadMessages() {
+      try {
+        const res = await fetch(`${API_URL}/api/messages`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Unable to load messages');
+        const data = await res.json();
+        if (mounted) setMessages(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    }
+
+    async function loadComposerOptions() {
+      try {
+        if (user.role === 'owner') {
+          const daycareRes = await fetch(`${API_URL}/api/daycares/my`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (!daycareRes.ok) {
+            if (mounted) setComposerError('Could not load your daycare. Please refresh and try again.');
+            return;
+          }
+          const daycare = await daycareRes.json();
+          const contactsRes = await fetch(
+            `${API_URL}/api/messages/contacts?daycareId=${encodeURIComponent(daycare._id)}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          const contacts = await contactsRes.json();
+          if (!contactsRes.ok) {
+            if (mounted) {
+              setComposerError(contacts.error || 'Saved-parent contacts are unavailable. Please restart or update the messaging server.');
+            }
+            return;
+          }
+          if (mounted) {
+            setOwnerDaycare(daycare);
+            setParentContacts(Array.isArray(contacts) ? contacts : []);
+            setComposerError('');
+          }
+          return;
+        }
+
+        const res = await fetch(`${API_URL}/api/auth/me`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        const ids = data.savedDaycares || [];
+        const details = await Promise.all(ids.map(id =>
+          fetch(`${API_URL}/api/daycares/${getId(id)}`).then(response => response.json())
+        ));
+        if (mounted) setSavedDaycares(details.filter(daycare => daycare._id));
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    loadMessages();
+    loadComposerOptions();
+    const refreshTimer = window.setInterval(loadMessages, 15000);
+    return () => {
+      mounted = false;
+      window.clearInterval(refreshTimer);
+    };
+  }, [user, token]);
 
   // Auto fill from URL params (when coming from daycare profile)
   useEffect(() => {
     const params    = new URLSearchParams(location.search);
     const daycareId = params.get('daycareId');
     const daycareName = params.get('daycareName');
-    if (daycareId) {
+    if (daycareId && user?.role !== 'owner') {
       setNewMsg(prev => ({
         ...prev,
         daycareId,
         text: daycareName ? `Hi, I am interested in ${daycareName}. ` : ''
       }));
     }
-  }, [location]);
+  }, [location, user]);
 
-  async function fetchMessages() {
-    try {
-      const res  = await fetch(`${API_URL}/api/messages`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+  useEffect(() => {
+    if (!selectedConversation || !userId || !token) return;
+    selectedConversation.messages
+      .filter(message => getId(message.to) === userId && !message.read)
+      .forEach(async message => {
+        if (pendingReadIds.current.has(message._id)) return;
+        pendingReadIds.current.add(message._id);
+        try {
+          const res = await fetch(`${API_URL}/api/messages/${message._id}/read`, {
+            method: 'PATCH',
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (res.ok) {
+            setMessages(previous => previous.map(item =>
+              item._id === message._id ? { ...item, read: true } : item
+            ));
+          }
+        } catch (err) {
+          console.error(err);
+        } finally {
+          pendingReadIds.current.delete(message._id);
+        }
       });
-      const data = await res.json();
-      setMessages(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function fetchSavedDaycares() {
-    try {
-      const res  = await fetch(`${API_URL}/api/auth/me`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (data.savedDaycares?.length > 0) {
-        const details = await Promise.all(
-          data.savedDaycares.map(id =>
-            fetch(`${API_URL}/api/daycares/${id}`).then(r => r.json())
-          )
-        );
-        setSavedDaycares(details.filter(d => d._id));
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  }
+  }, [selectedConversation, userId, token]);
 
   async function sendMessage() {
-    if (!newMsg.daycareId || !newMsg.text) {
-      setStatus('error');
-      return;
-    }
+    const isOwner = user.role === 'owner';
+    const daycareId = isOwner ? ownerDaycare?._id : newMsg.daycareId;
+    const recipientId = isOwner
+      ? newMsg.to
+      : savedDaycares.find(daycare => daycare._id === newMsg.daycareId)?.owner;
 
-    // Get the owner ID from the selected daycare
-    const daycare = savedDaycares.find(d => d._id === newMsg.daycareId);
-    if (!daycare) {
-      setStatus('error');
+    if (!daycareId || !recipientId || !newMsg.text.trim()) {
+      setStatus({
+        type: 'error',
+        text: isOwner
+          ? 'Select a parent and write a message.'
+          : 'Select a daycare and write a message.'
+      });
       return;
     }
 
     setSending(true);
-    setStatus('');
+    setStatus(null);
     try {
       const res = await fetch(`${API_URL}/api/messages`, {
         method:  'POST',
@@ -92,21 +196,59 @@ export default function Messages() {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          to:       daycare.owner,
-          daycareId: newMsg.daycareId,
+          to: recipientId,
+          daycareId,
           text:     newMsg.text
         })
       });
       const data = await res.json();
       if (!res.ok) {
-        setStatus('error');
+        setStatus({ type: 'error', text: data.error || 'Message could not be sent.' });
       } else {
         setMessages(prev => [data, ...prev]);
-        setNewMsg({ daycareId: '', text: '' });
-        setStatus('success');
+        setNewMsg({ daycareId: '', to: '', text: '' });
+        setStatus({ type: 'success', text: 'Message sent to the daycare owner.' });
       }
     } catch (err) {
-      setStatus('error');
+      setStatus({ type: 'error', text: 'Message could not be sent. Please try again.' });
+    } finally {
+      setSending(false);
+    }
+  }
+
+  async function sendReply() {
+    if (!selectedConversation || !replyText.trim()) {
+      setReplyStatus('Write a reply before sending.');
+      return;
+    }
+
+    const lastMessage = selectedConversation.messages[selectedConversation.messages.length - 1];
+    const isLastMessageMine = getId(lastMessage.from) === userId;
+    setSending(true);
+    setReplyStatus('');
+    try {
+      const res = await fetch(`${API_URL}/api/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          replyTo: lastMessage._id,
+          to: isLastMessageMine ? getId(lastMessage.to) : getId(lastMessage.from),
+          daycareId: getId(lastMessage.daycare),
+          text: replyText
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setReplyStatus(data.error || 'Reply could not be sent.');
+      } else {
+        setMessages(previous => [data, ...previous]);
+        setReplyText('');
+      }
+    } catch (err) {
+      setReplyStatus('Reply could not be sent. Please try again.');
     } finally {
       setSending(false);
     }
@@ -119,6 +261,11 @@ export default function Messages() {
     if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
     return `${Math.floor(seconds / 86400)}d ago`;
   }
+
+  const latestMessage = selectedConversation?.messages[selectedConversation.messages.length - 1];
+  const threadContact = latestMessage
+    ? (getId(latestMessage.from) === userId ? latestMessage.to : latestMessage.from)
+    : null;
 
   if (!user) {
     return (
@@ -144,8 +291,33 @@ export default function Messages() {
         <h2 style={styles.cardTitle}>New message</h2>
 
         <div style={styles.field}>
-          <label style={styles.label}>Select a daycare</label>
-          {savedDaycares.length === 0 ? (
+          <label style={styles.label}>
+            {user.role === 'owner' ? 'Select a parent who has saved your daycare' : 'Select a daycare'}
+          </label>
+          {user.role === 'owner' ? composerError ? (
+            <div style={styles.errorMsg}>{composerError}</div>
+          ) : (
+            parentContacts.length === 0 ? (
+              <div style={styles.noSaved}>
+                <p style={{ fontSize: '13px', color: '#6B7280', marginBottom: '10px' }}>
+                  {ownerDaycare
+                    ? 'No parents have saved your daycare yet.'
+                    : 'Register your daycare before messaging parents.'}
+                </p>
+              </div>
+            ) : (
+              <select
+                value={newMsg.to}
+                onChange={event => setNewMsg({ ...newMsg, to: event.target.value })}
+                style={styles.input}
+              >
+                <option value="">Choose a parent...</option>
+                {parentContacts.map(parent => (
+                  <option key={parent._id} value={parent._id}>{parent.name}</option>
+                ))}
+              </select>
+            )
+          ) : savedDaycares.length === 0 ? (
             <div style={styles.noSaved}>
               <p style={{ fontSize: '13px', color: '#6B7280', marginBottom: '10px' }}>
                 You haven't saved any daycares yet. Save daycares from search results to message their owners.
@@ -173,6 +345,7 @@ export default function Messages() {
         <div style={styles.field}>
           <label style={styles.label}>Message</label>
           <textarea
+            maxLength={2000}
             placeholder="Write your message to the daycare owner..."
             value={newMsg.text}
             onChange={e => setNewMsg({ ...newMsg, text: e.target.value })}
@@ -180,67 +353,126 @@ export default function Messages() {
           />
         </div>
 
-        {status === 'success' && (
-          <div style={styles.successMsg}>✅ Message sent to the daycare owner!</div>
+        {user.role === 'owner' && ownerDaycare && (
+          <p style={styles.composerContext}>Sending as {ownerDaycare.name}</p>
         )}
-        {status === 'error' && (
-          <div style={styles.errorMsg}>Please select a daycare and write a message.</div>
+
+        {status && (
+          <div style={status.type === 'success' ? styles.successMsg : styles.errorMsg}>
+            {status.text}
+          </div>
         )}
 
         <button
           onClick={sendMessage}
-          disabled={sending || savedDaycares.length === 0}
+          disabled={sending || (user.role === 'owner'
+            ? !ownerDaycare || parentContacts.length === 0
+            : savedDaycares.length === 0)}
           style={{
             ...styles.btnGreen,
-            opacity: savedDaycares.length === 0 ? 0.5 : 1
+            opacity: (user.role === 'owner'
+              ? !ownerDaycare || parentContacts.length === 0
+              : savedDaycares.length === 0) ? 0.5 : 1
           }}
         >
           {sending ? 'Sending...' : 'Send message'}
         </button>
       </div>
 
-      {/* Message list */}
+      {/* Conversations */}
       <div style={styles.card}>
-        <h2 style={styles.cardTitle}>Inbox ({messages.length})</h2>
+        <h2 style={styles.cardTitle}>Conversations ({conversations.length})</h2>
         {loading && <p style={{ fontSize: '14px', color: '#6B7280' }}>Loading...</p>}
-        {!loading && messages.length === 0 && (
+        {!loading && conversations.length === 0 && (
           <p style={{ fontSize: '14px', color: '#6B7280' }}>No messages yet.</p>
         )}
-        {messages.map(msg => {
-          const isMine    = msg.from?._id === user.id || msg.from?.name === user.name;
-          const otherUser = isMine ? msg.to : msg.from;
-          const initials  = otherUser?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || '?';
+        {conversations.map(conversation => {
+          const lastMessage = conversation.messages[conversation.messages.length - 1];
+          const isMine = getId(lastMessage.from) === userId;
+          const otherUser = isMine ? lastMessage.to : lastMessage.from;
+          const unreadCount = conversation.messages.filter(message =>
+            getId(message.to) === userId && !message.read
+          ).length;
           return (
-            <div key={msg._id} style={{
-              ...styles.msgRow,
-              background: !msg.read && !isMine ? '#F0FBF7' : '#fff',
-            }}>
-              <div style={{
-                ...styles.avatar,
-                background: isMine ? '#EEEDFE' : '#E1F5EE',
-                color:      isMine ? '#534AB7' : '#085041',
-              }}>
-                {initials}
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={styles.msgHeader}>
-                  <span style={styles.msgName}>
-                    {isMine ? `To: ${otherUser?.name}` : `From: ${otherUser?.name}`}
-                  </span>
-                  {msg.daycare && (
-                    <span style={styles.daycareBadge}>re: {msg.daycare?.name}</span>
-                  )}
-                  <span style={styles.msgTime}>{timeAgo(msg.createdAt)}</span>
-                </div>
-                <p style={styles.msgText}>{msg.text}</p>
-                {!msg.read && !isMine && (
-                  <span style={styles.newBadge}>New</span>
-                )}
-              </div>
-            </div>
+            <button
+              key={conversation.key}
+              type="button"
+              onClick={() => {
+                setActiveConversation(conversation.key);
+                setReplyStatus('');
+              }}
+              style={{
+                ...styles.conversationButton,
+                ...(selectedConversation?.key === conversation.key ? styles.selectedConversation : {})
+              }}
+            >
+              <span style={styles.conversationMain}>
+                <strong>{otherUser?.name || 'Conversation'}</strong>
+                <span style={styles.conversationPreview}>{lastMessage.text}</span>
+              </span>
+              <span style={styles.conversationMeta}>
+                <span>{conversation.daycare?.name || 'Daycare'}</span>
+                <span>{timeAgo(lastMessage.createdAt)}</span>
+                {unreadCount > 0 && <span style={styles.newBadge}>{unreadCount} new</span>}
+              </span>
+            </button>
           );
         })}
       </div>
+
+      {selectedConversation && latestMessage && (
+        <div style={styles.card}>
+          <div style={styles.threadHeading}>
+            <div>
+              <h2 style={styles.cardTitle}>{selectedConversation.daycare?.name || 'Conversation'}</h2>
+              <p style={styles.threadContact}>With {threadContact?.name || 'user'}</p>
+            </div>
+          </div>
+
+          <div style={styles.threadMessages}>
+            {selectedConversation.messages.map(message => {
+              const isMine = getId(message.from) === userId;
+              return (
+                <div key={message._id} style={{
+                  ...styles.threadMessage,
+                  alignSelf: isMine ? 'flex-end' : 'flex-start',
+                  background: isMine ? '#E1F5EE' : '#F3F4F6'
+                }}>
+                  <span style={styles.threadSender}>{isMine ? 'You' : message.from?.name}</span>
+                  <p style={styles.msgText}>{message.text}</p>
+                  <span style={styles.threadTime}>
+                    {timeAgo(message.createdAt)}{isMine && message.read ? ' · Read' : ''}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          <div style={styles.replyBox}>
+            <label style={styles.label} htmlFor="message-reply">Reply</label>
+            <textarea
+              id="message-reply"
+              maxLength={2000}
+              placeholder={`Reply to ${threadContact?.name || 'this conversation'}...`}
+              value={replyText}
+              onChange={event => setReplyText(event.target.value)}
+              style={{ ...styles.input, height: '90px', resize: 'vertical' }}
+            />
+            <div style={styles.replyFooter}>
+              <span style={styles.characterCount}>{replyText.length}/2000</span>
+              <button
+                type="button"
+                onClick={sendReply}
+                disabled={sending || !replyText.trim()}
+                style={{ ...styles.btnGreen, opacity: sending || !replyText.trim() ? 0.55 : 1 }}
+              >
+                {sending ? 'Sending...' : 'Send reply'}
+              </button>
+            </div>
+            {replyStatus && <div style={styles.errorMsg}>{replyStatus}</div>}
+          </div>
+        </div>
+      )}
 
     </div>
   );
@@ -267,5 +499,19 @@ const styles = {
   msgTime:     { fontSize: '11px', color: '#6B7280', marginLeft: 'auto' },
   msgText:     { fontSize: '13px', color: '#374151', lineHeight: '1.6' },
   newBadge:    { fontSize: '10px', background: '#E1F5EE', color: '#085041', padding: '2px 7px', borderRadius: '20px', marginTop: '4px', display: 'inline-block' },
+  conversationButton: { width: '100%', display: 'flex', gap: '12px', justifyContent: 'space-between', alignItems: 'center', padding: '12px', marginBottom: '8px', textAlign: 'left', border: '1px solid #E8E6E0', borderRadius: '8px', background: '#fff', color: '#2C2C2A', cursor: 'pointer', fontFamily: 'inherit' },
+  selectedConversation: { borderColor: '#1D9E75', background: '#F0FBF7' },
+  conversationMain: { minWidth: 0, display: 'flex', flexDirection: 'column', gap: '4px' },
+  conversationPreview: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '380px', fontSize: '12px', color: '#6B7280' },
+  conversationMeta: { display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px', flexShrink: 0, fontSize: '11px', color: '#6B7280' },
+  threadHeading: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E8E6E0', marginBottom: '16px' },
+  threadContact: { marginTop: '-10px', marginBottom: '14px', fontSize: '12px', color: '#6B7280' },
+  threadMessages: { display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '420px', overflowY: 'auto', padding: '4px 0 16px' },
+  threadMessage: { width: 'fit-content', maxWidth: '85%', padding: '10px 12px', borderRadius: '8px' },
+  threadSender: { display: 'block', marginBottom: '4px', fontSize: '11px', fontWeight: '600', color: '#374151' },
+  threadTime: { display: 'block', marginTop: '6px', fontSize: '10px', color: '#6B7280', textAlign: 'right' },
+  replyBox: { borderTop: '1px solid #E8E6E0', paddingTop: '14px' },
+  replyFooter: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' },
+  characterCount: { fontSize: '11px', color: '#6B7280' },
   emptyCard:   { background: '#fff', borderRadius: '12px', border: '1px solid #E8E6E0', padding: '40px', textAlign: 'center', maxWidth: '440px', margin: '40px auto' },
 };

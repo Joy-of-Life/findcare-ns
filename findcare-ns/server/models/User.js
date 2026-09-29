@@ -33,6 +33,10 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref:  'Daycare'
   }],
+  savedDaycareHistory: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref:  'Daycare'
+  }],
   alertPrefs: {
     email:     { type: Boolean, default: true },
     ageGroups: { type: [String], default: [] }

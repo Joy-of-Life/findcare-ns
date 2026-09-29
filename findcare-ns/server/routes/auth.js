@@ -4,6 +4,7 @@ const bcrypt    = require('bcryptjs');
 const jwt       = require('jsonwebtoken');
 const crypto    = require('crypto');
 const nodemailer = require('nodemailer');
+const mongoose  = require('mongoose');
 const User      = require('../models/User');
 const auth      = require('../middleware/auth');
 
@@ -181,9 +182,18 @@ router.patch('/save-daycare', auth, async (req, res) => {
     }
 
     const { daycareId } = req.body;
+    if (!daycareId || !mongoose.isValidObjectId(daycareId)) {
+      return res.status(400).json({ error: 'A valid daycare is required' });
+    }
     const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
 
-    const isSaved = user.savedDaycares.includes(daycareId);
+    const isSaved = user.savedDaycares.some(id => id.toString() === daycareId);
+    if (!user.savedDaycareHistory.some(id => id.toString() === daycareId)) {
+      user.savedDaycareHistory.push(daycareId);
+    }
 
     if (isSaved) {
       user.savedDaycares = user.savedDaycares.filter(
