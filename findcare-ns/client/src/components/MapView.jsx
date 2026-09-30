@@ -95,7 +95,7 @@ export default function MapView({ daycares, ageGroup }) {
                     {daycare.name}
                   </h3>
                   <p style={{ fontSize: '12px', color: '#6B7280', marginBottom: '8px' }}>
-                    📍 {daycare.address}, {daycare.city}
+                    📍 {daycare.hideAddress ? daycare.city : `${daycare.address}, ${daycare.city}`}
                   </p>
                   <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '8px' }}>
                     {daycare.ageRange?.map(age => (

@@ -2,6 +2,7 @@ const express  = require('express');
 const router   = express.Router();
 const Waitlist = require('../models/Waitlist');
 const auth     = require('../middleware/auth');
+const toPublicDaycare = require('../daycarePrivacy');
 
 // GET /api/waitlist/my/all — get all waitlist entries for current parent
 // IMPORTANT: this must be BEFORE /:daycareId or Express will treat 'my' as a daycareId
@@ -11,9 +12,13 @@ router.get('/my/all', auth, async (req, res) => {
       parent: req.user.id,
       status: 'active'
     })
-    .populate('daycare', 'name city address monthlyPrice')
+    .populate('daycare', 'name city address hideAddress monthlyPrice')
     .sort({ createdAt: 1 });
-    res.json(entries);
+    res.json(entries.map(entry => {
+      const result = entry.toObject();
+      result.daycare = toPublicDaycare(result.daycare);
+      return result;
+    }));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -76,8 +81,10 @@ router.post('/:daycareId', auth, async (req, res) => {
     });
 
     await entry.save();
-    const populated = await entry.populate('daycare', 'name city address');
-    res.status(201).json(populated);
+    const populated = await entry.populate('daycare', 'name city address hideAddress');
+    const result = populated.toObject();
+    result.daycare = toPublicDaycare(result.daycare);
+    res.status(201).json(result);
 
   } catch (err) {
     if (err.code === 11000) {

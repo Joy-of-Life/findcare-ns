@@ -93,7 +93,7 @@ router.post('/notify', async (req, res) => {
               </p>
               <div style="background:#F8F7F4;border-radius:8px;padding:16px;margin-bottom:20px">
                 <h3 style="color:#2C2C2A;margin:0 0 8px">${daycare.name}</h3>
-                <p style="color:#6B7280;margin:0 0 4px">📍 ${daycare.address}, ${daycare.city}</p>
+                <p style="color:#6B7280;margin:0 0 4px">📍 ${daycare.hideAddress ? daycare.city : `${daycare.address}, ${daycare.city}`}</p>
                 <p style="color:#6B7280;margin:0 0 4px">📞 ${daycare.phone}</p>
                 <p style="color:#6B7280;margin:0 0 4px">🕐 ${daycare.openHours}</p>
                 <p style="color:#6B7280;margin:0">💰 $${daycare.monthlyPrice}/month</p>

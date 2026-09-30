@@ -110,7 +110,7 @@ export default function DaycareProfile() {
       <div style={styles.header}>
         <div>
           <h1 style={styles.title}>{daycare.name}</h1>
-          <p style={styles.address}>📍 {daycare.address}, {daycare.city}</p>
+          <p style={styles.address}>📍 {daycare.hideAddress ? daycare.city : `${daycare.address}, ${daycare.city}`}</p>
           <div style={styles.tags}>
             {daycare.ageRange?.map(age  => <span key={age}  style={styles.tagOrange}>{age}</span>)}
             {daycare.language?.map(lang => <span key={lang} style={styles.tagPurple}>{lang}</span>)}

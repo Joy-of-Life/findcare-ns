@@ -21,6 +21,10 @@ const daycareSchema = new mongoose.Schema({
     type:     String,
     required: true
   },
+  hideAddress: {
+    type: Boolean,
+    default: false
+  },
   city: {
     type:     String,
     required: true

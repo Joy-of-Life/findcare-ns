@@ -2,9 +2,14 @@ const express  = require('express');
 const router   = express.Router();
 const Daycare  = require('../models/Daycare');
 const auth     = require('../middleware/auth');
+const toPublicDaycare = require('../daycarePrivacy');
 
 const SEARCH_FIELDS = ['name', 'address', 'city', 'description', 'language', 'ageRange', 'openHours'];
 const SEARCH_STOP_WORDS = new Set(['a', 'an', 'and', 'care', 'childcare', 'daycare', 'daycares', 'find', 'for', 'in', 'looking', 'me', 'near', 'of', 'please', 'the', 'to', 'want', 'with']);
+const OWNER_EDITABLE_FIELDS = [
+  'name', 'address', 'city', 'phone', 'monthlyPrice', 'openHours', 'description',
+  'language', 'ageRange', 'coordinates', 'availability', 'hideAddress'
+];
 
 function escapeRegex(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -89,7 +94,7 @@ router.get('/', async (req, res) => {
           : ['infant', 'toddler', 'preschool'].some(group => (d.availability?.[group] || 0) > 0));
       }
 
-      return res.json(result.sort((a, b) => b.rating - a.rating));
+      return res.json(result.sort((a, b) => b.rating - a.rating).map(toPublicDaycare));
     }
 
     if (city)     query.city         = { $regex: escapeRegex(city), $options: 'i' };
@@ -113,7 +118,7 @@ router.get('/', async (req, res) => {
     }
 
     const daycares = await Daycare.find(query).sort({ rating: -1 });
-    res.json(daycares);
+    res.json(daycares.map(toPublicDaycare));
 
   } catch (err) {
     console.error(err);
@@ -137,7 +142,7 @@ router.get('/:id', async (req, res) => {
   try {
     const daycare = await Daycare.findById(req.params.id);
     if (!daycare) return res.status(404).json({ error: 'Daycare not found' });
-    res.json(daycare);
+    res.json(toPublicDaycare(daycare));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -165,12 +170,33 @@ router.patch('/:id', auth, async (req, res) => {
     if (daycare.owner.toString() !== req.user.id) {
       return res.status(403).json({ error: 'Not authorized' });
     }
-    const updated = await Daycare.findByIdAndUpdate(
-      req.params.id, req.body, { new: true }
+    const updates = Object.fromEntries(
+      Object.entries(req.body).filter(([field]) => OWNER_EDITABLE_FIELDS.includes(field))
     );
+    if (!Object.keys(updates).length) {
+      return res.status(400).json({ error: 'No editable daycare fields provided' });
+    }
+    const updated = await Daycare.findByIdAndUpdate(
+      req.params.id, { $set: updates }, { new: true, runValidators: true }
+    );
+    const availability = updates.availability;
+    const spotsJustOpened = availability && ['infant', 'toddler', 'preschool'].some(ageGroup =>
+      (daycare.availability?.[ageGroup] || 0) === 0 && (availability[ageGroup] || 0) > 0
+    );
+    if (spotsJustOpened) {
+      try {
+        await fetch(`http://localhost:${process.env.PORT || 5000}/api/alerts/notify`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ daycareId: req.params.id })
+        });
+      } catch (alertErr) {
+        console.warn('Availability alert failed:', alertErr.message);
+      }
+    }
     res.json(updated);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(err.name === 'ValidationError' ? 400 : 500).json({ error: err.message });
   }
 });
 

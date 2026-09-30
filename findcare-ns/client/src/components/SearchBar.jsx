@@ -86,6 +86,9 @@ export default function SearchBar({ onSearch }) {
             <option value="">Language</option>
             <option value="English">English</option>
             <option value="French">French</option>
+            <option value="Arabic">Arabic</option>
+            <option value="Mandarin">Mandarin</option>
+            <option value="Spanish">Spanish</option>
           </select>
 
           <select aria-label="Maximum monthly price" value={maxPrice} onChange={e => setMaxPrice(e.target.value)} style={styles.select}>

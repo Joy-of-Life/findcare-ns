@@ -177,7 +177,7 @@ export default function ParentDashboard() {
                 >
                   {daycare.name}
                 </div>
-                <div style={styles.daycareAddr}>📍 {daycare.address}, {daycare.city}</div>
+                <div style={styles.daycareAddr}>📍 {daycare.hideAddress ? daycare.city : `${daycare.address}, ${daycare.city}`}</div>
                 <div style={styles.tags}>
                   {daycare.ageRange?.map(age => (
                     <span key={age} style={styles.tagOrange}>{age}</span>
