@@ -8,20 +8,36 @@ export default function Compare() {
   const [results, setResults]   = useState([]);
   const [selected, setSelected] = useState([]);
   const [loading, setLoading]   = useState(false);
+  const [searchError, setSearchError] = useState('');
+  const [hasSearched, setHasSearched] = useState(false);
   const navigate                = useNavigate();
 
   async function searchDaycares() {
-    if (!search.trim()) return;
+    if (!search.trim()) {
+      setSearchError('Enter a city or daycare name before searching.');
+      return;
+    }
+    setSearchError('');
+    setHasSearched(false);
+    setResults([]);
     setLoading(true);
     try {
       const res  = await fetch(`${API_URL}/api/daycares?city=${search}`);
       const data = await res.json();
       setResults(Array.isArray(data) ? data : []);
+      setHasSearched(true);
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
+  }
+
+  function clearSearch() {
+    setSearch('');
+    setResults([]);
+    setHasSearched(false);
+    setSearchError('');
   }
 
   function toggleSelect(daycare) {
@@ -55,16 +71,36 @@ export default function Compare() {
 
       {/* Search */}
       <div style={styles.searchRow}>
-        <input
-          type="text"
-          placeholder="🔍 Search by city e.g. Halifax..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && searchDaycares()}
-          style={styles.input}
-        />
+        <div style={styles.inputWrap}>
+          <input
+            type="text"
+            placeholder="🔍 Search by city e.g. Halifax..."
+            value={search}
+            onChange={e => {
+              setSearch(e.target.value);
+              setHasSearched(false);
+              if (e.target.value.trim()) setSearchError('');
+            }}
+            onKeyDown={e => e.key === 'Enter' && searchDaycares()}
+            aria-invalid={Boolean(searchError)}
+            aria-describedby={searchError ? 'compare-search-error' : undefined}
+            style={styles.input}
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch('')}
+              style={styles.clearBtn}
+              aria-label="Clear daycare search"
+              title="Clear daycare search"
+            >
+              ×
+            </button>
+          )}
+        </div>
         <button onClick={searchDaycares} style={styles.btnOrange}>Search</button>
       </div>
+      {searchError && <p id="compare-search-error" role="alert" style={styles.searchError}>{searchError}</p>}
 
       {/* Selected badges */}
       {selected.length > 0 && (
@@ -84,8 +120,15 @@ export default function Compare() {
 
       {/* Search results */}
       {results.length > 0 && (
-        <div style={styles.resultsList}>
-          {results.map(daycare => {
+        <>
+          <div style={styles.resultsHeader}>
+            <span style={styles.resultsCount}>{results.length} daycare{results.length === 1 ? '' : 's'} found</span>
+            <button type="button" onClick={clearSearch} style={styles.clearSearchBtn}>
+              <span aria-hidden="true">×</span> Clear search
+            </button>
+          </div>
+          <div style={styles.resultsList}>
+            {results.map(daycare => {
             const isSelected = selected.find(d => d._id === daycare._id);
             return (
               <div
@@ -112,8 +155,12 @@ export default function Compare() {
                 </div>
               </div>
             );
-          })}
-        </div>
+            })}
+          </div>
+        </>
+      )}
+      {hasSearched && !loading && results.length === 0 && (
+        <p role="status" style={styles.noMatches}>No matching daycares found. Try another city or daycare name.</p>
       )}
 
       {/* Comparison table */}
@@ -239,12 +286,19 @@ const styles = {
   title:         { fontSize: '24px', fontWeight: '700', color: '#2C2C2A', marginBottom: '4px' },
   sub:           { fontSize: '14px', color: '#9E9E9E', marginBottom: '20px' },
   searchRow:     { display: 'flex', gap: '8px', marginBottom: '16px' },
-  input:         { flex: 1, padding: '10px 12px', borderRadius: '10px', border: '1.5px solid #FFCC80', fontSize: '14px', color: '#2C2C2A', background: '#fff', outline: 'none' },
+  inputWrap:     { display: 'flex', alignItems: 'center', flex: 1, minWidth: 0, padding: '0 8px 0 12px', borderRadius: '10px', border: '1.5px solid #FFCC80', background: '#fff' },
+  input:         { flex: 1, minWidth: 0, padding: '10px 0', border: 'none', fontSize: '14px', color: '#2C2C2A', background: 'transparent', outline: 'none' },
+  clearBtn:      { border: 'none', background: 'transparent', color: '#777', fontSize: '22px', lineHeight: 1, cursor: 'pointer', padding: '2px 4px' },
   btnOrange:     { padding: '8px 16px', borderRadius: '8px', border: 'none', background: '#FF6B35', color: '#fff', fontSize: '13px', fontWeight: '600', cursor: 'pointer' },
+  searchError:   { color: '#C62828', fontSize: '13px', margin: '-8px 0 16px' },
   selectedRow:   { display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '16px' },
   selectedLabel: { fontSize: '13px', color: '#9E9E9E' },
   selectedBadge: { fontSize: '13px', background: '#FFF3E0', color: '#E65100', padding: '4px 10px', borderRadius: '20px', display: 'flex', alignItems: 'center', border: '1px solid #FFCC80' },
   loading:       { textAlign: 'center', color: '#FF6B35', padding: '20px' },
+  noMatches:     { textAlign: 'center', color: '#6B7280', background: '#FFF3E0', border: '1px solid #FFCC80', borderRadius: '8px', padding: '18px', margin: '8px 0 24px' },
+  resultsHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', margin: '8px 0 10px' },
+  resultsCount:  { color: '#56616A', fontSize: '13px', fontWeight: 600 },
+  clearSearchBtn:{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '6px 10px', border: '1px solid #E5B192', borderRadius: '6px', color: '#9C4526', background: '#fff', fontSize: '12px', fontWeight: 600, cursor: 'pointer' },
   resultsList:   { display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '24px' },
   resultItem:    { display: 'flex', alignItems: 'center', padding: '12px 14px', borderRadius: '10px', border: '1.5px solid', cursor: 'pointer' },
   resultName:    { fontSize: '14px', fontWeight: '600', color: '#2C2C2A' },

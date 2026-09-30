@@ -25,22 +25,22 @@ export default function Navbar() {
         {/* Center Navigation */}
         {!user && (
           <div style={styles.centerNav}>
-            <a 
-              href="#discover" 
+            <Link
+              to="/?discover=1"
               style={hoveredBtn === 'discover' ? styles.navLinkHover : styles.navLink}
               onMouseEnter={() => setHoveredBtn('discover')}
               onMouseLeave={() => setHoveredBtn(null)}
             >
-              Discover Daycares
-            </a>
-            <a 
-              href="#about" 
+              Browse all daycares
+            </Link>
+            <Link
+              to="/about"
               style={hoveredBtn === 'about' ? styles.navLinkHover : styles.navLink}
               onMouseEnter={() => setHoveredBtn('about')}
               onMouseLeave={() => setHoveredBtn(null)}
             >
               About Us
-            </a>
+            </Link>
           </div>
         )}
 

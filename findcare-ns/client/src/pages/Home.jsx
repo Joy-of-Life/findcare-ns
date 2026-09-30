@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import SearchBar from '../components/SearchBar';
 import AISearchBar from '../components/AISearchBar';
@@ -15,19 +15,14 @@ export default function Home() {
   const [saved, setSaved] = useState({});
   const [showPopup, setShowPopup] = useState(false);
   const [hoveredBtn, setHoveredBtn] = useState(null);
+  const discoverHandled = useRef(false);
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user, token } = useAuth();
 
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-  // Handle #discover hash to show all daycares
-  useEffect(() => {
-    if (window.location.hash === '#discover') {
-      handleSearch({});
-    }
-  }, []);
-
-  async function handleSearch(filters) {
+  const handleSearch = useCallback(async (filters) => {
     setLoading(true);
     setSearched(true);
     setShowPopup(true);
@@ -56,7 +51,22 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [API_URL]);
+
+  // Open the full daycare list when requested from the navigation.
+  useEffect(() => {
+    if (searchParams.get('discover') !== '1') {
+      discoverHandled.current = false;
+      return;
+    }
+    if (discoverHandled.current) return;
+    discoverHandled.current = true;
+
+    handleSearch({});
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('discover');
+    setSearchParams(nextParams, { replace: true });
+  }, [searchParams, setSearchParams, handleSearch]);
 
   function handleFindNearMe() {
     if (!navigator.geolocation) {
