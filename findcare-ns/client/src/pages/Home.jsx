@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import SearchBar from '../components/SearchBar';
 import AISearchBar from '../components/AISearchBar';
@@ -19,6 +19,50 @@ export default function Home() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user, token } = useAuth();
+  const [openFaq, setOpenFaq] = useState(0);
+
+  const faqItems = [
+    {
+      question: 'How current is the daycare information?',
+      answer:
+        'We keep listings updated using official licensing data, province information, and recent public updates for local operators. We always recommend confirming current availability and details directly with the daycare before applying.',
+    },
+    {
+      question: 'Where does Findcare NS get its information?',
+      answer:
+        'Our listings are gathered from local childcare licensing records, geographic data, and public provider information so families can compare daycares in one place. We aim to keep the information clear, useful, and easy to verify.',
+    },
+    {
+      question: 'What is the Waitlist Tracker?',
+      answer:
+        'The Waitlist Tracker helps parents organize daycare applications, compare their status, and keep notes on follow-up dates. It is designed to reduce the stress of juggling multiple daycare submissions at once.',
+    },
+    {
+      question: 'How do waitlist alerts work?',
+      answer:
+        'When you save a daycare or choose to monitor a location, we can notify you when that provider updates contact details, capacity information, or related availability signals. This keeps you informed without having to check every provider manually.',
+    },
+    {
+      question: 'Is Findcare NS affiliated with any daycare providers?',
+      answer:
+        'No. We are an independent search and comparison platform designed to help families explore licensed childcare options. We are not affiliated with any specific daycare, government body, or provider network.',
+    },
+    {
+      question: 'Is Findcare NS free to use?',
+      answer:
+        'Yes. The directory and search tools are intended to be free for parents exploring childcare options in their area. We focus on helping you find the right fit without unnecessary friction.',
+    },
+    {
+      question: 'Can I suggest updates or corrections to listings?',
+      answer:
+        'Yes. If a daycare profile looks outdated, missing, or incorrect, we encourage parents to get in touch so the listing can be reviewed and updated. Accurate information helps everyone make better decisions.',
+    },
+    {
+      question: 'How do I filter daycares by distance from my location?',
+      answer:
+        'Use the location-based search or the “Find Daycare Near Me” option to search by your current area. You can combine this with filters like age range, language, price, and availability to narrow the list to the best options nearby.',
+    },
+  ];
 
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -327,6 +371,39 @@ export default function Home() {
         </div>
       </div>
 
+      <div id="faq" style={{ ...styles.faqWrap, scrollMarginTop: '90px' }}>
+        <div style={styles.sectionHeader}>
+          <p style={styles.sectionEyebrow}>Frequently Asked Questions</p>
+          <h2 style={styles.sectionTitle}>Everything parents need to know before they apply</h2>
+        </div>
+
+        <div style={styles.faqGrid}>
+          {faqItems.map((item, index) => (
+            <div
+              key={item.question}
+              style={{
+                ...styles.faqItem,
+                borderColor: openFaq === index ? '#F4D7BF' : '#F3E1D4',
+                boxShadow: openFaq === index ? '0 12px 28px rgba(31, 41, 55, 0.06)' : 'none',
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setOpenFaq(openFaq === index ? -1 : index)}
+                style={styles.faqButton}
+              >
+                <span style={styles.faqQuestion}>{item.question}</span>
+                <span style={styles.faqIcon}>{openFaq === index ? '−' : '+'}</span>
+              </button>
+
+              {openFaq === index && (
+                <p style={styles.faqAnswer}>{item.answer}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
       {(!user || user.role === 'parent') && (
         <div style={styles.callout}>
           <div>
@@ -343,6 +420,56 @@ export default function Home() {
           </button>
         </div>
       )}
+
+      <footer style={styles.siteFooter}>
+        <div style={styles.siteFooterInner}>
+          <div style={styles.footerBrand}>
+            <div style={styles.brandRow}>
+              <span style={styles.brandIcon}>🏠</span>
+              <span style={styles.brandName}>FindCare NS</span>
+            </div>
+            <p style={styles.brandText}>
+              Helping families discover licensed daycare options across Nova Scotia with search,
+              comparison tools, and alert tracking built for real-world decision-making.
+            </p>
+            <a href="mailto:hello@findcare.ns" style={styles.footerEmail}>hello@findcare.ns</a>
+          </div>
+
+          <div style={styles.footerColumn}>
+            <h4 style={styles.footerTitle}>Quick Links</h4>
+            <div style={styles.footerList}>
+              <Link to="/?discover=1" style={styles.footerLink}>Browse all daycares</Link>
+              <Link to="/compare" style={styles.footerLink}>Compare daycares</Link>
+              <Link to="/about" style={styles.footerLink}>About Us</Link>
+              <Link to="/#faq" style={styles.footerLink}>FAQ</Link>
+            </div>
+          </div>
+
+          <div style={styles.footerColumn}>
+            <h4 style={styles.footerTitle}>Legal & Help</h4>
+            <div style={styles.footerList}>
+              <Link to="/register" style={styles.footerLink}>List your daycare</Link>
+              <Link to="/login" style={styles.footerLink}>Login</Link>
+              <Link to="/register" style={styles.footerLink}>Register</Link>
+              <Link to="/about" style={styles.footerLink}>Support</Link>
+            </div>
+          </div>
+
+          <div style={styles.footerColumn}>
+            <h4 style={styles.footerTitle}>Popular Areas</h4>
+            <div style={styles.footerList}>
+              <Link to="/?discover=1" style={styles.footerLink}>Halifax</Link>
+              <Link to="/?discover=1" style={styles.footerLink}>Dartmouth</Link>
+              <Link to="/?discover=1" style={styles.footerLink}>Bedford</Link>
+              <Link to="/?discover=1" style={styles.footerLink}>Lower Sackville</Link>
+            </div>
+          </div>
+        </div>
+
+        <div style={styles.footerBottom}>
+          © 2026 FindCare NS. All rights reserved.
+        </div>
+      </footer>
 
       {showPopup && (
         <>
@@ -899,6 +1026,63 @@ const styles = {
     height: '4px',
     background: 'linear-gradient(90deg, #FFB199 0%, #FF6B35 100%)',
   },
+  faqWrap: {
+    maxWidth: '1180px',
+    margin: '0 auto',
+    padding: '52px 24px 10px',
+  },
+  faqGrid: {
+    maxWidth: '980px',
+    margin: '0 auto',
+    display: 'grid',
+    gap: '12px',
+  },
+  faqItem: {
+    background: '#fff',
+    borderRadius: '16px',
+    border: '1px solid #F3E1D4',
+    overflow: 'hidden',
+    transition: 'all 0.2s ease',
+  },
+  faqButton: {
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '12px',
+    padding: '20px 24px',
+    background: 'transparent',
+    border: 'none',
+    textAlign: 'left',
+    cursor: 'pointer',
+    color: '#1D2A39',
+    fontWeight: 700,
+    fontSize: '1.02rem',
+  },
+  faqQuestion: {
+    flex: 1,
+    lineHeight: 1.5,
+  },
+  faqIcon: {
+    width: '28px',
+    height: '28px',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: '50%',
+    background: '#FFF1EA',
+    color: '#F06A38',
+    fontSize: '1.4rem',
+    fontWeight: 700,
+    flexShrink: 0,
+  },
+  faqAnswer: {
+    margin: 0,
+    padding: '0 24px 22px',
+    color: '#4B5563',
+    fontSize: '0.97rem',
+    lineHeight: 1.8,
+  },
   callout: {
     maxWidth: '1180px',
     margin: '44px auto 88px',
@@ -928,6 +1112,83 @@ const styles = {
     maxWidth: '760px',
     fontFamily: 'Recoleta, serif',
     fontWeight: 700,
+  },
+  siteFooter: {
+    background: '#1D2A39',
+    color: '#E5E7EB',
+    marginTop: '48px',
+    borderTop: '1px solid rgba(255,255,255,0.08)',
+  },
+  siteFooterInner: {
+    maxWidth: '1180px',
+    margin: '0 auto',
+    padding: '52px 24px 22px',
+    display: 'grid',
+    gridTemplateColumns: '1.6fr 1fr 1fr 1fr',
+    gap: '28px',
+  },
+  footerBrand: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px',
+  },
+  brandRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+  },
+  brandIcon: {
+    fontSize: '26px',
+  },
+  brandName: {
+    fontSize: '24px',
+    fontWeight: 800,
+    color: '#fff',
+    letterSpacing: '-0.04em',
+  },
+  brandText: {
+    margin: 0,
+    color: '#D1D5DB',
+    lineHeight: 1.8,
+    fontSize: '0.96rem',
+    maxWidth: '420px',
+  },
+  footerEmail: {
+    color: '#FFB199',
+    textDecoration: 'none',
+    fontWeight: 600,
+  },
+  footerColumn: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+  },
+  footerTitle: {
+    margin: 0,
+    fontSize: '0.82rem',
+    fontWeight: 800,
+    textTransform: 'uppercase',
+    letterSpacing: '0.12em',
+    color: '#FFB199',
+  },
+  footerList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
+  },
+  footerLink: {
+    color: '#E5E7EB',
+    textDecoration: 'none',
+    fontSize: '0.96rem',
+    transition: 'color 0.2s ease',
+  },
+  footerBottom: {
+    maxWidth: '1180px',
+    margin: '0 auto',
+    padding: '0 24px 26px',
+    color: '#C7CED8',
+    fontSize: '0.9rem',
+    borderTop: '1px solid rgba(255,255,255,0.08)',
   },
   backdrop: {
     position: 'fixed',

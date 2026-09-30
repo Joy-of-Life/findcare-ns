@@ -12,6 +12,30 @@ export default function Navbar() {
     navigate('/');
   }
 
+  function handleFaqClick(event) {
+    event.preventDefault();
+    const target = document.getElementById('faq');
+
+    if (window.location.pathname !== '/') {
+      navigate('/');
+      setTimeout(() => {
+        const faqElement = document.getElementById('faq');
+        if (faqElement) {
+          const navOffset = 90;
+          const top = faqElement.getBoundingClientRect().top + window.scrollY - navOffset;
+          window.scrollTo({ top, behavior: 'smooth' });
+        }
+      }, 100);
+      return;
+    }
+
+    if (target) {
+      const navOffset = 90;
+      const top = target.getBoundingClientRect().top + window.scrollY - navOffset;
+      window.scrollTo({ top, behavior: 'smooth' });
+    }
+  }
+
   return (
     <nav style={styles.nav}>
       <div style={styles.container}>
@@ -40,6 +64,15 @@ export default function Navbar() {
               onMouseLeave={() => setHoveredBtn(null)}
             >
               About Us
+            </Link>
+            <Link
+              to="/#faq"
+              onClick={handleFaqClick}
+              style={hoveredBtn === 'faq' ? styles.navLinkHover : styles.navLink}
+              onMouseEnter={() => setHoveredBtn('faq')}
+              onMouseLeave={() => setHoveredBtn(null)}
+            >
+              FAQ
             </Link>
           </div>
         )}
