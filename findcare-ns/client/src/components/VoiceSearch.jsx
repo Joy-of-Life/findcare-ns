@@ -62,7 +62,18 @@ export default function VoiceSearch({ onSearch }) {
         </p>
       </div>
       {transcript && (
-        <div style={styles.transcript}>"{transcript}"</div>
+        <div style={styles.transcriptRow}>
+          <div style={styles.transcript}>"{transcript}"</div>
+          <button
+            type="button"
+            onClick={() => setTranscript('')}
+            style={styles.clearBtn}
+            aria-label="Clear voice search transcript"
+            title="Clear voice search transcript"
+          >
+            ×
+          </button>
+        </div>
       )}
       {error && <p style={styles.error}>{error}</p>}
       <p style={styles.exampleLabel}>Try saying:</p>
@@ -91,7 +102,9 @@ const styles = {
   center:      { display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '8px' },
   micBtn:      { width: '44px', height: '44px', borderRadius: '50%', border: 'none', fontSize: '18px', color: '#fff', marginBottom: '6px', cursor: 'pointer' },
   hint:        { fontSize: '11px', color: '#E65100' },
+  transcriptRow:{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' },
   transcript:  { padding: '6px 10px', background: '#fff', borderRadius: '8px', border: '1px solid #FFCC80', fontSize: '12px', color: '#E65100', marginBottom: '6px' },
+  clearBtn:    { border: 'none', background: 'transparent', color: '#E65100', fontSize: '20px', lineHeight: 1, cursor: 'pointer', padding: '2px 5px' },
   error:       { fontSize: '11px', color: '#C62828', marginBottom: '6px' },
   exampleLabel:{ fontSize: '11px', color: '#E65100', marginBottom: '6px' },
   chips:       { display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'center' },

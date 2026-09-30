@@ -30,6 +30,17 @@ export default function SearchBar({ onSearch }) {
           onKeyDown={handleKeyDown}
           style={styles.input}
         />
+        {query && (
+          <button
+            type="button"
+            onClick={() => setQuery('')}
+            style={styles.clearBtn}
+            aria-label="Clear search text"
+            title="Clear search text"
+          >
+            ×
+          </button>
+        )}
       </div>
 
       {/* Filters row */}
@@ -90,6 +101,7 @@ const styles = {
   inputWrap:  { display: 'flex', alignItems: 'center', border: '1.5px solid #FFCC80', borderRadius: '10px', padding: '10px 14px', marginBottom: '12px', background: '#FFFDF9' },
   icon:       { marginRight: '8px', fontSize: '16px' },
   input:      { flex: 1, border: 'none', background: 'transparent', fontSize: '15px', color: '#2C2C2A', outline: 'none' },
+  clearBtn:   { border: 'none', background: 'transparent', color: '#777', fontSize: '22px', lineHeight: 1, cursor: 'pointer', padding: '2px 4px' },
   filtersRow: { display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '14px', alignItems: 'center' },
   select:     { padding: '8px 12px', borderRadius: '8px', border: '1.5px solid #FFCC80', background: '#FFFDF9', fontSize: '13px', color: '#555', cursor: 'pointer' },
   checkLabel: { display: 'flex', alignItems: 'center', fontSize: '13px', color: '#E65100', cursor: 'pointer', fontWeight: '500' },

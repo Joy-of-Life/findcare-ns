@@ -54,6 +54,21 @@ export default function AISearchBar({ onSearch }) {
           onKeyDown={handleKeyDown}
           style={styles.input}
         />
+        {query && (
+          <button
+            type="button"
+            onClick={() => {
+              setQuery('');
+              setParsed(null);
+              setError('');
+            }}
+            style={styles.clearBtn}
+            aria-label="Clear AI search text"
+            title="Clear AI search text"
+          >
+            ×
+          </button>
+        )}
         <button onClick={handleAISearch} disabled={loading} style={styles.btn}>
           {loading ? '...' : '✨'}
         </button>
@@ -91,6 +106,7 @@ const styles = {
   badge:       { fontSize: '10px', padding: '2px 7px', borderRadius: '20px', background: '#7C4DFF', color: '#fff', fontWeight: '500' },
   inputRow:    { display: 'flex', gap: '6px', marginBottom: '8px' },
   input:       { flex: 1, padding: '8px 10px', borderRadius: '8px', border: '1.5px solid #B39DDB', background: '#fff', fontSize: '13px', color: '#2C2C2A', outline: 'none' },
+  clearBtn:    { border: 'none', borderRadius: '8px', background: '#fff', color: '#666', fontSize: '22px', lineHeight: 1, cursor: 'pointer', padding: '0 7px' },
   btn:         { padding: '8px 12px', borderRadius: '8px', border: 'none', background: '#7C4DFF', color: '#fff', fontSize: '14px', cursor: 'pointer' },
   exampleLabel:{ fontSize: '11px', color: '#5C35CC', marginBottom: '6px' },
   chips:       { display: 'flex', gap: '5px', flexWrap: 'wrap' },
