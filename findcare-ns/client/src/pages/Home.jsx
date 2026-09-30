@@ -284,20 +284,22 @@ export default function Home() {
         </div>
       </div>
 
-      <div style={styles.callout}>
-        <div>
-          <p style={styles.calloutEyebrow}>Never Miss a New Daycare Opening</p>
-          <h3 style={styles.calloutTitle}>Get instant notifications when new openings appear in your preferred neighbourhood.</h3>
+      {(!user || user.role === 'parent') && (
+        <div style={styles.callout}>
+          <div>
+            <p style={styles.calloutEyebrow}>Alerts for saved daycares</p>
+            <h3 style={styles.calloutTitle}>Save daycares and enable email alerts to hear when a spot opens.</h3>
+          </div>
+          <button
+            onClick={() => navigate(user ? '/dashboard' : '/register')}
+            style={hoveredBtn === 'primaryCallout' ? styles.primaryBtnHover : styles.primaryBtn}
+            onMouseEnter={() => setHoveredBtn('primaryCallout')}
+            onMouseLeave={() => setHoveredBtn(null)}
+          >
+            {user ? 'Manage alert settings' : 'Create a parent account'}
+          </button>
         </div>
-        <button 
-          onClick={() => setShowPopup(true)} 
-          style={hoveredBtn === 'primaryCallout' ? styles.primaryBtnHover : styles.primaryBtn}
-          onMouseEnter={() => setHoveredBtn('primaryCallout')}
-          onMouseLeave={() => setHoveredBtn(null)}
-        >
-          Sign Up to Get Alerts
-        </button>
-      </div>
+      )}
 
       {showPopup && (
         <>
