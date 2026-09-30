@@ -22,6 +22,37 @@ export default function Home() {
 
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
+  useEffect(() => {
+    if (!user || user.role !== 'parent' || !token) {
+      setSaved({});
+      return undefined;
+    }
+
+    let cancelled = false;
+    const initialSavedIds = Array.isArray(user.savedDaycares) ? user.savedDaycares : [];
+    setSaved(Object.fromEntries(initialSavedIds.map(id => [id.toString(), true])));
+
+    async function loadSavedDaycares() {
+      try {
+        const res = await fetch(`${API_URL}/api/auth/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error('Unable to load saved daycares');
+
+        const data = await res.json();
+        if (!cancelled) {
+          const savedIds = Array.isArray(data.savedDaycares) ? data.savedDaycares : [];
+          setSaved(Object.fromEntries(savedIds.map(id => [id.toString(), true])));
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    loadSavedDaycares();
+    return () => { cancelled = true; };
+  }, [user, token, API_URL]);
+
   const handleSearch = useCallback(async (filters) => {
     setLoading(true);
     setSearched(true);
@@ -94,7 +125,7 @@ export default function Home() {
       return;
     }
     try {
-      await fetch(`${API_URL}/api/auth/save-daycare`, {
+      const res = await fetch(`${API_URL}/api/auth/save-daycare`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -102,7 +133,9 @@ export default function Home() {
         },
         body: JSON.stringify({ daycareId }),
       });
-      setSaved((prev) => ({ ...prev, [daycareId]: !prev[daycareId] }));
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Unable to update saved daycare');
+      setSaved((prev) => ({ ...prev, [daycareId]: data.saved }));
     } catch (err) {
       console.error(err);
     }
