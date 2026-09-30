@@ -3,10 +3,35 @@ const router   = express.Router();
 const Daycare  = require('../models/Daycare');
 const auth     = require('../middleware/auth');
 
+const SEARCH_FIELDS = ['name', 'address', 'city', 'description', 'language', 'ageRange', 'openHours'];
+const SEARCH_STOP_WORDS = new Set(['a', 'an', 'and', 'care', 'childcare', 'daycare', 'daycares', 'find', 'for', 'in', 'looking', 'me', 'near', 'of', 'please', 'the', 'to', 'want', 'with']);
+
+function escapeRegex(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function matchesSearch(daycare, terms) {
+  const searchableText = SEARCH_FIELDS
+    .map(field => daycare[field])
+    .flat()
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+
+  return terms.every(term => searchableText.includes(term.toLowerCase()));
+}
+
 // GET /api/daycares — search with filters
 router.get('/', async (req, res) => {
   try {
-    const { city, ageRange, maxPrice, language, rating, availableOnly, lat, lng, radius } = req.query;
+    const { city, search, ageRange, maxPrice, language, rating, availableOnly, lat, lng } = req.query;
+    const searchTerms = typeof search === 'string'
+      ? search.trim().split(/\s+/)
+        .map(term => term.replace(/^[^\w]+|[^\w]+$/g, '').toLowerCase())
+        .filter(term => term && !SEARCH_STOP_WORDS.has(term))
+      : [];
+    const onlyAvailable = availableOnly === true || availableOnly === 'true' ||
+      (typeof search === 'string' && /\b(open|available)\s+spots?\b/i.test(search));
     const query = {};
 
     // If lat/lng provided, filter by distance (hardcoded to 25km)
@@ -52,25 +77,39 @@ router.get('/', async (req, res) => {
 
       // Apply other filters
       let result = nearby;
+      if (searchTerms.length) result = result.filter(d => matchesSearch(d, searchTerms));
+      if (city) result = result.filter(d => new RegExp(escapeRegex(city), 'i').test(d.city || ''));
       if (ageRange) result = result.filter(d => d.ageRange && d.ageRange.includes(ageRange));
       if (maxPrice) result = result.filter(d => d.monthlyPrice <= Number(maxPrice));
       if (language) result = result.filter(d => d.language && d.language.includes(language));
       if (rating) result = result.filter(d => d.rating >= Number(rating));
-      if (availableOnly && ageRange) {
-        result = result.filter(d => (d.availability?.[ageRange] || 0) > 0);
+      if (onlyAvailable) {
+        result = result.filter(d => ageRange
+          ? (d.availability?.[ageRange] || 0) > 0
+          : ['infant', 'toddler', 'preschool'].some(group => (d.availability?.[group] || 0) > 0));
       }
 
       return res.json(result.sort((a, b) => b.rating - a.rating));
     }
 
-    if (city)     query.city         = { $regex: city, $options: 'i' };
+    if (city)     query.city         = { $regex: escapeRegex(city), $options: 'i' };
+    if (searchTerms.length) {
+      query.$and = searchTerms.map(term => ({
+        $or: SEARCH_FIELDS.map(field => ({
+          [field]: { $regex: escapeRegex(term), $options: 'i' }
+        }))
+      }));
+    }
     if (maxPrice) query.monthlyPrice = { $lte: Number(maxPrice) };
     if (language) query.language     = { $in: [language] };
     if (rating)   query.rating       = { $gte: Number(rating) };
     if (ageRange) query.ageRange     = { $in: [ageRange] };
 
-    if (availableOnly && ageRange) {
-      query[`availability.${ageRange}`] = { $gt: 0 };
+    if (onlyAvailable) {
+      const availabilityFilter = ageRange
+        ? { [`availability.${ageRange}`]: { $gt: 0 } }
+        : { $or: ['infant', 'toddler', 'preschool'].map(group => ({ [`availability.${group}`]: { $gt: 0 } })) };
+      query.$and = [...(query.$and || []), availabilityFilter];
     }
 
     const daycares = await Daycare.find(query).sort({ rating: -1 });

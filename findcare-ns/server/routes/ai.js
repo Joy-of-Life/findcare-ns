@@ -29,11 +29,11 @@ router.post('/search', async (req, res) => {
             content: `Parse this natural language search query and extract search filters.
 Respond ONLY with a JSON object with these fields:
 - city (string — Nova Scotia city name)
-- ageGroup (string — "infant", "toddler", or "preschool")
+- ageRange (string — "infant", "toddler", or "preschool")
 - language (string — "English" or "French")
 - maxPrice (number — monthly price ceiling in CAD)
-- openBefore (string — opening time e.g. "7:30am")
-- features (string — any special features mentioned)
+- features (string — relevant program or facility keywords only; exclude location, age, language, price, and availability)
+- availableOnly (boolean — true when open or available spots are requested)
 - summary (string — one sentence summary of what was searched)
 
 Query: "${query}"`

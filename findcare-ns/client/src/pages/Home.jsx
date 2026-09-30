@@ -39,8 +39,8 @@ export default function Home() {
       if (filters.maxPrice) params.append('maxPrice', filters.maxPrice);
       if (filters.rating) params.append('rating', filters.rating);
       if (filters.availableOnly) params.append('availableOnly', 'true');
-      if (filters.voiceQuery || filters.query) {
-        params.append('city', filters.voiceQuery || filters.query);
+      if (filters.voiceQuery || filters.query || filters.search) {
+        params.append('search', filters.voiceQuery || filters.query || filters.search);
       }
       if (filters.lat && filters.lng) {
         params.append('lat', filters.lat);
@@ -129,6 +129,10 @@ export default function Home() {
             </div>
           </div>
 
+          <div style={styles.heroSearch}>
+            <SearchBar onSearch={handleSearch} />
+          </div>
+
           <div style={styles.popularWrap}>
             <span style={styles.popularLabel}>Popular locations:</span>
             <div style={styles.cityGrid}>
@@ -168,10 +172,6 @@ export default function Home() {
       </div>
 
       <div style={styles.searchSection}>
-        <div style={styles.searchBlock}>
-          <div style={styles.searchBlockLabel}>Standard search</div>
-          <SearchBar onSearch={handleSearch} />
-        </div>
         <div style={styles.searchRow2}>
           <div style={styles.aiWrap}>
             <div style={styles.searchBlockLabel}>AI smart search</div>
@@ -461,6 +461,10 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
+  },
+  heroSearch: {
+    maxWidth: '900px',
+    width: '100%',
   },
   kicker: {
     fontSize: '12px',

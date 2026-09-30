@@ -22,7 +22,11 @@ export default function AISearchBar({ onSearch }) {
     try {
       const res = await axios.post(`${API_URL}/api/ai/search`, { query });
       setParsed(res.data.filters);
-      onSearch(res.data.filters);
+      onSearch({
+        ...res.data.filters,
+        ageRange: res.data.filters.ageRange || res.data.filters.ageGroup,
+        search: res.data.filters.features || '',
+      });
     } catch (err) {
       setError('AI search unavailable. Please try the standard search.');
     } finally {

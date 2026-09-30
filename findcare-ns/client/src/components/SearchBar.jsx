@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 export default function SearchBar({ onSearch }) {
-  const [city, setCity]                   = useState('');
+  const [query, setQuery]                 = useState('');
   const [ageRange, setAgeRange]           = useState('');
   const [language, setLanguage]           = useState('');
   const [maxPrice, setMaxPrice]           = useState('');
@@ -9,7 +9,7 @@ export default function SearchBar({ onSearch }) {
   const [availableOnly, setAvailableOnly] = useState(false);
 
   function handleSearch() {
-    onSearch({ city, ageRange, language, maxPrice, rating, availableOnly });
+    onSearch({ query, ageRange, language, maxPrice, rating, availableOnly });
   }
 
   function handleKeyDown(e) {
@@ -19,14 +19,14 @@ export default function SearchBar({ onSearch }) {
   return (
     <div style={styles.wrap}>
 
-      {/* City input */}
+      {/* Free-text search */}
       <div style={styles.inputWrap}>
         <span style={styles.icon}>📍</span>
         <input
           type="text"
-          placeholder="Enter city, postal code, or address..."
-          value={city}
-          onChange={e => setCity(e.target.value)}
+          placeholder="Search by daycare, area, address, or keyword..."
+          value={query}
+          onChange={e => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
           style={styles.input}
         />
