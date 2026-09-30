@@ -187,7 +187,7 @@ export default function Home() {
 
   return (
     <div style={styles.page}>
-      <div style={styles.heroWrap}>
+      <div className="findcare-home-hero" style={styles.heroWrap}>
         <div style={styles.heroInner}>
           <div style={styles.heroContent}>
             <h1 style={styles.heroTitle}>
@@ -612,11 +612,11 @@ const styles = {
     color: '#1F2937',
   },
   heroWrap: {
-    backgroundImage: "linear-gradient(135deg, rgba(245, 117, 59, 0.72), rgba(14, 31, 47, 0.5)), url('https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?auto=format&fit=crop&w=1600&q=80')",
+    backgroundImage: "linear-gradient(135deg, rgba(245, 117, 59, 0.44), rgba(14, 31, 47, 0.32)), url('https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?auto=format&fit=crop&w=1600&q=80')",
     backgroundSize: 'cover',
-    backgroundPosition: 'center',
+    backgroundPosition: 'center 46%',
     borderBottom: '1px solid #F0D4BE',
-    padding: '64px 24px 14px',
+    padding: '136px 24px 14px',
   },
   heroInner: {
     maxWidth: '1180px',
@@ -635,7 +635,7 @@ const styles = {
     alignItems: 'center',
   },
   heroSearch: {
-    maxWidth: '900px',
+    maxWidth: '800px',
     width: '100%',
   },
   kicker: {
@@ -653,7 +653,7 @@ const styles = {
     color: '#ffffff',
     margin: '0 0 14px',
     letterSpacing: '-0.05em',
-    textShadow: '0 3px 18px rgba(15, 23, 42, 0.12)',
+    textShadow: '0 3px 18px rgba(15, 23, 42, 0.32)',
     fontFamily: 'Poppins, Quicksand, Rubik, Raleway, sans-serif',
     whiteSpace: 'nowrap',
   },

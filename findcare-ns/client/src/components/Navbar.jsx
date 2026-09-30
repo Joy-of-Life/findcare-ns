@@ -1,11 +1,15 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import BrandIcon from './BrandIcon';
+import './Navbar.css';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
+  const location = useLocation();
   const navigate = useNavigate();
   const [hoveredBtn, setHoveredBtn] = useState(null);
+  const isHomePage = location.pathname === '/';
 
   function handleLogout() {
     logout();
@@ -37,18 +41,18 @@ export default function Navbar() {
   }
 
   return (
-    <nav style={styles.nav}>
-      <div style={styles.container}>
+    <nav className="findcare-navbar" style={isHomePage ? styles.homeNav : styles.nav}>
+      <div className="findcare-navbar__container" style={styles.container}>
 
         {/* Logo */}
-        <Link to="/" style={styles.logo}>
-          <span style={styles.logoIcon}>🏠</span>
+        <Link to="/" className="findcare-navbar__brand" style={styles.logo}>
+          <BrandIcon size={34} />
           <span style={styles.logoText}>FindCare</span>
         </Link>
 
         {/* Center Navigation */}
         {!user && (
-          <div style={styles.centerNav}>
+          <div className="findcare-navbar__center" style={styles.centerNav}>
             <Link
               to="/?discover=1"
               style={hoveredBtn === 'discover' ? styles.navLinkHover : styles.navLink}
@@ -78,11 +82,12 @@ export default function Navbar() {
         )}
 
         {/* Right Links */}
-        <div style={styles.links}>
+        <div className="findcare-navbar__links" style={styles.links}>
           {!user ? (
             <>
               <Link 
                 to="/register" 
+                className="findcare-navbar__list-button"
                 style={hoveredBtn === 'list' ? styles.listBtnHover : styles.listBtn}
                 onMouseEnter={() => setHoveredBtn('list')}
                 onMouseLeave={() => setHoveredBtn(null)}
@@ -91,6 +96,7 @@ export default function Navbar() {
               </Link>
               <Link 
                 to="/login" 
+                className="findcare-navbar__login-button"
                 style={hoveredBtn === 'login' ? styles.loginBtnHover : styles.loginBtn}
                 onMouseEnter={() => setHoveredBtn('login')}
                 onMouseLeave={() => setHoveredBtn(null)}
@@ -99,6 +105,7 @@ export default function Navbar() {
               </Link>
               <Link 
                 to="/register" 
+                className="findcare-navbar__register-button"
                 style={hoveredBtn === 'register' ? styles.registerBtnHover : styles.registerBtn}
                 onMouseEnter={() => setHoveredBtn('register')}
                 onMouseLeave={() => setHoveredBtn(null)}
@@ -110,18 +117,18 @@ export default function Navbar() {
             <>
               {user.role === 'parent' && (
                 <>
-                  <Link to="/dashboard" style={styles.link}>My dashboard</Link>
-                  <Link to="/messages"  style={styles.link}>Messages</Link>
-                  <Link to="/compare"   style={styles.link}>Compare</Link>
+                  <Link to="/dashboard" className="findcare-navbar__dashboard-link" style={styles.link}>My dashboard</Link>
+                  <Link to="/messages" className="findcare-navbar__message-link" style={styles.link}>Messages</Link>
+                  <Link to="/compare" className="findcare-navbar__compare-link" style={styles.link}>Compare</Link>
                 </>
               )}
               {user.role === 'owner' && (
                 <>
-                  <Link to="/portal"   style={styles.link}>My portal</Link>
-                  <Link to="/messages" style={styles.link}>Messages</Link>
+                  <Link to="/portal" className="findcare-navbar__dashboard-link" style={styles.link}>My portal</Link>
+                  <Link to="/messages" className="findcare-navbar__message-link" style={styles.link}>Messages</Link>
                 </>
               )}
-              <span style={styles.userName}>Hi, {user.name.split(' ')[0]} 👋</span>
+              <span className="findcare-navbar__user-name" style={styles.userName}>Hi, {user.name.split(' ')[0]} 👋</span>
               <button 
                 onClick={handleLogout} 
                 style={hoveredBtn === 'logout' ? styles.logoutBtnHover : styles.logoutBtn}
@@ -141,19 +148,39 @@ export default function Navbar() {
 
 const styles = {
   nav: {
-    background: 'linear-gradient(180deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.3) 100%), url("https://images.unsplash.com/photo-1546776310-4ea93c37d11c?w=1200&h=120&fit=crop")',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundAttachment: 'fixed',
-    position: 'relative',
+    width: 'calc(100% - 32px)',
+    maxWidth: 'none',
+    margin: '12px auto',
+    background: 'rgba(42, 48, 45, 0.32)',
+    backdropFilter: 'blur(14px) saturate(125%)',
+    WebkitBackdropFilter: 'blur(14px) saturate(125%)',
+    border: '1px solid rgba(255, 255, 255, 0.2)',
+    borderRadius: '18px',
+    boxShadow: '0 10px 28px rgba(15, 23, 20, 0.16)',
+    overflow: 'hidden',
     zIndex: 100,
-    boxShadow: '0 6px 18px rgba(0, 0, 0, 0.15)',
-    borderBottom: 'none',
+  },
+  homeNav: {
+    width: 'calc(100% - 32px)',
+    maxWidth: 'none',
+    position: 'absolute',
+    top: '16px',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    margin: 0,
+    background: 'rgba(42, 48, 45, 0.18)',
+    backdropFilter: 'blur(12px) saturate(135%)',
+    WebkitBackdropFilter: 'blur(12px) saturate(135%)',
+    border: '1px solid rgba(255, 255, 255, 0.25)',
+    borderRadius: '18px',
+    boxShadow: '0 10px 28px rgba(15, 23, 20, 0.16)',
+    overflow: 'hidden',
+    zIndex: 100,
   },
   container: {
-    maxWidth: '1200px',
+    maxWidth: 'none',
     margin: '0 auto',
-    padding: '0 24px',
+    padding: '0 22px',
     height: '72px',
     display: 'flex',
     alignItems: 'center',
@@ -165,9 +192,6 @@ const styles = {
     gap: '8px',
     textDecoration: 'none',
     minWidth: '160px',
-  },
-  logoIcon: {
-    fontSize: '24px',
   },
   logoText: {
     fontSize: '22px',

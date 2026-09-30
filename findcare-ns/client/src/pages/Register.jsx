@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import BrandIcon from '../components/BrandIcon';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -42,7 +43,7 @@ export default function Register() {
     <div style={styles.page}>
       <div style={styles.card}>
         <div style={styles.logoWrap}>
-          <span style={styles.logoIcon}>🏠</span>
+          <BrandIcon size={32} />
           <span style={styles.logoText}>FindCare</span>
         </div>
         <div style={styles.logoSub}>Nova Scotia</div>

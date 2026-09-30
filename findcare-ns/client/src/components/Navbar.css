@@ -1,0 +1,72 @@
+.findcare-navbar__container {
+  min-width: 0;
+}
+
+.findcare-navbar__links {
+  flex-shrink: 0;
+}
+
+@media (max-width: 900px) {
+  .findcare-navbar__brand {
+    min-width: 0 !important;
+  }
+
+  .findcare-navbar__center {
+    gap: 18px !important;
+  }
+
+  .findcare-navbar__links {
+    min-width: 0 !important;
+    gap: 8px !important;
+  }
+}
+
+@media (max-width: 680px) {
+  .findcare-navbar {
+    width: calc(100% - 16px) !important;
+    border-radius: 16px !important;
+  }
+
+  .findcare-navbar__container {
+    height: 68px !important;
+    padding: 0 14px !important;
+  }
+
+  .findcare-navbar__center {
+    display: none !important;
+  }
+
+  .findcare-navbar__links {
+    gap: 6px !important;
+  }
+
+  .findcare-navbar__list-button {
+    display: none !important;
+  }
+
+  .findcare-navbar__user-name,
+  .findcare-navbar__message-link,
+  .findcare-navbar__compare-link {
+    display: none !important;
+  }
+
+  .findcare-navbar__login-button,
+  .findcare-navbar__register-button {
+    padding: 8px 11px !important;
+    font-size: 12px !important;
+  }
+
+  .findcare-home-hero {
+    padding-top: 122px !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .findcare-navbar__brand > span {
+    font-size: 18px !important;
+  }
+
+  .findcare-navbar__login-button {
+    display: none !important;
+  }
+}
