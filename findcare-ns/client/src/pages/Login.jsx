@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import BrandIcon from '../components/BrandIcon';
 
@@ -11,6 +11,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const { login }             = useAuth();
   const navigate              = useNavigate();
+  const location              = useLocation();
 
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -32,7 +33,30 @@ export default function Login() {
       } else {
         login(data.user, data.token);
         if (data.user.role === 'owner') navigate('/portal');
-        else navigate('/dashboard');
+        else if (
+          /^\/daycare\/[^/]+$/.test(location.state?.returnTo || '') &&
+          location.state?.pendingWaitlist?.ageGroup
+        ) {
+          navigate(location.state.returnTo, {
+            replace: true,
+            state: { resumeWaitlist: location.state.pendingWaitlist }
+          });
+        } else if (data.user.role === 'parent' && location.state?.pendingSave) {
+          const saveRes = await fetch(`${API_URL}/api/auth/save-daycare`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${data.token}`,
+            },
+            body: JSON.stringify({ daycareId: location.state.pendingSave }),
+          });
+          const saveData = await saveRes.json();
+          if (!saveRes.ok) {
+            setError(saveData.error || 'Logged in, but unable to save this daycare.');
+          } else {
+            navigate('/dashboard');
+          }
+        } else navigate('/dashboard');
       }
     } catch (err) {
       setError('Something went wrong. Please try again.');

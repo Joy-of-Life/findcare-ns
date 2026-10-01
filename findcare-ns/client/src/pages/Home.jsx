@@ -166,7 +166,7 @@ export default function Home() {
 
   async function handleSave(daycareId) {
     if (!user) {
-      navigate('/login');
+      navigate('/login', { state: { pendingSave: daycareId } });
       return;
     }
     try {

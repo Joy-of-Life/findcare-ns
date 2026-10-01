@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ReviewCard  from '../components/ReviewCard';
 import MapView     from '../components/MapView';
@@ -11,6 +11,8 @@ export default function DaycareProfile() {
   const { id }              = useParams();
   const { user, token }     = useAuth();
   const navigate            = useNavigate();
+  const location            = useLocation();
+  const resumedWaitlist     = useRef(false);
   const [daycare, setDaycare]           = useState(null);
   const [reviews, setReviews]           = useState([]);
   const [loading, setLoading]           = useState(true);
@@ -66,20 +68,38 @@ export default function DaycareProfile() {
     } catch (err) { console.error(err); }
   }
 
-  async function joinWaitlist() {
-    if (!user) { navigate('/login'); return; }
-    if (!waitlistForm.ageGroup) { setWaitlistMsg('Please select an age group.'); return; }
+  const submitWaitlist = useCallback(async (formData) => {
     setWaitlistMsg('');
     try {
-      const res  = await fetch(`${API_URL}/api/waitlist/${id}`, {
-        method:  'POST',
+      const res = await fetch(`${API_URL}/api/waitlist/${id}`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body:    JSON.stringify(waitlistForm)
+        body: JSON.stringify(formData)
       });
       const data = await res.json();
       if (!res.ok) { setWaitlistMsg(data.error || 'Failed to join waitlist'); }
       else { setOnWaitlist(true); setWaitlistMsg(`You are on the waitlist at position #${data.position}!`); }
     } catch (err) { setWaitlistMsg('Something went wrong.'); }
+  }, [id, token]);
+
+  useEffect(() => {
+    const pendingWaitlist = location.state?.resumeWaitlist;
+    if (resumedWaitlist.current || !pendingWaitlist?.ageGroup || user?.role !== 'parent' || !token) return;
+    resumedWaitlist.current = true;
+    setWaitlistForm(pendingWaitlist);
+    navigate(location.pathname, { replace: true, state: null });
+    submitWaitlist(pendingWaitlist);
+  }, [location.pathname, location.state, navigate, submitWaitlist, token, user]);
+
+  function joinWaitlist() {
+    if (!waitlistForm.ageGroup) { setWaitlistMsg('Please select an age group.'); return; }
+    if (!user) {
+      navigate('/login', {
+        state: { returnTo: location.pathname, pendingWaitlist: waitlistForm }
+      });
+      return;
+    }
+    submitWaitlist(waitlistForm);
   }
 
   function renderStars(rating, interactive = false) {
