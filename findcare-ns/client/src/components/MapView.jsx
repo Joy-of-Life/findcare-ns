@@ -1,6 +1,7 @@
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { AGE_GROUP_DISPLAY_LABELS, formatDaysOpen } from '../constants/ageGroups';
 
 // Fix Leaflet default marker icon issue with React
 delete L.Icon.Default.prototype._getIconUrl;
@@ -102,7 +103,7 @@ export default function MapView({ daycares, ageGroup }) {
                       <span key={age} style={{
                         fontSize: '11px', padding: '2px 7px',
                         borderRadius: '20px', background: '#E1F5EE', color: '#085041'
-                      }}>{age}</span>
+                      }}>{AGE_GROUP_DISPLAY_LABELS[age] || age}</span>
                     ))}
                     {daycare.language?.map(lang => (
                       <span key={lang} style={{
@@ -110,7 +111,25 @@ export default function MapView({ daycares, ageGroup }) {
                         borderRadius: '20px', background: '#EEEDFE', color: '#3C3489'
                       }}>{lang}</span>
                     ))}
+                    {daycare.acceptsSubsidy && <span className="provider-feature-popup">Accepts subsidy</span>}
+                    {daycare.mealsProvided && <span className="provider-feature-popup">Meals provided</span>}
+                    {daycare.outdoorPlaySpace && <span className="provider-feature-popup">Outdoor play space</span>}
                   </div>
+                  {daycare.maxChildren > 0 && (
+                    <p style={{ fontSize: '12px', color: '#267561', margin: '0 0 4px' }}>
+                      Max {daycare.maxChildren} children
+                    </p>
+                  )}
+                  {daycare.daysOpen?.length > 0 && (
+                    <p style={{ fontSize: '12px', color: '#52695E', margin: '0 0 4px' }}>
+                      Open: {formatDaysOpen(daycare.daysOpen)}
+                    </p>
+                  )}
+                  {daycare.openHours && (
+                    <p style={{ fontSize: '12px', color: '#6B7280', margin: '0 0 8px' }}>
+                      {daycare.openHours}
+                    </p>
+                  )}
                   <div style={{
                     display: 'flex', justifyContent: 'space-between',
                     fontSize: '12px', borderTop: '1px solid #F3F4F6', paddingTop: '8px'

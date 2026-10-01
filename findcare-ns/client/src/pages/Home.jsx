@@ -6,6 +6,7 @@ import AISearchBar from '../components/AISearchBar';
 import VoiceSearch from '../components/VoiceSearch';
 import MapView from '../components/MapView';
 import WelcomePopup from '../components/WelcomePopup';
+import { AGE_GROUP_DISPLAY_LABELS, formatDaysOpen } from '../constants/ageGroups';
 
 export default function Home() {
   const [results, setResults] = useState([]);
@@ -546,11 +547,20 @@ export default function Home() {
                   )}
                   <div style={styles.tags}>
                     {daycare.ageRange?.map((age) => (
-                      <span key={age} style={styles.tagOrange}>{age}</span>
+                      <span key={age} style={styles.tagOrange}>{AGE_GROUP_DISPLAY_LABELS[age] || age}</span>
                     ))}
                     {daycare.language?.map((lang) => (
                       <span key={lang} style={styles.tagPurple}>{lang}</span>
                     ))}
+                    {daycare.acceptsSubsidy && <span style={styles.tagCapacity}>Accepts subsidy</span>}
+                    {daycare.mealsProvided && <span style={styles.tagDays}>Meals provided</span>}
+                    {daycare.outdoorPlaySpace && <span style={styles.tagDays}>Outdoor play space</span>}
+                    {daycare.maxChildren > 0 && (
+                      <span style={styles.tagCapacity}>Max {daycare.maxChildren} children</span>
+                    )}
+                    {daycare.daysOpen?.length > 0 && (
+                      <span style={styles.tagDays}>Open: {formatDaysOpen(daycare.daysOpen)}</span>
+                    )}
                     {['infant', 'toddler', 'preschool'].map((age) => {
                       const spots = daycare.availability?.[age];
                       if (spots === undefined) return null;
@@ -1310,6 +1320,22 @@ const styles = {
     padding: '2px 8px',
     borderRadius: '20px',
     border: '1px solid #B39DDB',
+  },
+  tagCapacity: {
+    fontSize: '12px',
+    background: '#E8F5F1',
+    color: '#267561',
+    padding: '2px 8px',
+    borderRadius: '20px',
+    border: '1px solid #B8DED3',
+  },
+  tagDays: {
+    fontSize: '12px',
+    background: '#F1F4F0',
+    color: '#52695E',
+    padding: '2px 8px',
+    borderRadius: '20px',
+    border: '1px solid #D6DFD7',
   },
   cardFooter: {
     display: 'flex',

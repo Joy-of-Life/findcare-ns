@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AGE_GROUP_LABELS } from '../constants/ageGroups';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -221,7 +222,7 @@ export default function Compare() {
               <div key={d._id} style={{ ...styles.valueCell, flexWrap: 'wrap', gap: '4px' }}>
                 {d.ageRange?.map(age => (
                   <span key={age} style={{ background: '#FFF3E0', color: '#E65100', padding: '2px 6px', borderRadius: '20px', fontSize: '11px', border: '1px solid #FFCC80' }}>
-                    {age}
+                    {AGE_GROUP_LABELS[age] || age}
                   </span>
                 ))}
               </div>

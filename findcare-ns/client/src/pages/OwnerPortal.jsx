@@ -1,25 +1,54 @@
 import { useState, useEffect } from 'react';
 import { useAuth }    from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { AGE_GROUP_LABELS, AGE_GROUP_OPTIONS, AVAILABILITY_AGE_GROUPS } from '../constants/ageGroups';
+import './OwnerPortal.css';
 
 const API_URL    = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 const LANGUAGES  = ['English', 'French', 'Arabic', 'Mandarin', 'Spanish'];
-const AGE_GROUPS = ['infant', 'toddler', 'preschool'];
-const OPENING_TIMES = [
-  '5:00am', '5:30am', '6:00am', '6:30am', '6:45am', '7:00am', '7:30am',
-  '8:00am', '8:30am', '9:00am', '9:30am', '10:00am',
+const PROVIDER_FEATURES = [
+  { name: 'acceptsSubsidy', label: 'Accepts subsidy' },
+  { name: 'mealsProvided', label: 'Meals provided' },
+  { name: 'outdoorPlaySpace', label: 'Outdoor play space' },
 ];
-const CLOSING_TIMES = [
-  '4:00pm', '4:30pm', '5:00pm', '5:30pm', '6:00pm', '6:30pm', '7:00pm',
+const DAYS_OPEN = [
+  { value: 'mon', label: 'Mon' }, { value: 'tue', label: 'Tue' },
+  { value: 'wed', label: 'Wed' }, { value: 'thu', label: 'Thu' },
+  { value: 'fri', label: 'Fri' }, { value: 'sat', label: 'Sat' },
+  { value: 'sun', label: 'Sun' },
 ];
 const DEFAULT_AVAILABILITY = { infant: 0, toddler: 0, preschool: 0 };
 
+function toTimeInput(value = '') {
+  const match = value.match(/^(\d{1,2}):(\d{2})\s*(am|pm)$/i);
+  if (!match) return '';
+  let hours = Number(match[1]) % 12;
+  if (match[3].toLowerCase() === 'pm') hours += 12;
+  return `${String(hours).padStart(2, '0')}:${match[2]}`;
+}
+
+function formatTime(value = '') {
+  if (!value) return '';
+  const [hours, minutes] = value.split(':').map(Number);
+  return `${hours % 12 || 12}:${String(minutes).padStart(2, '0')} ${hours >= 12 ? 'PM' : 'AM'}`;
+}
+
 function parseOpenHours(openHours = '') {
-  const match = openHours.match(/^\s*(.*?)\s+(?:–|-|to)\s+(.*?)\s*$/i);
-  return match ? { openingTime: match[1], closingTime: match[2] } : { openingTime: '', closingTime: '' };
+  const match = openHours.match(/(\d{1,2}:\d{2}\s*(?:am|pm))\s+(?:–|-|to)\s+(\d{1,2}:\d{2}\s*(?:am|pm))/i);
+  return match ? { opensAt: toTimeInput(match[1]), closesAt: toTimeInput(match[2]) } : { opensAt: '', closesAt: '' };
+}
+
+function formatOpenHours(daysOpen, opensAt, closesAt) {
+  const days = DAYS_OPEN.filter(day => daysOpen.includes(day.value)).map(day => day.label);
+  if (!days.length || !opensAt || !closesAt) return '';
+  const daysLabel = days.join(',') === 'Mon,Tue,Wed,Thu,Fri'
+    ? 'Mon–Fri'
+    : days.length === DAYS_OPEN.length ? 'Mon–Sun' : days.join(', ');
+  return `${daysLabel}, ${formatTime(opensAt)} – ${formatTime(closesAt)}`;
 }
 
 function createDaycareForm(daycare = {}) {
+  const parsedHours = parseOpenHours(daycare.openHours);
   return {
     name: daycare.name || '',
     address: daycare.address || '',
@@ -28,10 +57,16 @@ function createDaycareForm(daycare = {}) {
     phone: daycare.phone || '',
     monthlyPrice: daycare.monthlyPrice ?? '',
     openHours: daycare.openHours || '',
-    ...parseOpenHours(daycare.openHours),
+    opensAt: daycare.opensAt || parsedHours.opensAt,
+    closesAt: daycare.closesAt || parsedHours.closesAt,
+    maxChildren: daycare.maxChildren ?? daycare.maxChildrenAtATime ?? '',
+    daysOpen: daycare.daysOpen?.length ? daycare.daysOpen : ['mon', 'tue', 'wed', 'thu', 'fri'],
     description: daycare.description || '',
     language: daycare.language || [],
     ageRange: daycare.ageRange || [],
+    acceptsSubsidy: Boolean(daycare.acceptsSubsidy),
+    mealsProvided: Boolean(daycare.mealsProvided),
+    outdoorPlaySpace: Boolean(daycare.outdoorPlaySpace),
     coordinates: {
       lat: daycare.coordinates?.lat ?? '',
       lng: daycare.coordinates?.lng ?? '',
@@ -103,19 +138,32 @@ export default function OwnerPortal() {
   function handleChange(e) {
     const { name } = e.target;
     const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
-    if (name === 'openingTime' || name === 'closingTime') {
+    if (name === 'opensAt' || name === 'closesAt') {
       setForm(current => {
         const next = { ...current, [name]: value };
         return {
           ...next,
-          openHours: next.openingTime && next.closingTime
-            ? `${next.openingTime} – ${next.closingTime}`
-            : '',
+          openHours: formatOpenHours(next.daysOpen, next.opensAt, next.closesAt),
         };
       });
       return;
     }
     setForm({ ...form, [name]: value });
+  }
+  function toggleOpenDay(day) {
+    setForm(current => {
+      const daysOpen = current.daysOpen.includes(day)
+        ? current.daysOpen.filter(value => value !== day)
+        : [...current.daysOpen, day];
+      return { ...current, daysOpen, openHours: formatOpenHours(daysOpen, current.opensAt, current.closesAt) };
+    });
+  }
+  function setOpenDays(daysOpen) {
+    setForm(current => ({
+      ...current,
+      daysOpen,
+      openHours: formatOpenHours(daysOpen, current.opensAt, current.closesAt),
+    }));
   }
   function handleCoords(e) { setForm({ ...form, coordinates: { ...form.coordinates, [e.target.name]: e.target.value } }); }
   function toggleLanguage(lang) {
@@ -131,7 +179,16 @@ export default function OwnerPortal() {
   }
 
   async function handleSubmit() {
-    if (!form.name || !form.address || !form.city || !form.phone || !form.openingTime || !form.closingTime) { setStatus('error'); return; }
+    const latitude = Number(form.coordinates.lat);
+    const longitude = Number(form.coordinates.lng);
+    const hasValidCoordinates = form.coordinates.lat !== '' && form.coordinates.lng !== '' &&
+      latitude >= -90 && latitude <= 90 && longitude >= -180 && longitude <= 180;
+    const isValid = form.name.trim() && form.address.trim() && form.city.trim() && form.phone.trim() &&
+      form.description.trim() && form.monthlyPrice !== '' && Number.isFinite(Number(form.monthlyPrice)) && Number(form.monthlyPrice) >= 0 && form.language.length > 0 &&
+      form.ageRange.length > 0 && Number.isInteger(Number(form.maxChildren)) && Number(form.maxChildren) > 0 &&
+      form.daysOpen.length > 0 && form.opensAt && form.closesAt && form.opensAt < form.closesAt &&
+      hasValidCoordinates;
+    if (!isValid) { setStatus('error'); return; }
     const isEditing = view === 'edit' && myDaycare;
     setSubmitting(true);
     setStatus('');
@@ -141,17 +198,22 @@ export default function OwnerPortal() {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body:    JSON.stringify({
           ...form,
-          openHours: `${form.openingTime} – ${form.closingTime}`,
+          openHours: formatOpenHours(form.daysOpen, form.opensAt, form.closesAt),
+          maxChildren: Number(form.maxChildren),
           monthlyPrice: Number(form.monthlyPrice),
-          coordinates:  { lat: Number(form.coordinates.lat), lng: Number(form.coordinates.lng) }
+          coordinates:  { lat: latitude, lng: longitude }
         }),
       });
       if (!res.ok) throw new Error('Failed');
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to save daycare details');
-      setMyDaycare(data);
+      const savedDaycare = {
+        ...data,
+        maxChildren: data.maxChildren ?? data.maxChildrenAtATime ?? Number(form.maxChildren),
+      };
+      setMyDaycare(savedDaycare);
       setAvailability(data.availability || DEFAULT_AVAILABILITY);
-      setForm(createDaycareForm(data));
+      setForm(createDaycareForm(savedDaycare));
       setStatus('success');
       setView('manage');
     } catch (err) { setStatus('error'); }
@@ -212,7 +274,7 @@ export default function OwnerPortal() {
             ))}
           </div>
           <div style={{ display: 'flex', gap: '8px', marginTop: '14px', flexWrap: 'wrap' }}>
-            {myDaycare.ageRange?.map(age  => <span key={age}  style={styles.tagOrange}>{age}</span>)}
+            {myDaycare.ageRange?.map(age  => <span key={age}  style={styles.tagOrange}>{AGE_GROUP_LABELS[age] || age}</span>)}
             {myDaycare.language?.map(lang => <span key={lang} style={styles.tagPurple}>{lang}</span>)}
             {myDaycare.verified && <span style={styles.tagGreen}>✓ Verified</span>}
             {myDaycare.licensed && <span style={styles.tagGreen}>✓ Licensed</span>}
@@ -226,7 +288,7 @@ export default function OwnerPortal() {
             Parents with alerts will be notified automatically when spots open up.
           </p>
           <div style={styles.availGrid}>
-            {AGE_GROUPS.map(age => {
+            {AVAILABILITY_AGE_GROUPS.map(age => {
               const badge = spotLabel(availability[age]);
               return (
                 <div key={age} style={styles.availItem}>
@@ -286,52 +348,25 @@ export default function OwnerPortal() {
         <h2 style={styles.cardTitle}>Basic information</h2>
         <div style={styles.grid2}>
           {[
-            { label: 'Daycare name',      name: 'name',         type: 'text'   },
-            { label: 'Phone',             name: 'phone',        type: 'text'   },
-            { label: 'Address',           name: 'address',      type: 'text'   },
-            { label: 'City',              name: 'city',         type: 'text'   },
-            { label: 'Monthly price ($)', name: 'monthlyPrice', type: 'number' },
-            { label: 'Open hours',        name: 'openHours',    type: 'text'   },
+            { label: 'Daycare name *',      name: 'name',         type: 'text'   },
+            { label: 'Phone *',             name: 'phone',        type: 'tel'    },
+            { label: 'Address *',           name: 'address',      type: 'text'   },
+            { label: 'City *',              name: 'city',         type: 'text'   },
+            { label: 'Monthly price ($) *', name: 'monthlyPrice', type: 'number' },
           ].map(f => (
             <div key={f.name} style={styles.field}>
               <label style={styles.label}>{f.label}</label>
-              {f.name === 'openHours' ? (
-                <div style={styles.hoursFields}>
-                  <select
-                    id="openingTime"
-                    name="openingTime"
-                    value={form.openingTime}
-                    onChange={handleChange}
-                    style={styles.input}
-                    aria-label="Opening time"
-                    required
-                  >
-                    <option value="">Opens at</option>
-                    {OPENING_TIMES.map(time => <option key={time} value={time}>{time}</option>)}
-                  </select>
-                  <select
-                    id="closingTime"
-                    name="closingTime"
-                    value={form.closingTime}
-                    onChange={handleChange}
-                    style={styles.input}
-                    aria-label="Closing time"
-                    required
-                  >
-                    <option value="">Closes at</option>
-                    {CLOSING_TIMES.map(time => <option key={time} value={time}>{time}</option>)}
-                  </select>
-                </div>
-              ) : (
-                <input
-                  id={f.name}
-                  type={f.type}
-                  name={f.name}
-                  value={form[f.name]}
-                  onChange={handleChange}
-                  style={styles.input}
-                />
-              )}
+              <input
+                id={f.name}
+                type={f.type}
+                name={f.name}
+                value={form[f.name]}
+                onChange={handleChange}
+                style={styles.input}
+                required
+                min={f.name === 'monthlyPrice' ? '0' : undefined}
+                step={f.name === 'monthlyPrice' ? '1' : undefined}
+              />
             </div>
           ))}
         </div>
@@ -350,12 +385,12 @@ export default function OwnerPortal() {
           </span>
         </label>
         <div style={{ ...styles.field, marginTop: '12px' }}>
-          <label style={styles.label}>Description</label>
+          <label style={styles.label}>Description *</label>
           <textarea name="description" value={form.description} onChange={handleChange}
-            placeholder="Describe your daycare..." style={{ ...styles.input, height: '80px', resize: 'none' }} />
+            placeholder="Describe your daycare..." style={{ ...styles.input, height: '80px', resize: 'none' }} required />
         </div>
         <div style={{ marginTop: '14px' }}>
-          <label style={styles.label}>Languages offered</label>
+          <label style={styles.label}>Languages offered *</label>
           <div style={styles.tags}>
             {LANGUAGES.map(lang => (
               <span key={lang} onClick={() => toggleLanguage(lang)} style={{
@@ -367,25 +402,94 @@ export default function OwnerPortal() {
             ))}
           </div>
         </div>
+        <div className="owner-provider-features">
+          {PROVIDER_FEATURES.map(feature => (
+            <label key={feature.name} className="owner-provider-feature">
+              <input
+                type="checkbox"
+                name={feature.name}
+                checked={form[feature.name]}
+                onChange={handleChange}
+              />
+              <span>{feature.label}</span>
+            </label>
+          ))}
+        </div>
         <div style={{ marginTop: '14px' }}>
-          <label style={styles.label}>Age groups accepted</label>
-          <div style={styles.tags}>
-            {AGE_GROUPS.map(age => (
-              <span key={age} onClick={() => toggleAgeRange(age)} style={{
-                ...styles.tagToggle,
-                background:  form.ageRange.includes(age) ? '#FFF3E0' : 'transparent',
-                color:       form.ageRange.includes(age) ? '#E65100' : '#9E9E9E',
-                borderColor: form.ageRange.includes(age) ? '#FFCC80' : '#FFE0B2',
-              }}>{age}</span>
-            ))}
+          <div className="owner-service-grid">
+            <div>
+              <label style={styles.label}>Ages served *</label>
+              <div className="owner-age-options">
+                {AGE_GROUP_OPTIONS.map(({ value, label, range }) => (
+                  <label key={value} className="owner-age-option" style={{
+                    borderColor: form.ageRange.includes(value) ? '#FFCC80' : '#E8E1D5',
+                    background: form.ageRange.includes(value) ? '#FFF8EE' : '#fff',
+                  }}>
+                    <input type="checkbox" checked={form.ageRange.includes(value)} onChange={() => toggleAgeRange(value)} />
+                    <span>{label} ({range})</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="owner-max-children">
+              <label style={styles.label} htmlFor="maxChildren">Max children at a time *</label>
+              <input
+                id="maxChildren"
+                type="number"
+                name="maxChildren"
+                min="1"
+                step="1"
+                value={form.maxChildren}
+                onChange={handleChange}
+                style={styles.input}
+                required
+              />
+              <p className="owner-capacity-note">
+                In Nova Scotia, an unlicensed home child care provider may care for up to 6 children under age 13, including their own children.
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
       <div style={styles.card}>
+        <h2 style={styles.cardTitle}>Days and hours open *</h2>
+        <div className="owner-days-row">
+          {DAYS_OPEN.map(day => (
+            <button
+              key={day.value}
+              type="button"
+              aria-pressed={form.daysOpen.includes(day.value)}
+              onClick={() => toggleOpenDay(day.value)}
+            >
+              {day.label}
+            </button>
+          ))}
+        </div>
+        <div className="owner-day-presets">
+          <button type="button" onClick={() => setOpenDays(['mon', 'tue', 'wed', 'thu', 'fri'])}>Weekdays</button>
+          <span>|</span>
+          <button type="button" onClick={() => setOpenDays(DAYS_OPEN.map(day => day.value))}>All week</button>
+          <span>|</span>
+          <button type="button" onClick={() => setOpenDays([])}>Clear</button>
+        </div>
+        <div className="owner-time-fields">
+          <div style={styles.field}>
+            <label style={styles.label} htmlFor="opensAt">Opens at *</label>
+            <input id="opensAt" type="time" name="opensAt" value={form.opensAt} onChange={handleChange} style={styles.input} required />
+          </div>
+          <div style={styles.field}>
+            <label style={styles.label} htmlFor="closesAt">Closes at *</label>
+            <input id="closesAt" type="time" name="closesAt" value={form.closesAt} onChange={handleChange} style={styles.input} required />
+          </div>
+        </div>
+        {form.openHours && <p className="owner-hours-preview">Preview: {formatOpenHours(form.daysOpen, form.opensAt, form.closesAt)}</p>}
+      </div>
+
+      <div style={styles.card}>
         <h2 style={styles.cardTitle}>🔔 Real-time availability</h2>
         <div style={styles.availGrid}>
-          {AGE_GROUPS.map(age => {
+          {AVAILABILITY_AGE_GROUPS.map(age => {
             const badge = spotLabel(form.availability[age]);
             return (
               <div key={age} style={styles.availItem}>
@@ -410,16 +514,16 @@ export default function OwnerPortal() {
         <div style={styles.grid2}>
           <div style={styles.field}>
             <label style={styles.label}>Latitude</label>
-            <input type="number" name="lat" value={form.coordinates.lat} onChange={handleCoords} placeholder="e.g. 44.6488" style={styles.input} step="0.0001" />
+            <input type="number" name="lat" value={form.coordinates.lat} onChange={handleCoords} placeholder="e.g. 44.6488" style={styles.input} step="0.0001" min="-90" max="90" required />
           </div>
           <div style={styles.field}>
             <label style={styles.label}>Longitude</label>
-            <input type="number" name="lng" value={form.coordinates.lng} onChange={handleCoords} placeholder="e.g. -63.5752" style={styles.input} step="0.0001" />
+            <input type="number" name="lng" value={form.coordinates.lng} onChange={handleCoords} placeholder="e.g. -63.5752" style={styles.input} step="0.0001" min="-180" max="180" required />
           </div>
         </div>
       </div>
 
-      {status === 'error'   && <div style={styles.errorMsg}>Please fill in all required fields.</div>}
+      {status === 'error'   && <div style={styles.errorMsg}>Complete all required fields. Select at least one language, age group, and open day; add valid coordinates and a closing time after opening.</div>}
 
       <button onClick={handleSubmit} disabled={submitting}
         style={{ ...styles.btnOrange, width: '100%', padding: '14px', fontSize: '15px' }}>

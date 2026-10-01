@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth }     from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { AGE_GROUP_LABELS } from '../constants/ageGroups';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -180,7 +181,7 @@ export default function ParentDashboard() {
                 <div style={styles.daycareAddr}>📍 {daycare.hideAddress ? daycare.city : `${daycare.address}, ${daycare.city}`}</div>
                 <div style={styles.tags}>
                   {daycare.ageRange?.map(age => (
-                    <span key={age} style={styles.tagOrange}>{age}</span>
+                    <span key={age} style={styles.tagOrange}>{AGE_GROUP_LABELS[age] || age}</span>
                   ))}
                   {daycare.language?.map(lang => (
                     <span key={lang} style={styles.tagPurple}>{lang}</span>

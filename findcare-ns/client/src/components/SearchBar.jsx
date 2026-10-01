@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { AGE_GROUP_OPTIONS, AVAILABILITY_AGE_GROUPS } from '../constants/ageGroups';
 import './SearchBar.css';
 
 export default function SearchBar({ onSearch }) {
@@ -75,11 +76,14 @@ export default function SearchBar({ onSearch }) {
 
       {showFilters && (
         <div id="findcare-search-filters" className="findcare-search__filters" style={styles.filtersRow}>
-          <select aria-label="Age group" value={ageRange} onChange={e => setAgeRange(e.target.value)} style={styles.select}>
+          <select aria-label="Age group" value={ageRange} onChange={e => {
+            setAgeRange(e.target.value);
+            if (!AVAILABILITY_AGE_GROUPS.includes(e.target.value)) setAvailableOnly(false);
+          }} style={styles.select}>
             <option value="">Age group</option>
-            <option value="infant">Infant (0–18mo)</option>
-            <option value="toddler">Toddler (18mo–3yr)</option>
-            <option value="preschool">Preschool (3–5yr)</option>
+            {AGE_GROUP_OPTIONS.map(({ value, label, range }) => (
+              <option key={value} value={value}>{label} ({range})</option>
+            ))}
           </select>
 
           <select aria-label="Language" value={language} onChange={e => setLanguage(e.target.value)} style={styles.select}>
@@ -107,7 +111,7 @@ export default function SearchBar({ onSearch }) {
             <option value="4.5">4.5+ stars</option>
           </select>
 
-          {ageRange && (
+          {AVAILABILITY_AGE_GROUPS.includes(ageRange) && (
             <label style={styles.checkLabel}>
               <input
                 type="checkbox"

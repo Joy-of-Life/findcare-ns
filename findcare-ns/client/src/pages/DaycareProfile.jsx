@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ReviewCard  from '../components/ReviewCard';
 import MapView     from '../components/MapView';
+import { AGE_GROUP_LABELS } from '../constants/ageGroups';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -112,7 +113,7 @@ export default function DaycareProfile() {
           <h1 style={styles.title}>{daycare.name}</h1>
           <p style={styles.address}>📍 {daycare.hideAddress ? daycare.city : `${daycare.address}, ${daycare.city}`}</p>
           <div style={styles.tags}>
-            {daycare.ageRange?.map(age  => <span key={age}  style={styles.tagOrange}>{age}</span>)}
+            {daycare.ageRange?.map(age  => <span key={age}  style={styles.tagOrange}>{AGE_GROUP_LABELS[age] || age}</span>)}
             {daycare.language?.map(lang => <span key={lang} style={styles.tagPurple}>{lang}</span>)}
             {daycare.licensed && <span style={styles.tagGreen}>✓ Licensed</span>}
             {daycare.verified && <span style={styles.tagGreen}>✓ Verified</span>}

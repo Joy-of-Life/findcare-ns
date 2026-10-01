@@ -8,8 +8,39 @@ const SEARCH_FIELDS = ['name', 'address', 'city', 'description', 'language', 'ag
 const SEARCH_STOP_WORDS = new Set(['a', 'an', 'and', 'care', 'childcare', 'daycare', 'daycares', 'find', 'for', 'in', 'looking', 'me', 'near', 'of', 'please', 'the', 'to', 'want', 'with']);
 const OWNER_EDITABLE_FIELDS = [
   'name', 'address', 'city', 'phone', 'monthlyPrice', 'openHours', 'description',
-  'language', 'ageRange', 'coordinates', 'availability', 'hideAddress'
+  'language', 'ageRange', 'coordinates', 'availability', 'hideAddress', 'maxChildren',
+  'daysOpen', 'opensAt', 'closesAt', 'acceptsSubsidy', 'mealsProvided', 'outdoorPlaySpace'
 ];
+const SUPPORTED_AGE_GROUPS = ['infant', 'toddler', 'preschool', 'kindergarten', 'school-age'];
+const SUPPORTED_DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+
+function validateOwnerListing(fields) {
+  const requiredText = ['name', 'address', 'city', 'phone', 'description', 'openHours'];
+  if (requiredText.some(field => typeof fields[field] !== 'string' || !fields[field].trim())) {
+    return 'Complete all required daycare details';
+  }
+  if (fields.monthlyPrice === '' || !Number.isFinite(Number(fields.monthlyPrice)) || Number(fields.monthlyPrice) < 0) {
+    return 'Enter a valid monthly price';
+  }
+  if (!Array.isArray(fields.language) || !fields.language.length) return 'Select at least one language';
+  if (!Array.isArray(fields.ageRange) || !fields.ageRange.length || fields.ageRange.some(age => !SUPPORTED_AGE_GROUPS.includes(age))) {
+    return 'Select at least one supported age group';
+  }
+  if (!Number.isInteger(Number(fields.maxChildren)) || Number(fields.maxChildren) < 1) return 'Enter the maximum number of children';
+  if (!Array.isArray(fields.daysOpen) || !fields.daysOpen.length || fields.daysOpen.some(day => !SUPPORTED_DAYS.includes(day))) {
+    return 'Select at least one valid open day';
+  }
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(fields.opensAt || '') || !/^([01]\d|2[0-3]):[0-5]\d$/.test(fields.closesAt || '') || fields.opensAt >= fields.closesAt) {
+    return 'Choose valid opening and closing times';
+  }
+  const latitude = fields.coordinates?.lat;
+  const longitude = fields.coordinates?.lng;
+  if (latitude === '' || longitude === '' || !Number.isFinite(Number(latitude)) || !Number.isFinite(Number(longitude)) ||
+      Number(latitude) < -90 || Number(latitude) > 90 || Number(longitude) < -180 || Number(longitude) > 180) {
+    return 'Enter valid map coordinates';
+  }
+  return '';
+}
 
 function escapeRegex(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -94,7 +125,7 @@ router.get('/', async (req, res) => {
           : ['infant', 'toddler', 'preschool'].some(group => (d.availability?.[group] || 0) > 0));
       }
 
-      return res.json(result.sort((a, b) => b.rating - a.rating).map(toPublicDaycare));
+      return res.json(result.sort((a, b) => a.distanceFromUser - b.distanceFromUser).map(toPublicDaycare));
     }
 
     if (city)     query.city         = { $regex: escapeRegex(city), $options: 'i' };
@@ -151,6 +182,8 @@ router.get('/:id', async (req, res) => {
 // POST /api/daycares — create new daycare (owner only)
 router.post('/', auth, async (req, res) => {
   try {
+    const validationError = validateOwnerListing(req.body);
+    if (validationError) return res.status(400).json({ error: validationError });
     const daycare = new Daycare({
       ...req.body,
       owner: req.user.id
@@ -176,6 +209,8 @@ router.patch('/:id', auth, async (req, res) => {
     if (!Object.keys(updates).length) {
       return res.status(400).json({ error: 'No editable daycare fields provided' });
     }
+    const validationError = validateOwnerListing({ ...daycare.toObject(), ...updates });
+    if (validationError) return res.status(400).json({ error: validationError });
     const updated = await Daycare.findByIdAndUpdate(
       req.params.id, { $set: updates }, { new: true, runValidators: true }
     );

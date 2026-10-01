@@ -1,0 +1,164 @@
+.owner-service-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 16px;
+  margin-top: 14px;
+  align-items: start;
+}
+
+.owner-age-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.owner-age-option {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 48px;
+  padding: 8px 10px;
+  border: 1px solid #E8E1D5;
+  border-radius: 9px;
+  color: #202520;
+  background: #fff;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.owner-age-option input {
+  accent-color: #FF6B35;
+  flex-shrink: 0;
+}
+
+.owner-max-children {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid #E8E1D5;
+  border-radius: 10px;
+  background: #FFFDF7;
+}
+
+.owner-capacity-note {
+  margin: 0;
+  color: #68788A;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.owner-days-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.owner-days-row button {
+  min-width: 46px;
+  padding: 8px 12px;
+  border: 1px solid #D8D2C7;
+  border-radius: 20px;
+  color: #404640;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.owner-days-row button[aria-pressed='true'] {
+  border-color: #268B74;
+  color: #fff;
+  background: #43A88E;
+}
+
+.owner-day-presets {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0 18px;
+}
+
+.owner-day-presets button {
+  padding: 0;
+  border: none;
+  color: #277E6D;
+  background: transparent;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.owner-day-presets span {
+  color: #D8D2C7;
+}
+
+.owner-time-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  max-width: 460px;
+}
+
+.owner-hours-preview {
+  margin: 12px 0 0;
+  color: #277E6D;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.owner-provider-features {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.owner-provider-feature {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 52px;
+  padding: 10px 12px;
+  border: 1px solid #E8E1D5;
+  border-radius: 9px;
+  color: #202520;
+  background: #FFFDF7;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.owner-provider-feature input {
+  width: 18px;
+  height: 18px;
+  accent-color: #7952F5;
+  flex-shrink: 0;
+}
+
+.provider-feature-popup {
+  padding: 2px 7px;
+  border-radius: 20px;
+  background: #E8F5F1;
+  color: #267561;
+  font-size: 11px;
+}
+
+@media (max-width: 680px) {
+  .owner-provider-features {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .owner-service-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .owner-age-options {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 420px) {
+  .owner-time-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

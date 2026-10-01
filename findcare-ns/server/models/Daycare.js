@@ -33,7 +33,17 @@ const daycareSchema = new mongoose.Schema({
     lat: { type: Number },
     lng: { type: Number }
   },
-  ageRange:     { type: [String] },
+  ageRange: {
+    type: [{ type: String, enum: ['infant', 'toddler', 'preschool', 'kindergarten', 'school-age'] }],
+    default: []
+  },
+  acceptsSubsidy: { type: Boolean, default: false },
+  mealsProvided: { type: Boolean, default: false },
+  outdoorPlaySpace: { type: Boolean, default: false },
+  maxChildren:  { type: Number, min: 1 },
+  daysOpen:     { type: [{ type: String, enum: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] }], default: [] },
+  opensAt:      { type: String },
+  closesAt:     { type: String },
   monthlyPrice: { type: Number },
   language:     { type: [String] },
   openHours:    { type: String },
