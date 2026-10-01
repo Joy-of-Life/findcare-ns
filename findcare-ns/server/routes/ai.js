@@ -17,24 +17,17 @@ router.post('/search', async (req, res) => {
         'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: 'qwen/qwen3.8-27b',
         max_tokens: 1000,
+        response_format: { type: 'json_object' },
         messages: [
           {
             role:    'system',
-            content: 'You are a daycare search assistant for Nova Scotia, Canada. Always respond with valid JSON only — no explanation, no markdown, just raw JSON.'
+            content: 'You are a daycare search assistant for Nova Scotia, Canada. Return valid JSON only with exactly these fields: city (Nova Scotia city name or null), ageRange ("infant", "toddler", "preschool", or null), language ("English", "French", or null), maxPrice (monthly CAD number or null), features (comma-separated string or null), availableOnly (boolean; true only when availability is explicitly requested), and summary (one sentence). Use null for unspecified or ambiguous values. Do not invent requirements.'
           },
           {
             role:    'user',
-            content: `Parse this natural language search query and extract search filters.
-Respond ONLY with a JSON object with these fields:
-- city (string — Nova Scotia city name)
-- ageRange (string — "infant", "toddler", or "preschool")
-- language (string — "English" or "French")
-- maxPrice (number — monthly price ceiling in CAD)
-- features (string — relevant program or facility keywords only; exclude location, age, language, price, and availability)
-- availableOnly (boolean — true when open or available spots are requested)
-- summary (string — one sentence summary of what was searched)
+            content: `Parse this natural language search query and extract search filters. Use the exact fields and types specified in the system instructions. The features value should contain only relevant program or facility keywords, excluding location, age, language, price, and availability.
 
 Query: "${query}"`
           }
@@ -54,6 +47,7 @@ Query: "${query}"`
     const text    = data.choices[0].message.content;
     const cleaned = text.replace(/```json|```/g, '').trim();
     const filters = JSON.parse(cleaned);
+    filters.availableOnly = /\b(?:available|availability|open spots?|spots? open|openings?|has space|accepting (?:new )?(?:children|kids|enrolments?|enrollments?))\b/i.test(query);
 
     res.json({ filters });
 
