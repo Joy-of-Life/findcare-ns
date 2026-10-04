@@ -29,6 +29,7 @@ app.use('/api/waitlist', require('./routes/waitlist'));
 app.use('/api/messages', require('./routes/messages'));
 app.use('/api/alerts',   require('./routes/alerts'));
 app.use('/api/ai',       require('./routes/ai'));
+app.use('/api/stats',    require('./routes/stats'));
 
 // Health check
 app.get('/', (req, res) => {

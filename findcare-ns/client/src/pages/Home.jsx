@@ -16,6 +16,7 @@ export default function Home() {
   const [saved, setSaved] = useState({});
   const [showPopup, setShowPopup] = useState(false);
   const [hoveredBtn, setHoveredBtn] = useState(null);
+  const [stats, setStats] = useState(null);
   const discoverHandled = useRef(false);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -66,6 +67,28 @@ export default function Home() {
   ];
 
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadStats() {
+      try {
+        const res = await fetch(`${API_URL}/api/stats`);
+        if (!res.ok) throw new Error('Unable to load homepage stats');
+        const data = await res.json();
+        if (!cancelled) setStats(data);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    loadStats();
+    const intervalId = setInterval(loadStats, 30000);
+    return () => {
+      cancelled = true;
+      clearInterval(intervalId);
+    };
+  }, [API_URL]);
 
   useEffect(() => {
     if (!user || user.role !== 'parent' || !token) {
@@ -240,11 +263,11 @@ export default function Home() {
 
           <div style={styles.statRow}>
             <div style={styles.statItem}>
-              <div style={styles.metric}>0+</div>
+              <div style={styles.metric}>{stats ? `${stats.familiesConnected.toLocaleString()}+` : '...'}</div>
               <div style={styles.metricLabel}>Families Connected</div>
             </div>
             <div style={styles.statItem}>
-              <div style={styles.metric}>0+</div>
+              <div style={styles.metric}>{stats ? `${stats.licensedDaycares.toLocaleString()}+` : '...'}</div>
               <div style={styles.metricLabel}>Licensed Daycares</div>
             </div>
             <div style={styles.statItem}>

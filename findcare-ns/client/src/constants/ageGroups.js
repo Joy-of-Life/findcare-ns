@@ -14,7 +14,7 @@ export const AGE_GROUP_DISPLAY_LABELS = Object.fromEntries(
   AGE_GROUP_OPTIONS.map(({ value, label, range }) => [value, `${label} (${range})`])
 );
 
-export const AVAILABILITY_AGE_GROUPS = ['infant', 'toddler', 'preschool'];
+export const AVAILABILITY_AGE_GROUPS = AGE_GROUP_OPTIONS.map(({ value }) => value);
 
 const DAY_OPTIONS = [
   { value: 'mon', label: 'Mon' }, { value: 'tue', label: 'Tue' },

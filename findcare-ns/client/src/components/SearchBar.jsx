@@ -22,31 +22,33 @@ export default function SearchBar({ onSearch }) {
   return (
     <div className="findcare-search" style={styles.wrap}>
       <div className="findcare-search__field" style={styles.inputWrap}>
-        <svg style={styles.icon} viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" />
-          <circle cx="12" cy="10" r="2.5" />
-        </svg>
-        <input
-          type="text"
-          className="findcare-search__input"
-          aria-label="Search by daycare or location"
-          placeholder="Enter city, postal code, or address..."
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-          onKeyDown={handleKeyDown}
-          style={styles.input}
-        />
-        {query && (
-          <button
-            type="button"
-            onClick={() => setQuery('')}
-            style={styles.clearBtn}
-            aria-label="Clear search text"
-            title="Clear search text"
-          >
-            ×
-          </button>
-        )}
+        <div className="findcare-search__location" style={styles.locationWrap}>
+          <svg style={styles.icon} viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" />
+            <circle cx="12" cy="10" r="2.5" />
+          </svg>
+          <input
+            type="text"
+            className="findcare-search__input"
+            aria-label="Search by daycare or location"
+            placeholder="Enter city, postal code, or address..."
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
+            style={styles.input}
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              style={styles.clearBtn}
+              aria-label="Clear search text"
+              title="Clear search text"
+            >
+              ×
+            </button>
+          )}
+        </div>
 
         <button
           type="button"
@@ -130,7 +132,8 @@ export default function SearchBar({ onSearch }) {
 
 const styles = {
   wrap: { background: '#FFFDF7', borderRadius: '17px', padding: '5px', border: '1px solid rgba(255, 255, 255, 0.84)', boxShadow: '0 8px 22px rgba(24, 20, 15, 0.13)' },
-  inputWrap: { display: 'flex', alignItems: 'center', gap: '8px', minHeight: '56px', padding: '0 7px', borderRadius: '12px', border: 'none', background: 'transparent', transition: 'box-shadow 180ms ease' },
+  inputWrap: { display: 'flex', alignItems: 'center', gap: '8px', minHeight: '56px', border: 'none', background: 'transparent' },
+  locationWrap: { display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0, minHeight: '56px', padding: '0 7px', borderRadius: '12px', border: '1px solid #8D8982', background: 'transparent', transition: 'box-shadow 180ms ease' },
   icon: { width: '21px', height: '21px', flexShrink: 0, margin: '0 4px', stroke: '#A7A29B', strokeWidth: '1.8', fill: 'none', strokeLinecap: 'round', strokeLinejoin: 'round' },
   input: { flex: 1, minWidth: 0, border: 'none', background: 'transparent', fontSize: '15px', color: '#2C2C2A', outline: 'none' },
   clearBtn: { border: 'none', background: 'transparent', color: '#777', fontSize: '22px', lineHeight: 1, cursor: 'pointer', padding: '4px' },

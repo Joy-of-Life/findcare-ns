@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 export default function WelcomePopup() {
   const [show, setShow] = useState(false);
-  const [daycareCount, setDaycareCount] = useState(0);
+  const [licensedDaycareCount, setLicensedDaycareCount] = useState(null);
   const navigate        = useNavigate();
 
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
@@ -14,18 +14,25 @@ export default function WelcomePopup() {
   }, []);
 
   useEffect(() => {
-    async function fetchDaycareCount() {
+    let cancelled = false;
+
+    async function fetchStats() {
       try {
-        const res = await fetch(`${API_URL}/api/daycares`);
+        const res = await fetch(`${API_URL}/api/stats`);
+        if (!res.ok) throw new Error('Unable to load daycare stats');
         const data = await res.json();
-        const count = Array.isArray(data) ? data.length : 0;
-        setDaycareCount(count);
+        if (!cancelled) setLicensedDaycareCount(data.licensedDaycares);
       } catch (err) {
-        console.error('Error fetching daycare count:', err);
-        setDaycareCount(0);
+        console.error('Error fetching daycare stats:', err);
       }
     }
-    fetchDaycareCount();
+
+    fetchStats();
+    const intervalId = setInterval(fetchStats, 30000);
+    return () => {
+      cancelled = true;
+      clearInterval(intervalId);
+    };
   }, [API_URL]);
 
   function handleOwner() {
@@ -79,7 +86,7 @@ export default function WelcomePopup() {
         {/* Stats */}
         <div style={styles.statsRow}>
           {[
-            { value: daycareCount > 0 ? `${daycareCount}+` : '0+',   label: 'Daycares listed'  },
+            { value: licensedDaycareCount === null ? '...' : `${licensedDaycareCount.toLocaleString()}+`, label: 'Licensed Daycares' },
             { value: 'NS',   label: 'Nova Scotia only'  },
             { value: 'Verified', label: 'Trusted & Verified Listings'  },
           ].map(s => (

@@ -2,7 +2,7 @@
   position: relative;
 }
 
-.findcare-search__field:focus-within {
+.findcare-search__location:focus-within {
   box-shadow: inset 0 0 0 1px rgba(255, 102, 95, 0.4);
 }
 

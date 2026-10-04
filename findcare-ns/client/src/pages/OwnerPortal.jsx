@@ -17,7 +17,7 @@ const DAYS_OPEN = [
   { value: 'fri', label: 'Fri' }, { value: 'sat', label: 'Sat' },
   { value: 'sun', label: 'Sun' },
 ];
-const DEFAULT_AVAILABILITY = { infant: 0, toddler: 0, preschool: 0 };
+const DEFAULT_AVAILABILITY = Object.fromEntries(AGE_GROUP_OPTIONS.map(({ value }) => [value, 0]));
 
 function toTimeInput(value = '') {
   const match = value.match(/^(\d{1,2}):(\d{2})\s*(am|pm)$/i);
@@ -64,6 +64,7 @@ function createDaycareForm(daycare = {}) {
     description: daycare.description || '',
     language: daycare.language || [],
     ageRange: daycare.ageRange || [],
+    unlicensedHomeProvider: Boolean(daycare.unlicensedHomeProvider),
     acceptsSubsidy: Boolean(daycare.acceptsSubsidy),
     mealsProvided: Boolean(daycare.mealsProvided),
     outdoorPlaySpace: Boolean(daycare.outdoorPlaySpace),
@@ -86,7 +87,16 @@ export default function OwnerPortal() {
 
   const [form, setForm] = useState(createDaycareForm);
   const [status, setStatus]       = useState('');
+  const [submitError, setSubmitError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showAttestation, setShowAttestation] = useState(false);
+  const [attestation, setAttestation] = useState({
+    capacityConfirmed: false,
+    unlicensedDisclosureConfirmed: false,
+    guidanceRead: false,
+    termsAccepted: false,
+    marketingOptIn: false,
+  });
 
   useEffect(() => {
     if (user) fetchMyDaycare();
@@ -101,7 +111,7 @@ export default function OwnerPortal() {
         const data = await res.json();
         if (data._id) {
           setMyDaycare(data);
-          setAvailability(data.availability || { infant: 0, toddler: 0, preschool: 0 });
+          setAvailability({ ...DEFAULT_AVAILABILITY, ...data.availability });
           setForm(createDaycareForm(data));
           setView('manage');
         } else { setView('register'); }
@@ -119,14 +129,21 @@ export default function OwnerPortal() {
         body:    JSON.stringify(availability)
       });
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Unable to update availability');
       setMyDaycare(data);
+      setAvailability({ ...DEFAULT_AVAILABILITY, ...data.availability });
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus(''), 2000);
-    } catch (err) { setSaveStatus('error'); }
+    } catch (err) { setSaveStatus(err.message || 'error'); }
   }
 
   function changeSpots(age, delta) {
-    setAvailability({ ...availability, [age]: Math.max(0, availability[age] + delta) });
+    setAvailability(current => {
+      const maxChildren = Number(myDaycare.maxChildren ?? myDaycare.maxChildrenAtATime ?? 0);
+      const total = AVAILABILITY_AGE_GROUPS.reduce((sum, group) => sum + Number(current[group] || 0), 0);
+      if (!myDaycare.ageRange?.includes(age) || (delta > 0 && total >= maxChildren)) return current;
+      return { ...current, [age]: Math.max(0, Number(current[age] || 0) + delta) };
+    });
   }
 
   function spotLabel(count) {
@@ -138,6 +155,9 @@ export default function OwnerPortal() {
   function handleChange(e) {
     const { name } = e.target;
     const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+    if (name === 'unlicensedHomeProvider' && !value) {
+      setAttestation(current => ({ ...current, guidanceRead: false }));
+    }
     if (name === 'opensAt' || name === 'closesAt') {
       setForm(current => {
         const next = { ...current, [name]: value };
@@ -171,27 +191,98 @@ export default function OwnerPortal() {
     setForm({ ...form, language: updated });
   }
   function toggleAgeRange(age) {
-    const updated = form.ageRange.includes(age) ? form.ageRange.filter(a => a !== age) : [...form.ageRange, age];
-    setForm({ ...form, ageRange: updated });
+    setForm(current => {
+      const ageRange = current.ageRange.includes(age)
+        ? current.ageRange.filter(value => value !== age)
+        : [...current.ageRange, age];
+      return {
+        ...current,
+        ageRange,
+        availability: ageRange.includes(age)
+          ? current.availability
+          : { ...current.availability, [age]: 0 },
+      };
+    });
   }
   function changeFormSpots(age, delta) {
-    setForm({ ...form, availability: { ...form.availability, [age]: Math.max(0, form.availability[age] + delta) } });
+    setForm(current => {
+      const total = AVAILABILITY_AGE_GROUPS.reduce((sum, group) => sum + Number(current.availability[group] || 0), 0);
+      const maxChildren = Number(current.maxChildren || 0);
+      if (!current.ageRange.includes(age) || (delta > 0 && total >= maxChildren)) return current;
+      return {
+        ...current,
+        availability: {
+          ...current.availability,
+          [age]: Math.max(0, Number(current.availability[age] || 0) + delta),
+        },
+      };
+    });
   }
 
   async function handleSubmit() {
+    const isEditing = view === 'edit' && Boolean(myDaycare);
+    const totalAvailableSpots = AVAILABILITY_AGE_GROUPS.reduce(
+      (total, age) => total + Number(form.availability[age] || 0), 0
+    );
+    const availabilityCountsAreValid = AVAILABILITY_AGE_GROUPS.every(age => {
+      const count = Number(form.availability[age] || 0);
+      return Number.isInteger(count) && count >= 0 && (count === 0 || form.ageRange.includes(age));
+    });
     const latitude = Number(form.coordinates.lat);
     const longitude = Number(form.coordinates.lng);
-    const hasValidCoordinates = form.coordinates.lat !== '' && form.coordinates.lng !== '' &&
-      latitude >= -90 && latitude <= 90 && longitude >= -180 && longitude <= 180;
-    const isValid = form.name.trim() && form.address.trim() && form.city.trim() && form.phone.trim() &&
-      form.description.trim() && form.monthlyPrice !== '' && Number.isFinite(Number(form.monthlyPrice)) && Number(form.monthlyPrice) >= 0 && form.language.length > 0 &&
-      form.ageRange.length > 0 && Number.isInteger(Number(form.maxChildren)) && Number(form.maxChildren) > 0 &&
-      form.daysOpen.length > 0 && form.opensAt && form.closesAt && form.opensAt < form.closesAt &&
-      hasValidCoordinates;
-    if (!isValid) { setStatus('error'); return; }
-    const isEditing = view === 'edit' && myDaycare;
+    const hasCoordinates = form.coordinates.lat !== '' || form.coordinates.lng !== '';
+    const hasValidCoordinates = !hasCoordinates || (form.coordinates.lat !== '' && form.coordinates.lng !== '' &&
+      latitude >= -90 && latitude <= 90 && longitude >= -180 && longitude <= 180);
+    const validationErrors = [];
+    if (!form.name.trim()) validationErrors.push('Daycare name');
+    if (!form.address.trim()) validationErrors.push('Address');
+    if (!form.city.trim()) validationErrors.push('City');
+    if (!form.phone.trim()) validationErrors.push('Phone');
+    if (!form.description.trim()) validationErrors.push('Description');
+    if (form.monthlyPrice === '' || !Number.isFinite(Number(form.monthlyPrice)) || Number(form.monthlyPrice) < 0) {
+      validationErrors.push('Monthly price');
+    }
+    if (!form.language.length) validationErrors.push('Languages offered');
+    if (!form.ageRange.length) validationErrors.push('Ages served');
+    if (!Number.isInteger(Number(form.maxChildren)) || Number(form.maxChildren) < 1) {
+      validationErrors.push('Max children at a time');
+    }
+    if (!availabilityCountsAreValid) validationErrors.push('Availability counts must be whole numbers for selected ages');
+    if (Number.isInteger(Number(form.maxChildren)) && totalAvailableSpots > Number(form.maxChildren)) {
+      validationErrors.push('Total open spots cannot exceed max children');
+    }
+    if (!form.daysOpen.length) validationErrors.push('Days open');
+    if (!form.opensAt) validationErrors.push('Opening time');
+    if (!form.closesAt) validationErrors.push('Closing time');
+    if (form.opensAt && form.closesAt && form.opensAt >= form.closesAt) {
+      validationErrors.push('Closing time must be later than opening time');
+    }
+    if (!hasValidCoordinates) validationErrors.push('Valid latitude and longitude');
+
+    if (validationErrors.length) {
+      setStatus('error');
+      setSubmitError(`Please fix: ${validationErrors.join('; ')}.`);
+      return;
+    }
+    if (!isEditing && !showAttestation) {
+      setStatus('');
+      setSubmitError('');
+      setShowAttestation(true);
+      return;
+    }
+    if (!isEditing && [
+      attestation.capacityConfirmed,
+      attestation.unlicensedDisclosureConfirmed,
+      ...(form.unlicensedHomeProvider ? [attestation.guidanceRead] : []),
+      attestation.termsAccepted,
+    ].some(confirmed => !confirmed)) {
+      setStatus('attestation-error');
+      setSubmitError('');
+      return;
+    }
     setSubmitting(true);
     setStatus('');
+    setSubmitError('');
     try {
       const res = await fetch(isEditing ? `${API_URL}/api/daycares/${myDaycare._id}` : `${API_URL}/api/daycares`, {
         method:  isEditing ? 'PATCH' : 'POST',
@@ -201,10 +292,10 @@ export default function OwnerPortal() {
           openHours: formatOpenHours(form.daysOpen, form.opensAt, form.closesAt),
           maxChildren: Number(form.maxChildren),
           monthlyPrice: Number(form.monthlyPrice),
-          coordinates:  { lat: latitude, lng: longitude }
+          coordinates: hasCoordinates ? { lat: latitude, lng: longitude } : undefined,
+          complianceAttestation: isEditing ? undefined : attestation,
         }),
       });
-      if (!res.ok) throw new Error('Failed');
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to save daycare details');
       const savedDaycare = {
@@ -215,8 +306,13 @@ export default function OwnerPortal() {
       setAvailability(data.availability || DEFAULT_AVAILABILITY);
       setForm(createDaycareForm(savedDaycare));
       setStatus('success');
+      setSubmitError('');
+      setShowAttestation(false);
       setView('manage');
-    } catch (err) { setStatus('error'); }
+    } catch (err) {
+      setStatus('error');
+      setSubmitError(err.message || 'Unable to save daycare details. Please try again.');
+    }
     finally { setSubmitting(false); }
   }
 
@@ -236,6 +332,66 @@ export default function OwnerPortal() {
   if (loading) return <div style={{ textAlign: 'center', padding: '60px', color: '#FF6B35', fontSize: '18px' }}>🏫 Loading...</div>;
 
   const isEditing = view === 'edit' && Boolean(myDaycare);
+
+  if (showAttestation && !isEditing) {
+    return (
+      <div className="owner-attestation" aria-labelledby="owner-attestation-title">
+        <h1 id="owner-attestation-title" className="owner-attestation__title">Compliance attestation</h1>
+        <p className="owner-attestation__intro">
+          These confirmations are required to list as an independent home child care provider. They protect you, parents, and our directory.
+        </p>
+
+        <section className="owner-attestation__guidance" aria-labelledby="owner-attestation-rules">
+          <h2 id="owner-attestation-rules">Provincial rules — Nova Scotia</h2>
+          <p>In Nova Scotia, an unlicensed home child care provider may care for up to 6 children under age 13, including their own children.</p>
+          <a href="https://childcarenovascotia.ca/operators/future-operators" target="_blank" rel="noreferrer">
+            Read the official guidance →
+          </a>
+        </section>
+
+        <div className="owner-attestation__checks">
+          <label className="owner-attestation__check">
+            <input type="checkbox" checked={attestation.capacityConfirmed} onChange={event => setAttestation(current => ({ ...current, capacityConfirmed: event.target.checked }))} />
+            <span>I confirm I provide care to no more than the number of children allowed under my provincial regulations.</span>
+          </label>
+          <label className="owner-attestation__check">
+            <input type="checkbox" checked={attestation.unlicensedDisclosureConfirmed} onChange={event => setAttestation(current => ({ ...current, unlicensedDisclosureConfirmed: event.target.checked }))} />
+            <span>I will not represent or market my service as a provincially licensed child care program.</span>
+          </label>
+          {form.unlicensedHomeProvider && (
+            <label className="owner-attestation__check">
+              <input type="checkbox" checked={attestation.guidanceRead} onChange={event => setAttestation(current => ({ ...current, guidanceRead: event.target.checked }))} />
+              <span>I have read my province's guidance for unlicensed home child care providers.</span>
+            </label>
+          )}
+          <label className="owner-attestation__check">
+            <input type="checkbox" checked={attestation.termsAccepted} onChange={event => setAttestation(current => ({ ...current, termsAccepted: event.target.checked }))} />
+            <span>I agree to FindCare NS's Terms of Service and Privacy Policy.</span>
+          </label>
+          <label className="owner-attestation__check">
+            <input type="checkbox" checked={attestation.marketingOptIn} onChange={event => setAttestation(current => ({ ...current, marketingOptIn: event.target.checked }))} />
+            <span>(Optional) I agree to receive occasional marketing emails about FindCare NS features and tips. I can unsubscribe at any time.</span>
+          </label>
+        </div>
+
+        {(status === 'attestation-error' || status === 'error') && (
+          <p className="owner-attestation__error" role="alert">
+            {status === 'attestation-error'
+              ? 'Confirm each required statement before submitting.'
+              : submitError || 'Unable to submit your listing. Please try again.'}
+          </p>
+        )}
+        <div className="owner-attestation__actions">
+          <button type="button" className="owner-attestation__back" onClick={() => { setStatus(''); setShowAttestation(false); }}>
+            <span aria-hidden="true">←</span> Back
+          </button>
+          <button type="button" className="owner-attestation__submit" onClick={handleSubmit} disabled={submitting}>
+            {submitting ? 'Submitting...' : 'Submit & publish listing'} <span aria-hidden="true">→</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // ─── MANAGE VIEW ──────────────────────────────────────────────
   if (view === 'manage' && myDaycare) {
@@ -288,7 +444,7 @@ export default function OwnerPortal() {
             Parents with alerts will be notified automatically when spots open up.
           </p>
           <div style={styles.availGrid}>
-            {AVAILABILITY_AGE_GROUPS.map(age => {
+            {myDaycare.ageRange?.filter(age => AVAILABILITY_AGE_GROUPS.includes(age)).map(age => {
               const badge = spotLabel(availability[age]);
               return (
                 <div key={age} style={styles.availItem}>
@@ -298,15 +454,19 @@ export default function OwnerPortal() {
                     {badge.text}
                   </div>
                   <div style={styles.availBtns}>
-                    <button onClick={() => changeSpots(age, -1)} style={styles.availBtn}>−</button>
-                    <button onClick={() => changeSpots(age, +1)} style={styles.availBtn}>+</button>
+                    <button disabled={!availability[age]} onClick={() => changeSpots(age, -1)} style={styles.availBtn}>−</button>
+                    <button
+                      disabled={AVAILABILITY_AGE_GROUPS.reduce((sum, group) => sum + Number(availability[group] || 0), 0) >= Number(myDaycare.maxChildren ?? myDaycare.maxChildrenAtATime ?? 0)}
+                      onClick={() => changeSpots(age, +1)}
+                      style={styles.availBtn}
+                    >+</button>
                   </div>
                 </div>
               );
             })}
           </div>
           {saveStatus === 'saved'  && <div style={styles.successMsg}>✅ Availability updated! Parents notified.</div>}
-          {saveStatus === 'error'  && <div style={styles.errorMsg}>Something went wrong. Try again.</div>}
+          {saveStatus && !['saving', 'saved'].includes(saveStatus) && <div style={styles.errorMsg}>{saveStatus}</div>}
           <button
             onClick={updateAvailability}
             disabled={saveStatus === 'saving'}
@@ -384,6 +544,22 @@ export default function OwnerPortal() {
             </span>
           </span>
         </label>
+        {!isEditing && (
+          <label style={styles.addressPrivacy}>
+            <input
+              type="checkbox"
+              name="unlicensedHomeProvider"
+              checked={form.unlicensedHomeProvider}
+              onChange={handleChange}
+            />
+            <span>
+              <strong>I am an unlicensed home child care provider</strong>
+              <span style={styles.addressPrivacyNote}>
+                Select this if you provide child care from your home without a provincial licence.
+              </span>
+            </span>
+          </label>
+        )}
         <div style={{ ...styles.field, marginTop: '12px' }}>
           <label style={styles.label}>Description *</label>
           <textarea name="description" value={form.description} onChange={handleChange}
@@ -489,7 +665,7 @@ export default function OwnerPortal() {
       <div style={styles.card}>
         <h2 style={styles.cardTitle}>🔔 Real-time availability</h2>
         <div style={styles.availGrid}>
-          {AVAILABILITY_AGE_GROUPS.map(age => {
+            {form.ageRange.filter(age => AVAILABILITY_AGE_GROUPS.includes(age)).map(age => {
             const badge = spotLabel(form.availability[age]);
             return (
               <div key={age} style={styles.availItem}>
@@ -497,13 +673,20 @@ export default function OwnerPortal() {
                 <div style={styles.availCount}>{form.availability[age]}</div>
                 <div style={{ ...styles.availBadge, background: badge.bg, color: badge.color }}>{badge.text}</div>
                 <div style={styles.availBtns}>
-                  <button onClick={() => changeFormSpots(age, -1)} style={styles.availBtn}>−</button>
-                  <button onClick={() => changeFormSpots(age, +1)} style={styles.availBtn}>+</button>
+                  <button disabled={!form.availability[age]} onClick={() => changeFormSpots(age, -1)} style={styles.availBtn}>−</button>
+                  <button
+                    disabled={AVAILABILITY_AGE_GROUPS.reduce((sum, group) => sum + Number(form.availability[group] || 0), 0) >= Number(form.maxChildren || 0)}
+                    onClick={() => changeFormSpots(age, +1)}
+                    style={styles.availBtn}
+                  >+</button>
                 </div>
               </div>
             );
           })}
         </div>
+        <p className="owner-availability-total">
+          Total open spots: {AVAILABILITY_AGE_GROUPS.reduce((sum, age) => sum + Number(form.availability[age] || 0), 0)} / {form.maxChildren || 0}
+        </p>
       </div>
 
       <div style={styles.card}>
@@ -514,16 +697,16 @@ export default function OwnerPortal() {
         <div style={styles.grid2}>
           <div style={styles.field}>
             <label style={styles.label}>Latitude</label>
-            <input type="number" name="lat" value={form.coordinates.lat} onChange={handleCoords} placeholder="e.g. 44.6488" style={styles.input} step="0.0001" min="-90" max="90" required />
+            <input type="number" name="lat" value={form.coordinates.lat} onChange={handleCoords} placeholder="e.g. 44.6488" style={styles.input} step="0.0001" min="-90" max="90" />
           </div>
           <div style={styles.field}>
             <label style={styles.label}>Longitude</label>
-            <input type="number" name="lng" value={form.coordinates.lng} onChange={handleCoords} placeholder="e.g. -63.5752" style={styles.input} step="0.0001" min="-180" max="180" required />
+            <input type="number" name="lng" value={form.coordinates.lng} onChange={handleCoords} placeholder="e.g. -63.5752" style={styles.input} step="0.0001" min="-180" max="180" />
           </div>
         </div>
       </div>
 
-      {status === 'error'   && <div style={styles.errorMsg}>Complete all required fields. Select at least one language, age group, and open day; add valid coordinates and a closing time after opening.</div>}
+      {status === 'error'   && <div style={styles.errorMsg}>{submitError || 'Complete all required fields.'}</div>}
 
       <button onClick={handleSubmit} disabled={submitting}
         style={{ ...styles.btnOrange, width: '100%', padding: '14px', fontSize: '15px' }}>

@@ -49,6 +49,18 @@
   line-height: 1.5;
 }
 
+.owner-availability-total {
+  margin: 12px 0 0;
+  color: #68788A;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.availBtns button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .owner-days-row {
   display: flex;
   gap: 8px;
@@ -143,7 +155,133 @@
   font-size: 11px;
 }
 
+.owner-attestation {
+  max-width: 700px;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 12px 32px 10px;
+  border: 1px solid #F3EBC2;
+  background: #FFFDE1;
+  color: #171717;
+}
+
+.owner-attestation__title {
+  margin: 0 0 8px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+.owner-attestation__intro {
+  margin: 0 0 24px;
+  color: #68788A;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.owner-attestation__guidance {
+  margin-bottom: 20px;
+  padding: 16px;
+  border: 1px solid #F0E5BB;
+  border-radius: 9px;
+}
+
+.owner-attestation__guidance h2 {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.owner-attestation__guidance p {
+  margin: 0 0 8px;
+  color: #68788A;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.owner-attestation__guidance a {
+  color: #287E70;
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.owner-attestation__checks {
+  display: grid;
+  gap: 12px;
+}
+
+.owner-attestation__check {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 13px 12px;
+  border: 1px solid #F0E5BB;
+  border-radius: 9px;
+  font-size: 14px;
+  line-height: 1.45;
+  cursor: pointer;
+}
+
+.owner-attestation__check input {
+  width: 16px;
+  height: 16px;
+  margin: 2px 0 0;
+  accent-color: #277E6D;
+  flex: 0 0 auto;
+}
+
+.owner-attestation__error {
+  margin: 12px 0 0;
+  color: #B42318;
+  font-size: 13px;
+}
+
+.owner-attestation__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #F0E5BB;
+}
+
+.owner-attestation__back,
+.owner-attestation__submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 0;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.owner-attestation__back {
+  padding: 10px 12px;
+  background: transparent;
+  color: #171717;
+}
+
+.owner-attestation__submit {
+  padding: 12px 16px;
+  border-radius: 7px;
+  background: #43A88E;
+  color: #fff;
+}
+
+.owner-attestation__submit:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
 @media (max-width: 680px) {
+  .owner-attestation {
+    padding: 16px;
+  }
+
   .owner-provider-features {
     grid-template-columns: minmax(0, 1fr);
   }

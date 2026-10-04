@@ -66,9 +66,18 @@ router.post('/notify', async (req, res) => {
       return res.json({ message: 'No subscribers to notify' });
     }
 
-    const totalSpots = (daycare.availability?.infant    || 0) +
-                       (daycare.availability?.toddler   || 0) +
-                       (daycare.availability?.preschool || 0);
+    const totalSpots = ['infant', 'toddler', 'preschool', 'kindergarten', 'school-age']
+      .reduce((total, ageGroup) => total + (daycare.availability?.[ageGroup] || 0), 0);
+    const availableByAge = [
+      ['infant', 'infant'],
+      ['toddler', 'toddler'],
+      ['preschool', 'preschool'],
+      ['kindergarten', 'kindergarten'],
+      ['school-age', 'school-age'],
+    ]
+      .filter(([ageGroup]) => daycare.availability?.[ageGroup] > 0)
+      .map(([ageGroup, label]) => `${daycare.availability[ageGroup]} ${label}`)
+      .join(' · ');
 
     if (totalSpots === 0) {
       return res.json({ message: 'No spots available — no alerts sent' });
@@ -101,9 +110,7 @@ router.post('/notify', async (req, res) => {
               <div style="background:#E1F5EE;border-radius:8px;padding:12px;margin-bottom:20px">
                 <p style="color:#085041;margin:0;font-weight:500">
                   Available spots:
-                  ${daycare.availability?.infant    > 0 ? `${daycare.availability.infant} infant · `    : ''}
-                  ${daycare.availability?.toddler   > 0 ? `${daycare.availability.toddler} toddler · `  : ''}
-                  ${daycare.availability?.preschool > 0 ? `${daycare.availability.preschool} preschool` : ''}
+                  ${availableByAge}
                 </p>
               </div>
               <a href="${process.env.CLIENT_URL}/daycare/${daycare._id}"

@@ -14,6 +14,26 @@ const OWNER_EDITABLE_FIELDS = [
 const SUPPORTED_AGE_GROUPS = ['infant', 'toddler', 'preschool', 'kindergarten', 'school-age'];
 const SUPPORTED_DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 
+function validateAvailability(fields) {
+  const availability = fields.availability || {};
+  const selectedAgeGroups = new Set(fields.ageRange || []);
+  let totalAvailableSpots = 0;
+
+  for (const ageGroup of SUPPORTED_AGE_GROUPS) {
+    const count = Number(availability[ageGroup] || 0);
+    if (!Number.isInteger(count) || count < 0) return 'Availability counts must be non-negative whole numbers';
+    if (count > 0 && !selectedAgeGroups.has(ageGroup)) {
+      return `Select ${ageGroup} under ages served before adding availability`;
+    }
+    totalAvailableSpots += count;
+  }
+
+  if (totalAvailableSpots > Number(fields.maxChildren)) {
+    return 'Total open spots cannot exceed max children';
+  }
+  return '';
+}
+
 function validateOwnerListing(fields) {
   const requiredText = ['name', 'address', 'city', 'phone', 'description', 'openHours'];
   if (requiredText.some(field => typeof fields[field] !== 'string' || !fields[field].trim())) {
@@ -35,9 +55,13 @@ function validateOwnerListing(fields) {
   }
   const latitude = fields.coordinates?.lat;
   const longitude = fields.coordinates?.lng;
-  if (latitude === '' || longitude === '' || !Number.isFinite(Number(latitude)) || !Number.isFinite(Number(longitude)) ||
-      Number(latitude) < -90 || Number(latitude) > 90 || Number(longitude) < -180 || Number(longitude) > 180) {
-    return 'Enter valid map coordinates';
+  const hasLatitude = latitude !== undefined && latitude !== '' && latitude !== null;
+  const hasLongitude = longitude !== undefined && longitude !== '' && longitude !== null;
+  if (hasLatitude !== hasLongitude || (hasLatitude && (
+    !Number.isFinite(Number(latitude)) || !Number.isFinite(Number(longitude)) ||
+    Number(latitude) < -90 || Number(latitude) > 90 || Number(longitude) < -180 || Number(longitude) > 180
+  ))) {
+    return 'Enter both valid map coordinates or leave both blank';
   }
   return '';
 }
@@ -122,7 +146,7 @@ router.get('/', async (req, res) => {
       if (onlyAvailable) {
         result = result.filter(d => ageRange
           ? (d.availability?.[ageRange] || 0) > 0
-          : ['infant', 'toddler', 'preschool'].some(group => (d.availability?.[group] || 0) > 0));
+          : SUPPORTED_AGE_GROUPS.some(group => (d.availability?.[group] || 0) > 0));
       }
 
       return res.json(result.sort((a, b) => a.distanceFromUser - b.distanceFromUser).map(toPublicDaycare));
@@ -144,7 +168,7 @@ router.get('/', async (req, res) => {
     if (onlyAvailable) {
       const availabilityFilter = ageRange
         ? { [`availability.${ageRange}`]: { $gt: 0 } }
-        : { $or: ['infant', 'toddler', 'preschool'].map(group => ({ [`availability.${group}`]: { $gt: 0 } })) };
+        : { $or: SUPPORTED_AGE_GROUPS.map(group => ({ [`availability.${group}`]: { $gt: 0 } })) };
       query.$and = [...(query.$and || []), availabilityFilter];
     }
 
@@ -182,10 +206,30 @@ router.get('/:id', async (req, res) => {
 // POST /api/daycares — create new daycare (owner only)
 router.post('/', auth, async (req, res) => {
   try {
+    const attestation = req.body.complianceAttestation;
+    if (!attestation) {
+      return res.status(400).json({ error: 'Complete all required compliance attestations' });
+    }
+    const requiredAttestations = [
+      attestation.capacityConfirmed,
+      attestation.unlicensedDisclosureConfirmed,
+      ...(req.body.unlicensedHomeProvider ? [attestation.guidanceRead] : []),
+      attestation.termsAccepted,
+    ];
+    if (requiredAttestations.some(confirmed => confirmed !== true)) {
+      return res.status(400).json({ error: 'Complete all required compliance attestations' });
+    }
     const validationError = validateOwnerListing(req.body);
     if (validationError) return res.status(400).json({ error: validationError });
+    const availabilityError = validateAvailability(req.body);
+    if (availabilityError) return res.status(400).json({ error: availabilityError });
     const daycare = new Daycare({
       ...req.body,
+      complianceAttestation: {
+        ...attestation,
+        marketingOptIn: attestation.marketingOptIn === true,
+        acceptedAt: new Date(),
+      },
       owner: req.user.id
     });
     const saved = await daycare.save();
@@ -211,11 +255,15 @@ router.patch('/:id', auth, async (req, res) => {
     }
     const validationError = validateOwnerListing({ ...daycare.toObject(), ...updates });
     if (validationError) return res.status(400).json({ error: validationError });
+    if (updates.availability) {
+      const availabilityError = validateAvailability({ ...daycare.toObject(), ...updates });
+      if (availabilityError) return res.status(400).json({ error: availabilityError });
+    }
     const updated = await Daycare.findByIdAndUpdate(
       req.params.id, { $set: updates }, { new: true, runValidators: true }
     );
     const availability = updates.availability;
-    const spotsJustOpened = availability && ['infant', 'toddler', 'preschool'].some(ageGroup =>
+    const spotsJustOpened = availability && SUPPORTED_AGE_GROUPS.some(ageGroup =>
       (daycare.availability?.[ageGroup] || 0) === 0 && (availability[ageGroup] || 0) > 0
     );
     if (spotsJustOpened) {
@@ -238,57 +286,41 @@ router.patch('/:id', auth, async (req, res) => {
 // PATCH /api/daycares/:id/availability — update spots (owner only)
 router.patch('/:id/availability', auth, async (req, res) => {
   try {
-    const { infant, toddler, preschool } = req.body;
-
-    console.log('Availability update received:', { infant, toddler, preschool });
-
     const current = await Daycare.findById(req.params.id);
     if (!current) return res.status(404).json({ error: 'Daycare not found' });
+    if (current.owner.toString() !== req.user.id) return res.status(403).json({ error: 'Not authorized' });
 
-    const hadSpots = (current.availability?.infant    || 0) +
-                 (current.availability?.toddler   || 0) +
-                 (current.availability?.preschool || 0);
+    const availability = req.body;
+    const availabilityError = validateAvailability({ ...current.toObject(), availability });
+    if (availabilityError) return res.status(400).json({ error: availabilityError });
 
-const updated = await Daycare.findByIdAndUpdate(
-  req.params.id,
-  { $set: {
-    'availability.infant':    infant,
-    'availability.toddler':   toddler,
-    'availability.preschool': preschool,
-  }},
-  { new: true }
-);
+    const updates = Object.fromEntries(SUPPORTED_AGE_GROUPS.map(ageGroup => [
+      `availability.${ageGroup}`,
+      Number(availability[ageGroup] || 0),
+    ]));
+    const spotsJustOpened = SUPPORTED_AGE_GROUPS.some(ageGroup =>
+      (current.availability?.[ageGroup] || 0) === 0 && Number(availability[ageGroup] || 0) > 0
+    );
+    const updated = await Daycare.findByIdAndUpdate(
+      req.params.id,
+      { $set: updates },
+      { new: true, runValidators: true }
+    );
 
-const nowHasSpots = (infant    || 0) +
-                    (toddler   || 0) +
-                    (preschool || 0);
-
-// Trigger alert if ANY age group went from 0 to having spots
-const infantOpened    = (current.availability?.infant    || 0) === 0 && (infant    || 0) > 0;
-const toddlerOpened   = (current.availability?.toddler   || 0) === 0 && (toddler   || 0) > 0;
-const preschoolOpened = (current.availability?.preschool || 0) === 0 && (preschool || 0) > 0;
-const spotsJustOpened = infantOpened || toddlerOpened || preschoolOpened;
-
-console.log('Spots just opened:', spotsJustOpened, { infantOpened, toddlerOpened, preschoolOpened });
-
-if (spotsJustOpened) {
-  try {
-    console.log('Triggering alert...');
-    await fetch(`http://localhost:${process.env.PORT || 5000}/api/alerts/notify`, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ daycareId: req.params.id })
-    });
-    console.log('Alert triggered successfully!');
-  } catch (alertErr) {
-    console.log('Alert trigger failed:', alertErr.message);
-  }
-}
-
+    if (spotsJustOpened) {
+      try {
+        await fetch(`http://localhost:${process.env.PORT || 5000}/api/alerts/notify`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ daycareId: req.params.id })
+        });
+      } catch (alertErr) {
+        console.warn('Availability alert failed:', alertErr.message);
+      }
+    }
     res.json(updated);
-
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(err.name === 'ValidationError' ? 400 : 500).json({ error: err.message });
   }
 });
 
