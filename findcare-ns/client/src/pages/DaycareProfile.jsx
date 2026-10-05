@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ReviewCard  from '../components/ReviewCard';
 import MapView     from '../components/MapView';
-import { AGE_GROUP_LABELS } from '../constants/ageGroups';
+import { AGE_GROUP_LABELS, AVAILABILITY_AGE_GROUPS } from '../constants/ageGroups';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -119,9 +119,10 @@ export default function DaycareProfile() {
   if (loading) return <div style={styles.loading}>🔍 Loading...</div>;
   if (!daycare) return <div style={styles.loading}>😕 Daycare not found.</div>;
 
-  const totalSpots = (daycare.availability?.infant    || 0) +
-                     (daycare.availability?.toddler   || 0) +
-                     (daycare.availability?.preschool || 0);
+  const totalSpots = AVAILABILITY_AGE_GROUPS.reduce(
+    (total, age) => total + (daycare.availability?.[age] || 0),
+    0
+  );
 
   return (
     <div style={styles.page}>
@@ -166,7 +167,9 @@ export default function DaycareProfile() {
       <div style={styles.card}>
         <h2 style={styles.cardTitle}>🔔 Real-time availability</h2>
         <div style={styles.availGrid}>
-          {['infant', 'toddler', 'preschool'].map(age => {
+          {daycare.ageRange
+            ?.filter(age => AVAILABILITY_AGE_GROUPS.includes(age))
+            .map(age => {
             const spots = daycare.availability?.[age] || 0;
             return (
               <div key={age} style={styles.availItem}>
