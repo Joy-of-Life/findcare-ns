@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const NOVA_SCOTIA_CITIES = require('../constants/novaScotiaCities');
 
 const availabilitySchema = new mongoose.Schema({
   infant:    { type: Number, default: 0 },
@@ -38,7 +39,11 @@ const daycareSchema = new mongoose.Schema({
   },
   city: {
     type:     String,
-    required: true
+    required: true,
+    enum: {
+      values: NOVA_SCOTIA_CITIES,
+      message: 'Select a city or community in Nova Scotia'
+    }
   },
   coordinates: {
     lat: { type: Number },

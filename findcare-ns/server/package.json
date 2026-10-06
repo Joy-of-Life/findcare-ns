@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test",
+    "seed": "node seed.js",
+    "seed:export": "node export-daycares.js"
   },
   "keywords": [],
   "author": "",

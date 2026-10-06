@@ -80,6 +80,8 @@ export default function OwnerPortal() {
   const { user, token } = useAuth();
   const navigate        = useNavigate();
   const [myDaycare, setMyDaycare]       = useState(null);
+  const [cityOptions, setCityOptions]   = useState([]);
+  const [cityOptionsError, setCityOptionsError] = useState('');
   const [loading, setLoading]           = useState(true);
   const [view, setView]                 = useState('manage');
   const [availability, setAvailability] = useState({ infant: 0, toddler: 0, preschool: 0 });
@@ -102,7 +104,22 @@ export default function OwnerPortal() {
     if (user) fetchMyDaycare();
   }, [user]);
 
+  async function fetchCityOptions() {
+    try {
+      const res = await fetch(`${API_URL}/api/daycares/cities`);
+      const data = await res.json();
+      if (!res.ok || !Array.isArray(data)) {
+        throw new Error(data.error || 'Unable to load Nova Scotia communities');
+      }
+      setCityOptions(data);
+      setCityOptionsError('');
+    } catch (err) {
+      setCityOptionsError(err.message || 'Unable to load Nova Scotia communities');
+    }
+  }
+
   async function fetchMyDaycare() {
+    fetchCityOptions();
     try {
       const res = await fetch(`${API_URL}/api/daycares/my`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -236,7 +253,7 @@ export default function OwnerPortal() {
     const validationErrors = [];
     if (!form.name.trim()) validationErrors.push('Daycare name');
     if (!form.address.trim()) validationErrors.push('Address');
-    if (!form.city.trim()) validationErrors.push('City');
+    if (!cityOptions.includes(form.city)) validationErrors.push('A city or community in Nova Scotia');
     if (!form.phone.trim()) validationErrors.push('Phone');
     if (!form.description.trim()) validationErrors.push('Description');
     if (form.monthlyPrice === '' || !Number.isFinite(Number(form.monthlyPrice)) || Number(form.monthlyPrice) < 0) {
@@ -511,25 +528,43 @@ export default function OwnerPortal() {
             { label: 'Daycare name *',      name: 'name',         type: 'text'   },
             { label: 'Phone *',             name: 'phone',        type: 'tel'    },
             { label: 'Address *',           name: 'address',      type: 'text'   },
-            { label: 'City *',              name: 'city',         type: 'text'   },
+            { label: 'City or community *', name: 'city',         type: 'select' },
             { label: 'Monthly price ($) *', name: 'monthlyPrice', type: 'number' },
           ].map(f => (
             <div key={f.name} style={styles.field}>
               <label style={styles.label}>{f.label}</label>
-              <input
-                id={f.name}
-                type={f.type}
-                name={f.name}
-                value={form[f.name]}
-                onChange={handleChange}
-                style={styles.input}
-                required
-                min={f.name === 'monthlyPrice' ? '0' : undefined}
-                step={f.name === 'monthlyPrice' ? '1' : undefined}
-              />
+              {f.type === 'select' ? (
+                <select
+                  id={f.name}
+                  name={f.name}
+                  value={form[f.name]}
+                  onChange={handleChange}
+                  style={styles.input}
+                  required
+                  disabled={!cityOptions.length}
+                >
+                  <option value="">Select a Nova Scotia community</option>
+                  {cityOptions.map(city => <option key={city} value={city}>{city}</option>)}
+                </select>
+              ) : (
+                <input
+                  id={f.name}
+                  type={f.type}
+                  name={f.name}
+                  value={form[f.name]}
+                  onChange={handleChange}
+                  style={styles.input}
+                  required
+                  min={f.name === 'monthlyPrice' ? '0' : undefined}
+                  step={f.name === 'monthlyPrice' ? '1' : undefined}
+                />
+              )}
             </div>
           ))}
         </div>
+        <p role={cityOptionsError ? 'alert' : undefined} style={{ fontSize: '13px', color: cityOptionsError ? '#C62828' : '#777', marginTop: '10px' }}>
+          {cityOptionsError || 'Listings are limited to communities in Nova Scotia.'}
+        </p>
         <label style={styles.addressPrivacy}>
           <input
             type="checkbox"

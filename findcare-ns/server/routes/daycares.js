@@ -1,8 +1,10 @@
 const express  = require('express');
 const router   = express.Router();
+const mongoose = require('mongoose');
 const Daycare  = require('../models/Daycare');
 const auth     = require('../middleware/auth');
 const toPublicDaycare = require('../daycarePrivacy');
+const NOVA_SCOTIA_CITIES = require('../constants/novaScotiaCities');
 
 const SEARCH_FIELDS = ['name', 'address', 'city', 'description', 'language', 'ageRange', 'openHours'];
 const SEARCH_STOP_WORDS = new Set(['a', 'an', 'and', 'care', 'childcare', 'daycare', 'daycares', 'find', 'for', 'in', 'looking', 'me', 'near', 'of', 'please', 'the', 'to', 'want', 'with']);
@@ -38,6 +40,9 @@ function validateOwnerListing(fields) {
   const requiredText = ['name', 'address', 'city', 'phone', 'description', 'openHours'];
   if (requiredText.some(field => typeof fields[field] !== 'string' || !fields[field].trim())) {
     return 'Complete all required daycare details';
+  }
+  if (!NOVA_SCOTIA_CITIES.includes(fields.city.trim())) {
+    return 'Select a city or community in Nova Scotia';
   }
   if (fields.monthlyPrice === '' || !Number.isFinite(Number(fields.monthlyPrice)) || Number(fields.monthlyPrice) < 0) {
     return 'Enter a valid monthly price';
@@ -82,6 +87,10 @@ function matchesSearch(daycare, terms) {
 }
 
 // GET /api/daycares — search with filters
+router.get('/cities', (req, res) => {
+  res.json(NOVA_SCOTIA_CITIES);
+});
+
 router.get('/', async (req, res) => {
   try {
     const { city, search, ageRange, maxPrice, language, rating, availableOnly, lat, lng } = req.query;
@@ -194,6 +203,9 @@ router.get('/my', auth, async (req, res) => {
 
 // GET /api/daycares/:id — single daycare
 router.get('/:id', async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    return res.status(400).json({ error: 'Invalid daycare ID' });
+  }
   try {
     const daycare = await Daycare.findById(req.params.id);
     if (!daycare) return res.status(404).json({ error: 'Daycare not found' });
