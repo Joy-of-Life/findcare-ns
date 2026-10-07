@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 export default function WelcomePopup() {
   const [show, setShow] = useState(false);
-  const [licensedDaycareCount, setLicensedDaycareCount] = useState(null);
+  const [daycareCount, setDaycareCount] = useState(null);
   const navigate        = useNavigate();
 
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
@@ -21,7 +21,10 @@ export default function WelcomePopup() {
         const res = await fetch(`${API_URL}/api/stats`);
         if (!res.ok) throw new Error('Unable to load daycare stats');
         const data = await res.json();
-        if (!cancelled) setLicensedDaycareCount(data.licensedDaycares);
+        if (!Number.isFinite(data.totalDaycares)) {
+          throw new Error('Daycare stats response is missing the total listing count');
+        }
+        if (!cancelled) setDaycareCount(data.totalDaycares);
       } catch (err) {
         console.error('Error fetching daycare stats:', err);
       }
@@ -64,7 +67,7 @@ export default function WelcomePopup() {
         <h2 style={styles.heading}>Finding the perfect daycare just got easier!</h2>
         <p style={styles.subheading}>Nova Scotia families, we're here for you.</p>
         <p style={styles.description}>
-          FindCare NS connects Nova Scotia parents with licensed daycare centres.<br/>
+          FindCare NS connects Nova Scotia parents with All available daycare centres.<br/>
           Search by city, age group, language and availability — all in one place.
         </p>
 
@@ -86,7 +89,7 @@ export default function WelcomePopup() {
         {/* Stats */}
         <div style={styles.statsRow}>
           {[
-            { value: licensedDaycareCount === null ? '...' : `${licensedDaycareCount.toLocaleString()}+`, label: 'Licensed Daycares' },
+            { value: Number.isFinite(daycareCount) ? `${daycareCount.toLocaleString()}+` : '...', label: 'Daycare Listings' },
             { value: 'NS',   label: 'Nova Scotia only'  },
             { value: 'Verified', label: 'Trusted & Verified Listings'  },
           ].map(s => (

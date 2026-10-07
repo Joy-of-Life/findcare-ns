@@ -267,8 +267,8 @@ export default function Home() {
               <div style={styles.metricLabel}>Families Connected</div>
             </div>
             <div style={styles.statItem}>
-              <div style={styles.metric}>{stats ? `${stats.licensedDaycares.toLocaleString()}+` : '...'}</div>
-              <div style={styles.metricLabel}>Licensed Daycares</div>
+              <div style={styles.metric}>{Number.isFinite(stats?.totalDaycares) ? `${stats.totalDaycares.toLocaleString()}+` : '...'}</div>
+              <div style={styles.metricLabel}>Daycare Listings</div>
             </div>
             <div style={styles.statItem}>
               <div style={styles.metric}>All‑Area</div>
