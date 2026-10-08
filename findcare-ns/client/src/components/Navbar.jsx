@@ -59,7 +59,7 @@ export default function Navbar() {
               onMouseEnter={() => setHoveredBtn('discover')}
               onMouseLeave={() => setHoveredBtn(null)}
             >
-              Browse all daycares
+              Browse All Daycares
             </Link>
             <Link
               to="/about"

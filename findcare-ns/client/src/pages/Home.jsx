@@ -462,7 +462,7 @@ export default function Home() {
           <div style={styles.footerColumn}>
             <h4 style={styles.footerTitle}>Quick Links</h4>
             <div style={styles.footerList}>
-              <Link to="/?discover=1" style={styles.footerLink}>Browse all daycares</Link>
+              <Link to="/?discover=1" style={styles.footerLink}>Browse All Daycares</Link>
               <Link to="/compare" style={styles.footerLink}>Compare daycares</Link>
               <Link to="/about" style={styles.footerLink}>About Us</Link>
               <Link to="/#faq" style={styles.footerLink}>FAQ</Link>
