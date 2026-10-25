@@ -1,6 +1,6 @@
 const User = require('../models/User');
 const Daycare = require('../models/Daycare');
-const transporter = require('./emailTransporter');
+const { sendEmail } = require('./emailService');
 
 async function sendAvailabilityAlerts(daycareId) {
   const daycare = await Daycare.findById(daycareId);
@@ -30,8 +30,7 @@ async function sendAvailabilityAlerts(daycareId) {
   }
 
   await Promise.all(subscribers.map(parent =>
-    transporter.sendMail({
-      from: process.env.GMAIL_USER,
+    sendEmail({
       to: parent.email,
       subject: `🎉 Spot available at ${daycare.name} — FindCare NS`,
       html: `

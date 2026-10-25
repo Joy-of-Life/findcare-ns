@@ -1,4 +1,18 @@
-# Server data sync
+# Server
+
+## Email delivery
+
+Email verification and availability alerts use the Resend HTTPS API. Configure
+these environment variables on the Render backend:
+
+- `RESEND_API_KEY`: API key from Resend.
+- `RESEND_FROM_EMAIL`: sender address or name/address using a domain verified
+  with Resend, such as `FindCare NS <alerts@example.com>`.
+
+The sender domain must be verified in Resend before emails can be delivered to
+parents. Do not use a Gmail App Password for these settings.
+
+## Data sync
 
 MongoDB is the live source of truth for daycare listings. To refresh the local
 seed snapshot from the database configured by `MONGO_URI`, run:

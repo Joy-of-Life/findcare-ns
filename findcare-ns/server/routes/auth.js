@@ -6,7 +6,7 @@ const crypto    = require('crypto');
 const mongoose  = require('mongoose');
 const User      = require('../models/User');
 const auth      = require('../middleware/auth');
-const transporter = require('../services/emailTransporter');
+const { sendEmail } = require('../services/emailService');
 
 // ─── REGISTER ─────────────────────────────────────────────────
 // POST /api/auth/register
@@ -53,8 +53,7 @@ router.post('/register', async (req, res) => {
 
     // Send verification email
     const verifyUrl = `${process.env.CLIENT_URL}/verify-email?token=${verifyToken}`;
-    await transporter.sendMail({
-      from:    process.env.GMAIL_USER,
+    await sendEmail({
       to:      email,
       subject: 'Welcome to FindCare NS — Please verify your email',
       html: `
