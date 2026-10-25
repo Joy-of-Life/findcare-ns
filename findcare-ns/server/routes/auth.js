@@ -3,19 +3,10 @@ const router    = express.Router();
 const bcrypt    = require('bcryptjs');
 const jwt       = require('jsonwebtoken');
 const crypto    = require('crypto');
-const nodemailer = require('nodemailer');
 const mongoose  = require('mongoose');
 const User      = require('../models/User');
 const auth      = require('../middleware/auth');
-
-// ─── Email transporter ────────────────────────────────────────
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_PASS
-  }
-});
+const transporter = require('../services/emailTransporter');
 
 // ─── REGISTER ─────────────────────────────────────────────────
 // POST /api/auth/register

@@ -123,7 +123,10 @@ export default function Compare() {
       {results.length > 0 && (
         <>
           <div style={styles.resultsHeader}>
-            <span style={styles.resultsCount}>{results.length} daycare{results.length === 1 ? '' : 's'} found</span>
+            <div style={styles.resultsSummary}>
+              <span style={styles.resultsCount}>{results.length} daycare{results.length === 1 ? '' : 's'} found</span>
+              <span style={styles.resultsHint}>Select up to 3 daycares above to compare them below.</span>
+            </div>
             <button type="button" onClick={clearSearch} style={styles.clearSearchBtn}>
               <span aria-hidden="true">×</span> Clear search
             </button>
@@ -298,7 +301,9 @@ const styles = {
   loading:       { textAlign: 'center', color: '#FF6B35', padding: '20px' },
   noMatches:     { textAlign: 'center', color: '#6B7280', background: '#FFF3E0', border: '1px solid #FFCC80', borderRadius: '8px', padding: '18px', margin: '8px 0 24px' },
   resultsHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', margin: '8px 0 10px' },
+  resultsSummary:{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' },
   resultsCount:  { color: '#56616A', fontSize: '13px', fontWeight: 600 },
+  resultsHint:   { color: '#6B7280', fontSize: '12px' },
   clearSearchBtn:{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '6px 10px', border: '1px solid #E5B192', borderRadius: '6px', color: '#9C4526', background: '#fff', fontSize: '12px', fontWeight: 600, cursor: 'pointer' },
   resultsList:   { display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '24px' },
   resultItem:    { display: 'flex', alignItems: 'center', padding: '12px 14px', borderRadius: '10px', border: '1.5px solid', cursor: 'pointer' },

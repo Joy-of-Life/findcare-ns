@@ -5,6 +5,7 @@ const Daycare  = require('../models/Daycare');
 const auth     = require('../middleware/auth');
 const toPublicDaycare = require('../daycarePrivacy');
 const NOVA_SCOTIA_CITIES = require('../constants/novaScotiaCities');
+const sendAvailabilityAlerts = require('../services/availabilityAlerts');
 
 const SEARCH_FIELDS = ['name', 'address', 'city', 'description', 'language', 'ageRange', 'openHours'];
 const SEARCH_STOP_WORDS = new Set(['a', 'an', 'and', 'care', 'childcare', 'daycare', 'daycares', 'find', 'for', 'in', 'looking', 'me', 'near', 'of', 'please', 'the', 'to', 'want', 'with']);
@@ -280,11 +281,7 @@ router.patch('/:id', auth, async (req, res) => {
     );
     if (spotsJustOpened) {
       try {
-        await fetch(`http://localhost:${process.env.PORT || 5000}/api/alerts/notify`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ daycareId: req.params.id })
-        });
+        await sendAvailabilityAlerts(req.params.id);
       } catch (alertErr) {
         console.warn('Availability alert failed:', alertErr.message);
       }
@@ -321,11 +318,7 @@ router.patch('/:id/availability', auth, async (req, res) => {
 
     if (spotsJustOpened) {
       try {
-        await fetch(`http://localhost:${process.env.PORT || 5000}/api/alerts/notify`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ daycareId: req.params.id })
-        });
+        await sendAvailabilityAlerts(req.params.id);
       } catch (alertErr) {
         console.warn('Availability alert failed:', alertErr.message);
       }
