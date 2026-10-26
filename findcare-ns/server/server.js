@@ -1,16 +1,13 @@
 const express  = require('express');
 const mongoose = require('mongoose');
-const cors     = require('cors');
 const { rateLimit } = require('express-rate-limit');
 require('dotenv').config();
+const corsMiddleware = require('./middleware/cors');
 
 const app = express();
 
 // Middleware
-app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
-  credentials: true
-}));
+app.use(corsMiddleware);
 app.use(express.json());
 
 // Rate limiting on auth routes

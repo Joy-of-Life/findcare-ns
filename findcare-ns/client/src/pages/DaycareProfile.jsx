@@ -16,6 +16,7 @@ export default function DaycareProfile() {
   const [daycare, setDaycare]           = useState(null);
   const [reviews, setReviews]           = useState([]);
   const [loading, setLoading]           = useState(true);
+  const [loadError, setLoadError]       = useState('');
   const [form, setForm]                 = useState({ rating: 5, text: '' });
   const [submitting, setSubmitting]     = useState(false);
   const [error, setError]               = useState('');
@@ -29,9 +30,20 @@ export default function DaycareProfile() {
   async function fetchDaycare() {
     try {
       const res  = await fetch(`${API_URL}/api/daycares/${id}`);
+      if (!res.ok) {
+        if (res.status === 404) {
+          setDaycare(null);
+          return;
+        }
+        throw new Error(`Daycare request failed with status ${res.status}`);
+      }
       const data = await res.json();
       setDaycare(data);
-    } catch (err) { console.error(err); }
+      setLoadError('');
+    } catch (err) {
+      console.error(err);
+      setLoadError('Unable to load this daycare. Please check your connection and try again.');
+    }
     finally { setLoading(false); }
   }
 
@@ -117,6 +129,7 @@ export default function DaycareProfile() {
   }
 
   if (loading) return <div style={styles.loading}>🔍 Loading...</div>;
+  if (loadError) return <div role="alert" style={styles.loading}>{loadError}</div>;
   if (!daycare) return <div style={styles.loading}>😕 Daycare not found.</div>;
 
   const totalSpots = AVAILABILITY_AGE_GROUPS.reduce(
