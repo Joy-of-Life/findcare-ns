@@ -201,7 +201,7 @@ router.get('/', async (req, res) => {
         const daycareLng = Number(item.coordinates?.lng);
         if (!Number.isFinite(daycareLat) || !Number.isFinite(daycareLng) ||
             daycareLat < -90 || daycareLat > 90 || daycareLng < -180 || daycareLng > 180) {
-          return { ...item, distanceFromUser: null };
+          return { daycare: item, distance: null };
         }
 
         const radians = degrees => degrees * Math.PI / 180;
@@ -211,15 +211,18 @@ router.get('/', async (req, res) => {
           Math.cos(radians(userLat)) * Math.cos(radians(daycareLat)) *
           Math.sin(deltaLng / 2) ** 2;
         const distance = 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return { ...item, distanceFromUser: Math.round(distance * 10) / 10 };
+        return { daycare: item, distance };
       });
 
       withDistance.sort((a, b) => {
-        if (a.distanceFromUser == null) return b.distanceFromUser == null ? ratingAndNameOrder(a, b) : 1;
-        if (b.distanceFromUser == null) return -1;
-        return a.distanceFromUser - b.distanceFromUser || ratingAndNameOrder(a, b);
+        if (a.distance == null) return b.distance == null ? 0 : 1;
+        if (b.distance == null) return -1;
+        return a.distance - b.distance;
       });
-      return res.json(withDistance.map(toPublicDaycare));
+      return res.json(withDistance.map(({ daycare, distance }) => toPublicDaycare({
+        ...daycare,
+        distanceFromUser: distance == null ? null : Math.round(distance * 10) / 10,
+      })));
     }
 
     res.json(daycares.sort(ratingAndNameOrder).map(toPublicDaycare));

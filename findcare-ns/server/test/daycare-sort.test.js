@@ -25,23 +25,25 @@ async function requestListings(query) {
   }
 }
 
-test('browse distance ordering uses distance, then rating, then name and keeps listings without coordinates', async () => {
+test('browse distance ordering uses only distance and keeps listings without coordinates last', async () => {
   Daycare.find = async () => [
     { name: 'Far Star', rating: 5, coordinates: { lat: 45, lng: -63.58 } },
     { name: 'Near Zebra', rating: 4, coordinates: { lat: 44.651, lng: -63.58 } },
     { name: 'Near Alpha', rating: 4, coordinates: { lat: 44.651, lng: -63.58 } },
     { name: 'Near Top Rated', rating: 5, coordinates: { lat: 44.651, lng: -63.58 } },
     { name: 'No Location', rating: 5 },
+    { name: 'No Location A', rating: 1 },
   ];
 
   const daycares = await requestListings('?sortByDistance=true&lat=44.65&lng=-63.58');
 
   assert.deepEqual(daycares.map(daycare => daycare.name), [
-    'Near Top Rated',
-    'Near Alpha',
     'Near Zebra',
+    'Near Alpha',
+    'Near Top Rated',
     'Far Star',
     'No Location',
+    'No Location A',
   ]);
   assert.equal(daycares[0].distanceFromUser, 0.1);
   assert.equal(daycares[4].distanceFromUser, null);
