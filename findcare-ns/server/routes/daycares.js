@@ -5,7 +5,9 @@ const Daycare  = require('../models/Daycare');
 const auth     = require('../middleware/auth');
 const toPublicDaycare = require('../daycarePrivacy');
 const NOVA_SCOTIA_CITIES = require('../constants/novaScotiaCities');
+const SUPPORTED_AGE_GROUPS = require('../constants/ageGroups');
 const sendAvailabilityAlerts = require('../services/availabilityAlerts');
+const getAvailabilityIncreases = require('../services/availabilityChanges');
 
 const SEARCH_FIELDS = ['name', 'address', 'city', 'description', 'language', 'ageRange', 'openHours'];
 const SEARCH_STOP_WORDS = new Set(['a', 'an', 'and', 'care', 'childcare', 'daycare', 'daycares', 'find', 'for', 'in', 'looking', 'me', 'near', 'of', 'please', 'the', 'to', 'want', 'with']);
@@ -14,7 +16,6 @@ const OWNER_EDITABLE_FIELDS = [
   'language', 'ageRange', 'coordinates', 'availability', 'hideAddress', 'maxChildren',
   'daysOpen', 'opensAt', 'closesAt', 'acceptsSubsidy', 'mealsProvided', 'outdoorPlaySpace'
 ];
-const SUPPORTED_AGE_GROUPS = ['infant', 'toddler', 'preschool', 'kindergarten', 'school-age'];
 const SUPPORTED_DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 
 function validateAvailability(fields) {
@@ -275,13 +276,12 @@ router.patch('/:id', auth, async (req, res) => {
     const updated = await Daycare.findByIdAndUpdate(
       req.params.id, { $set: updates }, { new: true, runValidators: true }
     );
-    const availability = updates.availability;
-    const spotsJustOpened = availability && SUPPORTED_AGE_GROUPS.some(ageGroup =>
-      (daycare.availability?.[ageGroup] || 0) === 0 && (availability[ageGroup] || 0) > 0
-    );
-    if (spotsJustOpened) {
+    const availabilityIncreases = updates.availability
+      ? getAvailabilityIncreases(daycare.availability, updated.availability)
+      : {};
+    if (Object.keys(availabilityIncreases).length > 0) {
       try {
-        await sendAvailabilityAlerts(req.params.id);
+        await sendAvailabilityAlerts(req.params.id, availabilityIncreases);
       } catch (alertErr) {
         console.warn('Availability alert failed:', alertErr.message);
       }
@@ -307,18 +307,16 @@ router.patch('/:id/availability', auth, async (req, res) => {
       `availability.${ageGroup}`,
       Number(availability[ageGroup] || 0),
     ]));
-    const spotsJustOpened = SUPPORTED_AGE_GROUPS.some(ageGroup =>
-      (current.availability?.[ageGroup] || 0) === 0 && Number(availability[ageGroup] || 0) > 0
-    );
+    const availabilityIncreases = getAvailabilityIncreases(current.availability, availability);
     const updated = await Daycare.findByIdAndUpdate(
       req.params.id,
       { $set: updates },
       { new: true, runValidators: true }
     );
 
-    if (spotsJustOpened) {
+    if (Object.keys(availabilityIncreases).length > 0) {
       try {
-        await sendAvailabilityAlerts(req.params.id);
+        await sendAvailabilityAlerts(req.params.id, availabilityIncreases);
       } catch (alertErr) {
         console.warn('Availability alert failed:', alertErr.message);
       }

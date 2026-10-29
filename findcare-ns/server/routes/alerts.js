@@ -2,6 +2,7 @@ const express    = require('express');
 const router     = express.Router();
 const User       = require('../models/User');
 const auth       = require('../middleware/auth');
+const SUPPORTED_AGE_GROUPS = require('../constants/ageGroups');
 const sendAvailabilityAlerts = require('../services/availabilityAlerts');
 
 // POST /api/alerts/subscribe — turn on alerts
@@ -38,7 +39,18 @@ router.patch('/unsubscribe', auth, async (req, res) => {
 // POST /api/alerts/notify — triggered when availability opens up
 router.post('/notify', async (req, res) => {
   try {
-    const result = await sendAvailabilityAlerts(req.body.daycareId);
+    const { daycareId, increasedAvailability } = req.body;
+    if (!daycareId || !increasedAvailability || typeof increasedAvailability !== 'object' ||
+        Array.isArray(increasedAvailability)) {
+      return res.status(400).json({ error: 'Daycare ID and availability increases are required' });
+    }
+    const hasInvalidIncrease = Object.entries(increasedAvailability).some(([ageGroup, count]) =>
+      !SUPPORTED_AGE_GROUPS.includes(ageGroup) || !Number.isInteger(count) || count < 1
+    );
+    if (hasInvalidIncrease) {
+      return res.status(400).json({ error: 'Availability increases must contain valid age groups and positive whole-number counts' });
+    }
+    const result = await sendAvailabilityAlerts(daycareId, increasedAvailability);
     res.status(result.status).json(
       result.status === 404 ? { error: result.message } : { message: result.message }
     );

@@ -1,38 +1,67 @@
 const User = require('../models/User');
 const Daycare = require('../models/Daycare');
+const Waitlist = require('../models/Waitlist');
+const AGE_GROUPS = require('../constants/ageGroups');
 const { sendEmail } = require('./emailService');
 
-async function sendAvailabilityAlerts(daycareId) {
+async function sendAvailabilityAlerts(daycareId, increasedAvailability = {}) {
   const daycare = await Daycare.findById(daycareId);
   if (!daycare) return { status: 404, message: 'Daycare not found' };
 
+  const availableIncreases = increasedAvailability;
+  const increasedGroups = Object.keys(availableIncreases)
+    .filter(ageGroup => AGE_GROUPS.includes(ageGroup) && availableIncreases[ageGroup] > 0);
+
+  if (increasedGroups.length === 0) {
+    return { status: 200, message: 'No availability increases to notify' };
+  }
+
+  const waitlistEntries = await Waitlist.find({
+    daycare: daycareId,
+    status: 'active',
+  });
+  const waitlistedGroupsByParent = new Map();
+  for (const entry of waitlistEntries) {
+    const parentId = entry.parent.toString();
+    if (!waitlistedGroupsByParent.has(parentId)) waitlistedGroupsByParent.set(parentId, new Set());
+    waitlistedGroupsByParent.get(parentId).add(entry.ageGroup);
+  }
+
+  const waitlistedParentIds = [...waitlistedGroupsByParent.keys()];
+  const waitlistedParents = waitlistedParentIds.length
+    ? await User.find({ _id: { $in: waitlistedParentIds }, role: 'parent' })
+    : [];
+  const waitlistedParentsById = new Map(
+    waitlistedParents.map(parent => [parent._id.toString(), parent])
+  );
   const subscribers = await User.find({
     savedDaycares: daycareId,
     'alertPrefs.email': true,
     role: 'parent',
   });
 
-  console.log(`Found ${subscribers.length} subscribers for ${daycare.name}`);
+  const recipients = [];
+  for (const [parentId, ageGroups] of waitlistedGroupsByParent) {
+    const parent = waitlistedParentsById.get(parentId);
+    const matchingGroups = increasedGroups.filter(ageGroup => ageGroups.has(ageGroup));
+    if (parent && matchingGroups.length > 0) {
+      recipients.push({ parent, ageGroups: matchingGroups, isWaitlisted: true });
+    }
+  }
+  for (const parent of subscribers) {
+    if (!waitlistedGroupsByParent.has(parent._id.toString())) {
+      recipients.push({ parent, ageGroups: increasedGroups, isWaitlisted: false });
+    }
+  }
 
-  if (subscribers.length === 0) {
+  if (recipients.length === 0) {
     return { status: 200, message: 'No subscribers to notify' };
   }
 
-  const totalSpots = ['infant', 'toddler', 'preschool', 'kindergarten', 'school-age']
-    .reduce((total, ageGroup) => total + (daycare.availability?.[ageGroup] || 0), 0);
-  const availableByAge = ['infant', 'toddler', 'preschool', 'kindergarten', 'school-age']
-    .filter(ageGroup => daycare.availability?.[ageGroup] > 0)
-    .map(ageGroup => `${daycare.availability[ageGroup]} ${ageGroup}`)
-    .join(' · ');
-
-  if (totalSpots === 0) {
-    return { status: 200, message: 'No spots available — no alerts sent' };
-  }
-
-  await Promise.all(subscribers.map(parent =>
+  await Promise.all(recipients.map(({ parent, ageGroups, isWaitlisted }) =>
     sendEmail({
       to: parent.email,
-      subject: `🎉 Spot available at ${daycare.name} — FindCare NS`,
+      subject: `🎉 Availability increased at ${daycare.name} — FindCare NS`,
       html: `
         <div style="font-family:sans-serif;max-width:600px;margin:0 auto">
           <div style="background:#1D9E75;padding:24px;border-radius:8px 8px 0 0">
@@ -42,7 +71,7 @@ async function sendAvailabilityAlerts(daycareId) {
           <div style="background:#fff;padding:24px;border:1px solid #E8E6E0;border-top:none;border-radius:0 0 8px 8px">
             <h2 style="color:#2C2C2A;margin:0 0 8px">A spot just opened up!</h2>
             <p style="color:#6B7280;margin:0 0 20px">
-              Good news, ${parent.name}! A spot has opened at one of your saved daycares.
+              Good news, ${parent.name}! Availability has increased at ${daycare.name}.
             </p>
             <div style="background:#F8F7F4;border-radius:8px;padding:16px;margin-bottom:20px">
               <h3 style="color:#2C2C2A;margin:0 0 8px">${daycare.name}</h3>
@@ -53,8 +82,8 @@ async function sendAvailabilityAlerts(daycareId) {
             </div>
             <div style="background:#E1F5EE;border-radius:8px;padding:12px;margin-bottom:20px">
               <p style="color:#085041;margin:0;font-weight:500">
-                Available spots:
-                ${availableByAge}
+                Newly available spots:
+                ${ageGroups.map(ageGroup => `${availableIncreases[ageGroup]} ${ageGroup}`).join(' · ')}
               </p>
             </div>
             <a href="${process.env.CLIENT_URL}/daycare/${daycare._id}"
@@ -62,7 +91,9 @@ async function sendAvailabilityAlerts(daycareId) {
               View daycare →
             </a>
             <p style="color:#6B7280;font-size:12px;margin-top:20px">
-              You received this because you saved ${daycare.name} on FindCare NS.
+              ${isWaitlisted
+                ? `You received this because you joined the waitlist for ${ageGroups.join(', ')} at ${daycare.name}.`
+                : `You received this because you saved ${daycare.name} on FindCare NS.`}
             </p>
           </div>
         </div>
@@ -70,7 +101,7 @@ async function sendAvailabilityAlerts(daycareId) {
     })
   ));
 
-  return { status: 200, message: `Notified ${subscribers.length} subscribers` };
+  return { status: 200, message: `Notified ${recipients.length} subscribers` };
 }
 
 module.exports = sendAvailabilityAlerts;

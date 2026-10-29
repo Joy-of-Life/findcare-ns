@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const SUPPORTED_AGE_GROUPS = require('../constants/ageGroups');
 
 const waitlistSchema = new mongoose.Schema({
   daycare: {
@@ -13,7 +14,7 @@ const waitlistSchema = new mongoose.Schema({
   },
   ageGroup: {
     type:     String,
-    enum:     ['infant', 'toddler', 'preschool', 'kindergarten', 'school-age'],
+    enum:     SUPPORTED_AGE_GROUPS,
     required: true
   },
   position: {

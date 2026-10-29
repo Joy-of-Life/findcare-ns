@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const NOVA_SCOTIA_CITIES = require('../constants/novaScotiaCities');
+const SUPPORTED_AGE_GROUPS = require('../constants/ageGroups');
 
 const availabilitySchema = new mongoose.Schema({
   infant:    { type: Number, default: 0 },
@@ -50,7 +51,7 @@ const daycareSchema = new mongoose.Schema({
     lng: { type: Number }
   },
   ageRange: {
-    type: [{ type: String, enum: ['infant', 'toddler', 'preschool', 'kindergarten', 'school-age'] }],
+    type: [{ type: String, enum: SUPPORTED_AGE_GROUPS }],
     default: []
   },
   unlicensedHomeProvider: { type: Boolean, default: false },
