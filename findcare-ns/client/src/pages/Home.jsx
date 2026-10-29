@@ -17,6 +17,7 @@ export default function Home() {
   const [showPopup, setShowPopup] = useState(false);
   const [hoveredBtn, setHoveredBtn] = useState(null);
   const [stats, setStats] = useState(null);
+  const [browseAllWithLocation, setBrowseAllWithLocation] = useState(false);
   const discoverHandled = useRef(false);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -125,6 +126,9 @@ export default function Home() {
     setLoading(true);
     setSearched(true);
     setShowPopup(true);
+    setBrowseAllWithLocation(Boolean(
+      filters.sortByDistance && filters.lat != null && filters.lng != null
+    ));
     try {
       const params = new URLSearchParams();
       if (filters.city) params.append('city', filters.city);
@@ -552,7 +556,7 @@ export default function Home() {
 
               {!loading && view === 'map' && <MapView daycares={results} />}
 
-              {!loading && view === 'list' && results.length > 0 && results[0]?.distanceFromUser && (
+              {!loading && view === 'list' && results.some(daycare => daycare.distanceFromUser != null) && (
                 <div style={{ 
                   padding: '12px 16px', 
                   background: '#FFF3E0', 
@@ -561,7 +565,9 @@ export default function Home() {
                   fontSize: '14px',
                   fontWeight: '500'
                 }}>
-                  📍 Showing daycares within 25km of your location
+                  📍 {browseAllWithLocation
+                    ? 'All daycares are shown, sorted by distance from your location'
+                    : 'Showing daycares within 25km of your location'}
                 </div>
               )}
 
