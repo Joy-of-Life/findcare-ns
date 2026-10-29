@@ -136,11 +136,12 @@ export default function Home() {
       if (filters.voiceQuery || filters.query || filters.search) {
         params.append('search', filters.voiceQuery || filters.query || filters.search);
       }
-      if (filters.lat && filters.lng) {
+      if (filters.lat != null && filters.lng != null) {
         params.append('lat', filters.lat);
         params.append('lng', filters.lng);
-        params.append('radius', filters.radius || 25);
+        if (!filters.sortByDistance) params.append('radius', filters.radius || 25);
       }
+      if (filters.sortByDistance) params.append('sortByDistance', 'true');
       const res = await fetch(`${API_URL}/api/daycares?${params}`);
       const data = await res.json();
       setResults(Array.isArray(data) ? data : []);
@@ -161,7 +162,23 @@ export default function Home() {
     if (discoverHandled.current) return;
     discoverHandled.current = true;
 
-    handleSearch({});
+    const browseAll = (position) => {
+      const filters = { sortByDistance: Boolean(position) };
+      if (position) {
+        filters.lat = position.coords.latitude;
+        filters.lng = position.coords.longitude;
+      }
+      handleSearch(filters);
+    };
+    if (navigator.geolocation) {
+      setLoading(true);
+      navigator.geolocation.getCurrentPosition(browseAll, () => browseAll(null), {
+        maximumAge: 300000,
+        timeout: 10000,
+      });
+    } else {
+      browseAll(null);
+    }
     const nextParams = new URLSearchParams(searchParams);
     nextParams.delete('discover');
     setSearchParams(nextParams, { replace: true });

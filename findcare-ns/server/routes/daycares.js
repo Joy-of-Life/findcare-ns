@@ -95,7 +95,7 @@ router.get('/cities', (req, res) => {
 
 router.get('/', async (req, res) => {
   try {
-    const { city, search, ageRange, maxPrice, language, rating, availableOnly, lat, lng } = req.query;
+    const { city, search, ageRange, maxPrice, language, rating, availableOnly, lat, lng, sortByDistance } = req.query;
     const searchTerms = typeof search === 'string'
       ? search.trim().split(/\s+/)
         .map(term => term.replace(/^[^\w]+|[^\w]+$/g, '').toLowerCase())
@@ -106,7 +106,7 @@ router.get('/', async (req, res) => {
     const query = {};
 
     // If lat/lng provided, filter by distance (hardcoded to 25km)
-    if (lat && lng) {
+    if (lat != null && lng != null && sortByDistance !== 'true') {
       const userLat = parseFloat(lat);
       const userLng = parseFloat(lng);
       const SEARCH_RADIUS = 25; // Fixed 25km radius
@@ -183,8 +183,46 @@ router.get('/', async (req, res) => {
       query.$and = [...(query.$and || []), availabilityFilter];
     }
 
-    const daycares = await Daycare.find(query).sort({ rating: -1 });
-    res.json(daycares.map(toPublicDaycare));
+    const daycares = await Daycare.find(query);
+    const hasValidLocation = lat != null && lng != null &&
+      Number.isFinite(Number(lat)) && Number.isFinite(Number(lng)) &&
+      Number(lat) >= -90 && Number(lat) <= 90 &&
+      Number(lng) >= -180 && Number(lng) <= 180;
+    const ratingAndNameOrder = (a, b) =>
+      (Number(b.rating) || 0) - (Number(a.rating) || 0) ||
+      String(a.name || '').localeCompare(String(b.name || ''));
+
+    if (sortByDistance === 'true' && hasValidLocation) {
+      const userLat = Number(lat);
+      const userLng = Number(lng);
+      const withDistance = daycares.map(daycare => {
+        const item = typeof daycare.toObject === 'function' ? daycare.toObject() : { ...daycare };
+        const daycareLat = Number(item.coordinates?.lat);
+        const daycareLng = Number(item.coordinates?.lng);
+        if (!Number.isFinite(daycareLat) || !Number.isFinite(daycareLng) ||
+            daycareLat < -90 || daycareLat > 90 || daycareLng < -180 || daycareLng > 180) {
+          return { ...item, distanceFromUser: null };
+        }
+
+        const radians = degrees => degrees * Math.PI / 180;
+        const deltaLat = radians(daycareLat - userLat);
+        const deltaLng = radians(daycareLng - userLng);
+        const a = Math.sin(deltaLat / 2) ** 2 +
+          Math.cos(radians(userLat)) * Math.cos(radians(daycareLat)) *
+          Math.sin(deltaLng / 2) ** 2;
+        const distance = 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return { ...item, distanceFromUser: Math.round(distance * 10) / 10 };
+      });
+
+      withDistance.sort((a, b) => {
+        if (a.distanceFromUser == null) return b.distanceFromUser == null ? ratingAndNameOrder(a, b) : 1;
+        if (b.distanceFromUser == null) return -1;
+        return a.distanceFromUser - b.distanceFromUser || ratingAndNameOrder(a, b);
+      });
+      return res.json(withDistance.map(toPublicDaycare));
+    }
+
+    res.json(daycares.sort(ratingAndNameOrder).map(toPublicDaycare));
 
   } catch (err) {
     console.error(err);
