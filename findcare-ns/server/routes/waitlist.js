@@ -4,6 +4,8 @@ const Waitlist = require('../models/Waitlist');
 const auth     = require('../middleware/auth');
 const toPublicDaycare = require('../daycarePrivacy');
 
+const SUPPORTED_AGE_GROUPS = ['infant', 'toddler', 'preschool', 'kindergarten', 'school-age'];
+
 // GET /api/waitlist/my/all — get all waitlist entries for current parent
 // IMPORTANT: this must be BEFORE /:daycareId or Express will treat 'my' as a daycareId
 router.get('/my/all', auth, async (req, res) => {
@@ -50,6 +52,9 @@ router.post('/:daycareId', auth, async (req, res) => {
 
     if (!ageGroup) {
       return res.status(400).json({ error: 'Age group is required' });
+    }
+    if (!SUPPORTED_AGE_GROUPS.includes(ageGroup)) {
+      return res.status(400).json({ error: 'Invalid age group' });
     }
 
     // Check if already on waitlist

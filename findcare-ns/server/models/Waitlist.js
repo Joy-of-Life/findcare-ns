@@ -13,7 +13,7 @@ const waitlistSchema = new mongoose.Schema({
   },
   ageGroup: {
     type:     String,
-    enum:     ['infant', 'toddler', 'preschool'],
+    enum:     ['infant', 'toddler', 'preschool', 'kindergarten', 'school-age'],
     required: true
   },
   position: {

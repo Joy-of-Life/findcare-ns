@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ReviewCard  from '../components/ReviewCard';
 import MapView     from '../components/MapView';
-import { AGE_GROUP_LABELS, AVAILABILITY_AGE_GROUPS } from '../constants/ageGroups';
+import { AGE_GROUP_LABELS, AGE_GROUP_OPTIONS, AVAILABILITY_AGE_GROUPS } from '../constants/ageGroups';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -234,9 +234,9 @@ export default function DaycareProfile() {
                   style={styles.input}
                 >
                   <option value="">Select age group</option>
-                  <option value="infant">👶 Infant (0–18mo)</option>
-                  <option value="toddler">🧒 Toddler (18mo–3yr)</option>
-                  <option value="preschool">🎒 Preschool (3–5yr)</option>
+                  {AGE_GROUP_OPTIONS.map(({ value, label, range }) => (
+                    <option key={value} value={value}>{label} ({range})</option>
+                  ))}
                 </select>
               </div>
               <div style={{ marginBottom: '12px' }}>
