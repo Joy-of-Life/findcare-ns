@@ -299,7 +299,7 @@ export default function Home() {
             </div>
             <div style={styles.statItem}>
               <div style={styles.metric}>Direct</div>
-              <div style={styles.metricLabel}>Owner-Submitted</div>
+              <div style={styles.metricLabel}>Owner Listed</div>
             </div>
           </div>
         </div>
