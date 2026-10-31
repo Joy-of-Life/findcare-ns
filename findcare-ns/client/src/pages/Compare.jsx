@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AGE_GROUP_LABELS } from '../constants/ageGroups';
 
@@ -11,6 +11,7 @@ export default function Compare() {
   const [loading, setLoading]   = useState(false);
   const [searchError, setSearchError] = useState('');
   const [hasSearched, setHasSearched] = useState(false);
+  const searchRequestId = useRef(0);
   const navigate                = useNavigate();
 
   async function searchDaycares() {
@@ -21,24 +22,34 @@ export default function Compare() {
     setSearchError('');
     setHasSearched(false);
     setResults([]);
+    setSelected([]);
     setLoading(true);
+    const requestId = ++searchRequestId.current;
     try {
       const res  = await fetch(`${API_URL}/api/daycares?city=${search}`);
       const data = await res.json();
-      setResults(Array.isArray(data) ? data : []);
-      setHasSearched(true);
+      if (requestId === searchRequestId.current) {
+        setResults(Array.isArray(data) ? data : []);
+        setHasSearched(true);
+      }
     } catch (err) {
       console.error(err);
+      if (requestId === searchRequestId.current) {
+        setSearchError('Unable to search daycares. Please try again.');
+      }
     } finally {
-      setLoading(false);
+      if (requestId === searchRequestId.current) setLoading(false);
     }
   }
 
   function clearSearch() {
+    searchRequestId.current += 1;
     setSearch('');
     setResults([]);
+    setSelected([]);
     setHasSearched(false);
     setSearchError('');
+    setLoading(false);
   }
 
   function toggleSelect(daycare) {
@@ -68,7 +79,7 @@ export default function Compare() {
     <div style={styles.page}>
       <button onClick={() => navigate(-1)} style={styles.backBtn}>← Back</button>
       <h1 style={styles.title}>⚖️ Compare daycares</h1>
-      <p style={styles.sub}>Search and select up to 3 daycares to compare side by side.</p>
+      <p style={styles.sub}>Search and select up to max 3 daycares at a time to compare side by side.</p>
 
       {/* Search */}
       <div style={styles.searchRow}>
@@ -121,47 +132,15 @@ export default function Compare() {
 
       {/* Search results */}
       {results.length > 0 && (
-        <>
-          <div style={styles.resultsHeader}>
-            <div style={styles.resultsSummary}>
-              <span style={styles.resultsCount}>{results.length} daycare{results.length === 1 ? '' : 's'} found</span>
-              <span style={styles.resultsHint}>Select up to 3 daycares above to compare them below.</span>
-            </div>
-            <button type="button" onClick={clearSearch} style={styles.clearSearchBtn}>
-              <span aria-hidden="true">×</span> Clear search
-            </button>
+        <div style={styles.resultsHeader}>
+          <div style={styles.resultsSummary}>
+            <span style={styles.resultsCount}>{results.length} daycare{results.length === 1 ? '' : 's'} found</span>
+            <span style={styles.resultsHint}>Select up to 3 daycares below to compare them above.</span>
           </div>
-          <div style={styles.resultsList}>
-            {results.map(daycare => {
-            const isSelected = selected.find(d => d._id === daycare._id);
-            return (
-              <div
-                key={daycare._id}
-                style={{
-                  ...styles.resultItem,
-                  borderColor: isSelected ? '#FF6B35' : '#FFE0B2',
-                  background:  isSelected ? '#FFF3E0' : '#fff',
-                }}
-                onClick={() => toggleSelect(daycare)}
-              >
-                <div style={{ flex: 1 }}>
-                  <div style={styles.resultName}>{daycare.name}</div>
-                  <div style={styles.resultAddr}>📍 {daycare.city} · ${daycare.monthlyPrice}/mo</div>
-                </div>
-                <div style={{
-                  width: '22px', height: '22px', borderRadius: '50%',
-                  border: `2px solid ${isSelected ? '#FF6B35' : '#FFCC80'}`,
-                  background: isSelected ? '#FF6B35' : 'transparent',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: '#fff', fontSize: '12px', fontWeight: '700',
-                }}>
-                  {isSelected ? '✓' : ''}
-                </div>
-              </div>
-            );
-            })}
-          </div>
-        </>
+          <button type="button" onClick={clearSearch} style={styles.clearSearchBtn}>
+            <span aria-hidden="true">×</span> Clear Search
+          </button>
+        </div>
       )}
       {hasSearched && !loading && results.length === 0 && (
         <p role="status" style={styles.noMatches}>No matching daycares found. Try another city or daycare name.</p>
@@ -274,10 +253,43 @@ export default function Compare() {
       )}
 
       {selected.length === 1 && (
-        <p style={styles.hint}>👆 Select one more daycare to start comparing.</p>
+        <p style={styles.hint}>👇 Select one more daycare below to start comparing.</p>
       )}
       {selected.length === 0 && results.length > 0 && (
-        <p style={styles.hint}>👆 Click any daycare above to select it for comparison.</p>
+        <p style={styles.hint}>👇 Click any daycare below to select it for comparison.</p>
+      )}
+
+      {results.length > 0 && (
+        <div style={styles.resultsList}>
+          {results.map(daycare => {
+            const isSelected = selected.find(d => d._id === daycare._id);
+            return (
+              <div
+                key={daycare._id}
+                style={{
+                  ...styles.resultItem,
+                  borderColor: isSelected ? '#FF6B35' : '#FFE0B2',
+                  background: isSelected ? '#FFF3E0' : '#fff',
+                }}
+                onClick={() => toggleSelect(daycare)}
+              >
+                <div style={{ flex: 1 }}>
+                  <div style={styles.resultName}>{daycare.name}</div>
+                  <div style={styles.resultAddr}>📍 {daycare.city} · ${daycare.monthlyPrice}/mo</div>
+                </div>
+                <div style={{
+                  width: '22px', height: '22px', borderRadius: '50%',
+                  border: `2px solid ${isSelected ? '#FF6B35' : '#FFCC80'}`,
+                  background: isSelected ? '#FF6B35' : 'transparent',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: '#fff', fontSize: '12px', fontWeight: '700',
+                }}>
+                  {isSelected ? '✓' : ''}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       )}
 
     </div>
