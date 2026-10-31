@@ -573,6 +573,12 @@ export default function Home() {
                 </div>
               )}
 
+              {!loading && results.length > 0 && (
+                <div style={{ padding: '0 16px 10px' }}>
+                  <ListingDisclaimer />
+                </div>
+              )}
+
               {!loading && view === 'list' && results.map((daycare) => (
                 <div key={daycare._id} style={styles.card}>
                   <div style={styles.cardTop}>
@@ -646,7 +652,6 @@ export default function Home() {
                       </button>
                     )}
                   </div>
-                  <ListingDisclaimer />
                 </div>
               ))}
 

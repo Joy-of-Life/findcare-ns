@@ -145,6 +145,7 @@ export default function Compare() {
           </button>
         </div>
       )}
+      {results.length > 0 && <ListingDisclaimer />}
       {hasSearched && !loading && results.length === 0 && (
         <p role="status" style={styles.noMatches}>No matching daycares found. Try another city or daycare name.</p>
       )}
@@ -290,7 +291,6 @@ export default function Compare() {
                     <LicensingBadge licensed={daycare.licensed} />
                   </div>
                   <div style={styles.resultAddr}>📍 {daycare.city} · ${daycare.monthlyPrice}/mo</div>
-                  <ListingDisclaimer />
                 </div>
                 <div style={{
                   width: '22px', height: '22px', borderRadius: '50%',

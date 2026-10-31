@@ -60,7 +60,7 @@ export default function WelcomePopup() {
         {/* Balloon tags */}
         <div style={styles.balloons}>
           <span style={{...styles.balloon, background:'#FFF3E0', color:'#E65100', border:'1px solid #FFCC80'}}>🎈 Nova Scotia</span>
-          <span style={{...styles.balloon, background:'#E3F2FD', color:'#1565C0', border:'1px solid #90CAF9'}}>⭐ Daycare Centres</span>
+          <span style={{...styles.balloon, background:'#E3F2FD', color:'#1565C0', border:'1px solid #90CAF9'}}>⭐ Daycare Centre/Home</span>
           <span style={{...styles.balloon, background:'#F3E5F5', color:'#6A1B9A', border:'1px solid #CE93D8'}}>💜 Real-time spots</span>
         </div>
 
@@ -74,7 +74,7 @@ export default function WelcomePopup() {
         {/* Feature cards */}
         <div style={styles.featureGrid}>
           {[
-            { icon: '🏫', title: 'Daycare Centres',   desc: 'All types welcomed'    },
+            { icon: '🏫', title: 'Daycare Centre/Home', desc: 'All types welcomed'    },
             { icon: '🔔', title: 'Spot alerts',        desc: 'Get notified instantly' },
             { icon: '🗺️', title: 'Interactive map',    desc: 'Find daycares nearby'  },
           ].map(f => (

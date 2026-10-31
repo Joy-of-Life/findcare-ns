@@ -8,7 +8,7 @@ export default function ListingDisclaimer() {
         lineHeight: 1.5,
       }}
     >
-      FindCare NS does not verify provider information or licensing status. Please confirm details directly with the provider and{' '}
+      FindCare NS does not verify provider information or licensing status. All details, including whether a provider is licensed or unlicensed, are submitted and self-reported by daycare owners. Please confirm details directly with the provider and{' '}
       <a
         href="https://nsbr-online-services.novascotia.ca/DCSOnline/ECDS/loadSearchPage.action"
         target="_blank"
