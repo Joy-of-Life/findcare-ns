@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AGE_GROUP_LABELS } from '../constants/ageGroups';
+import LicensingBadge from '../components/LicensingBadge';
+import ListingDisclaimer from '../components/ListingDisclaimer';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -121,6 +123,7 @@ export default function Compare() {
           {selected.map(d => (
             <span key={d._id} style={styles.selectedBadge}>
               {d.name}
+              <LicensingBadge licensed={d.licensed} />
               <span onClick={() => toggleSelect(d)} style={{ marginLeft: '6px', cursor: 'pointer', color: '#C62828' }}>×</span>
             </span>
           ))}
@@ -163,6 +166,14 @@ export default function Compare() {
             <div style={styles.headerCell}>Criteria</div>
             {selected.map(d => (
               <div key={d._id} style={{ ...styles.headerCell, color: '#FF6B35' }}>{d.name}</div>
+            ))}
+
+            {/* Licensing */}
+            <div style={styles.labelCell}>Licensing status</div>
+            {selected.map(d => (
+              <div key={d._id} style={styles.valueCell}>
+                <LicensingBadge licensed={d.licensed} />
+              </div>
             ))}
 
             {/* Price */}
@@ -274,8 +285,12 @@ export default function Compare() {
                 onClick={() => toggleSelect(daycare)}
               >
                 <div style={{ flex: 1 }}>
-                  <div style={styles.resultName}>{daycare.name}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <div style={styles.resultName}>{daycare.name}</div>
+                    <LicensingBadge licensed={daycare.licensed} />
+                  </div>
                   <div style={styles.resultAddr}>📍 {daycare.city} · ${daycare.monthlyPrice}/mo</div>
+                  <ListingDisclaimer />
                 </div>
                 <div style={{
                   width: '22px', height: '22px', borderRadius: '50%',

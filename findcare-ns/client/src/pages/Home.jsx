@@ -6,6 +6,8 @@ import AISearchBar from '../components/AISearchBar';
 import VoiceSearch from '../components/VoiceSearch';
 import MapView from '../components/MapView';
 import WelcomePopup from '../components/WelcomePopup';
+import LicensingBadge from '../components/LicensingBadge';
+import ListingDisclaimer from '../components/ListingDisclaimer';
 import { AGE_GROUP_DISPLAY_LABELS, formatDaysOpen } from '../constants/ageGroups';
 
 export default function Home() {
@@ -592,6 +594,7 @@ export default function Home() {
                     </p>
                   )}
                   <div style={styles.tags}>
+                    <LicensingBadge licensed={daycare.licensed} />
                     {daycare.ageRange?.map((age) => (
                       <span key={age} style={styles.tagOrange}>{AGE_GROUP_DISPLAY_LABELS[age] || age}</span>
                     ))}
@@ -643,6 +646,7 @@ export default function Home() {
                       </button>
                     )}
                   </div>
+                  <ListingDisclaimer />
                 </div>
               ))}
 

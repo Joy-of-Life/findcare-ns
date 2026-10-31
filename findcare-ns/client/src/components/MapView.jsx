@@ -1,6 +1,8 @@
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import LicensingBadge from './LicensingBadge';
+import ListingDisclaimer from './ListingDisclaimer';
 import { AGE_GROUP_DISPLAY_LABELS, formatDaysOpen } from '../constants/ageGroups';
 
 // Fix Leaflet default marker icon issue with React
@@ -99,6 +101,7 @@ export default function MapView({ daycares, ageGroup }) {
                     📍 {daycare.hideAddress ? daycare.city : `${daycare.address}, ${daycare.city}`}
                   </p>
                   <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                    <LicensingBadge licensed={daycare.licensed} />
                     {daycare.ageRange?.map(age => (
                       <span key={age} style={{
                         fontSize: '11px', padding: '2px 7px',
@@ -130,6 +133,7 @@ export default function MapView({ daycares, ageGroup }) {
                       {daycare.openHours}
                     </p>
                   )}
+                  <ListingDisclaimer />
                   <div style={{
                     display: 'flex', justifyContent: 'space-between',
                     fontSize: '12px', borderTop: '1px solid #F3F4F6', paddingTop: '8px'

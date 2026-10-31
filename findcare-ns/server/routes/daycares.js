@@ -14,7 +14,8 @@ const SEARCH_STOP_WORDS = new Set(['a', 'an', 'and', 'care', 'childcare', 'dayca
 const OWNER_EDITABLE_FIELDS = [
   'name', 'address', 'city', 'phone', 'monthlyPrice', 'openHours', 'description',
   'language', 'ageRange', 'coordinates', 'availability', 'hideAddress', 'maxChildren',
-  'daysOpen', 'opensAt', 'closesAt', 'acceptsSubsidy', 'mealsProvided', 'outdoorPlaySpace'
+  'daysOpen', 'opensAt', 'closesAt', 'acceptsSubsidy', 'mealsProvided', 'outdoorPlaySpace',
+  'licensed', 'unlicensedHomeProvider'
 ];
 const SUPPORTED_DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 
@@ -261,6 +262,15 @@ router.get('/:id', async (req, res) => {
 // POST /api/daycares — create new daycare (owner only)
 router.post('/', auth, async (req, res) => {
   try {
+    if (typeof req.body.licensed !== 'boolean') {
+      return res.status(400).json({ error: 'Select a licensing status' });
+    }
+    if (req.body.licensingStatusAttestationConfirmed !== true) {
+      return res.status(400).json({ error: 'Confirm the licensing status attestation' });
+    }
+    if (req.body.licensed && req.body.unlicensedHomeProvider) {
+      return res.status(400).json({ error: 'An unlicensed home provider cannot be marked as licensed' });
+    }
     const attestation = req.body.complianceAttestation;
     if (!attestation) {
       return res.status(400).json({ error: 'Complete all required compliance attestations' });
@@ -285,6 +295,10 @@ router.post('/', auth, async (req, res) => {
         marketingOptIn: attestation.marketingOptIn === true,
         acceptedAt: new Date(),
       },
+      licensingStatusAttestations: [{
+        licensed: req.body.licensed,
+        acceptedAt: new Date(),
+      }],
       owner: req.user.id
     });
     const saved = await daycare.save();
@@ -297,6 +311,9 @@ router.post('/', auth, async (req, res) => {
 // PATCH /api/daycares/:id — update daycare (owner only)
 router.patch('/:id', auth, async (req, res) => {
   try {
+    if (req.body.licensingStatusAttestationConfirmed !== true) {
+      return res.status(400).json({ error: 'Confirm the licensing status attestation' });
+    }
     const daycare = await Daycare.findById(req.params.id);
     if (!daycare) return res.status(404).json({ error: 'Daycare not found' });
     if (daycare.owner.toString() !== req.user.id) {
@@ -305,9 +322,24 @@ router.patch('/:id', auth, async (req, res) => {
     const updates = Object.fromEntries(
       Object.entries(req.body).filter(([field]) => OWNER_EDITABLE_FIELDS.includes(field))
     );
+    if (Object.prototype.hasOwnProperty.call(updates, 'licensed') && typeof updates.licensed !== 'boolean') {
+      return res.status(400).json({ error: 'Select a licensing status' });
+    }
+    const licensed = updates.licensed ?? daycare.licensed ?? false;
+    const unlicensedHomeProvider = updates.unlicensedHomeProvider ?? daycare.unlicensedHomeProvider;
+    if (licensed && unlicensedHomeProvider) {
+      return res.status(400).json({ error: 'An unlicensed home provider cannot be marked as licensed' });
+    }
     if (!Object.keys(updates).length) {
       return res.status(400).json({ error: 'No editable daycare fields provided' });
     }
+    updates.licensingStatusAttestations = [
+      ...(daycare.licensingStatusAttestations || []).map(({ licensed: attestedStatus, acceptedAt }) => ({
+        licensed: attestedStatus,
+        acceptedAt,
+      })),
+      { licensed, acceptedAt: new Date() },
+    ];
     const validationError = validateOwnerListing({ ...daycare.toObject(), ...updates });
     if (validationError) return res.status(400).json({ error: validationError });
     if (updates.availability) {

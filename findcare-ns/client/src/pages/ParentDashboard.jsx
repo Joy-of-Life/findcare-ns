@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useAuth }     from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { AGE_GROUP_LABELS } from '../constants/ageGroups';
+import LicensingBadge from '../components/LicensingBadge';
+import ListingDisclaimer from '../components/ListingDisclaimer';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -180,6 +182,7 @@ export default function ParentDashboard() {
                 </div>
                 <div style={styles.daycareAddr}>📍 {daycare.hideAddress ? daycare.city : `${daycare.address}, ${daycare.city}`}</div>
                 <div style={styles.tags}>
+                  <LicensingBadge licensed={daycare.licensed} />
                   {daycare.ageRange?.map(age => (
                     <span key={age} style={styles.tagOrange}>{AGE_GROUP_LABELS[age] || age}</span>
                   ))}
@@ -190,6 +193,7 @@ export default function ParentDashboard() {
                     {status.text}
                   </span>
                 </div>
+                <ListingDisclaimer />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-end' }}>
                 <span style={styles.price}>${daycare.monthlyPrice}/mo</span>

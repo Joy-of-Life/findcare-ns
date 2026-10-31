@@ -19,6 +19,11 @@ const complianceAttestationSchema = new mongoose.Schema({
   acceptedAt: { type: Date, required: true },
 }, { _id: false });
 
+const licensingStatusAttestationSchema = new mongoose.Schema({
+  licensed: { type: Boolean, required: true },
+  acceptedAt: { type: Date, required: true },
+}, { _id: false });
+
 const daycareSchema = new mongoose.Schema({
   owner: {
     type:     mongoose.Schema.Types.ObjectId,
@@ -69,6 +74,7 @@ const daycareSchema = new mongoose.Schema({
   photos:       { type: [String] },
   availability: { type: availabilitySchema, default: () => ({}) },
   complianceAttestation: { type: complianceAttestationSchema },
+  licensingStatusAttestations: { type: [licensingStatusAttestationSchema], default: [] },
   rating:       { type: Number, default: 0 },
   reviewCount:  { type: Number, default: 0 },
   licensed:     { type: Boolean, default: false },

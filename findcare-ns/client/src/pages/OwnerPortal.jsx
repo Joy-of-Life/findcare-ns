@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth }    from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { AGE_GROUP_LABELS, AGE_GROUP_OPTIONS, AVAILABILITY_AGE_GROUPS } from '../constants/ageGroups';
+import LicensingBadge from '../components/LicensingBadge';
 import './OwnerPortal.css';
 
 const API_URL    = process.env.REACT_APP_API_URL || 'http://localhost:5000';
@@ -64,6 +65,8 @@ function createDaycareForm(daycare = {}) {
     description: daycare.description || '',
     language: daycare.language || [],
     ageRange: daycare.ageRange || [],
+    licensed: daycare.licensed ?? '',
+    licensingStatusAttestationConfirmed: false,
     unlicensedHomeProvider: Boolean(daycare.unlicensedHomeProvider),
     acceptsSubsidy: Boolean(daycare.acceptsSubsidy),
     mealsProvided: Boolean(daycare.mealsProvided),
@@ -171,7 +174,29 @@ export default function OwnerPortal() {
 
   function handleChange(e) {
     const { name } = e.target;
+    if (name === 'licensed') {
+      const licensed = e.target.value === '' ? '' : e.target.value === 'licensed';
+      setForm(current => ({
+        ...current,
+        licensed,
+        licensingStatusAttestationConfirmed: false,
+        ...(licensed ? { unlicensedHomeProvider: false } : {}),
+      }));
+      if (licensed) {
+        setAttestation(current => ({ ...current, guidanceRead: false }));
+      }
+      return;
+    }
     const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+    if (name === 'unlicensedHomeProvider' && value) {
+      setForm(current => ({
+        ...current,
+        unlicensedHomeProvider: true,
+        licensed: false,
+        licensingStatusAttestationConfirmed: false,
+      }));
+      return;
+    }
     if (name === 'unlicensedHomeProvider' && !value) {
       setAttestation(current => ({ ...current, guidanceRead: false }));
     }
@@ -269,6 +294,8 @@ export default function OwnerPortal() {
       validationErrors.push('Total open spots cannot exceed max children');
     }
     if (!form.daysOpen.length) validationErrors.push('Days open');
+    if (typeof form.licensed !== 'boolean') validationErrors.push('Licensing status');
+    if (!form.licensingStatusAttestationConfirmed) validationErrors.push('Licensing status attestation');
     if (!form.opensAt) validationErrors.push('Opening time');
     if (!form.closesAt) validationErrors.push('Closing time');
     if (form.opensAt && form.closesAt && form.opensAt >= form.closesAt) {
@@ -311,6 +338,7 @@ export default function OwnerPortal() {
           monthlyPrice: Number(form.monthlyPrice),
           coordinates: hasCoordinates ? { lat: latitude, lng: longitude } : undefined,
           complianceAttestation: isEditing ? undefined : attestation,
+          licensingStatusAttestationConfirmed: form.licensingStatusAttestationConfirmed,
         }),
       });
       const data = await res.json();
@@ -450,7 +478,7 @@ export default function OwnerPortal() {
             {myDaycare.ageRange?.map(age  => <span key={age}  style={styles.tagOrange}>{AGE_GROUP_LABELS[age] || age}</span>)}
             {myDaycare.language?.map(lang => <span key={lang} style={styles.tagPurple}>{lang}</span>)}
             {myDaycare.verified && <span style={styles.tagGreen}>✓ Verified</span>}
-            {myDaycare.licensed && <span style={styles.tagGreen}>✓ Licensed</span>}
+            <LicensingBadge licensed={myDaycare.licensed} />
           </div>
         </div>
 
@@ -530,10 +558,36 @@ export default function OwnerPortal() {
             { label: 'Address *',           name: 'address',      type: 'text'   },
             { label: 'City or community *', name: 'city',         type: 'select' },
             { label: 'Monthly price ($) *', name: 'monthlyPrice', type: 'number' },
+            { label: 'Licensing status *',  name: 'licensed',     type: 'licensing' },
           ].map(f => (
             <div key={f.name} style={styles.field}>
               <label style={styles.label}>{f.label}</label>
-              {f.type === 'select' ? (
+              {f.type === 'licensing' ? (
+                <>
+                  <select
+                    id={f.name}
+                    name={f.name}
+                    value={form.licensed === '' ? '' : form.licensed ? 'licensed' : 'unlicensed'}
+                    onChange={handleChange}
+                    style={styles.input}
+                    required
+                  >
+                    <option value="">Select licensing status</option>
+                    <option value="licensed">Licensed</option>
+                    <option value="unlicensed">Unlicensed</option>
+                  </select>
+                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginTop: '10px', fontSize: '13px', lineHeight: 1.5, color: '#2C2C2A' }}>
+                    <input
+                      type="checkbox"
+                      name="licensingStatusAttestationConfirmed"
+                      checked={form.licensingStatusAttestationConfirmed}
+                      onChange={handleChange}
+                      disabled={typeof form.licensed !== 'boolean'}
+                    />
+                    <span>I confirm that the selected licensing status accurately reflects my daycare’s current provincial licensing status.</span>
+                  </label>
+                </>
+              ) : f.type === 'select' ? (
                 <select
                   id={f.name}
                   name={f.name}

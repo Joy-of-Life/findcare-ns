@@ -23,7 +23,7 @@ export default function About() {
           <p style={styles.eyebrow}>About FindCare NS</p>
           <h1 style={styles.heroTitle}>A clearer way to explore childcare in Nova Scotia.</h1>
           <p style={styles.heroText}>
-            Finding care takes research. FindCare NS brings daycare information and useful planning tools together, so families can explore their options in one place.
+            Finding daycare in Novascotia shouldn’t mean endless phone calls. FindCare NS shows you what’s available across Nova Scotia in real time, with planning tools to help you decide what’s right for your family.
           </p>
           <Link to="/?discover=1" style={styles.heroLink}>Browse daycares</Link>
         </div>

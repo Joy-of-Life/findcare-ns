@@ -3,6 +3,8 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ReviewCard  from '../components/ReviewCard';
 import MapView     from '../components/MapView';
+import LicensingBadge from '../components/LicensingBadge';
+import ListingDisclaimer from '../components/ListingDisclaimer';
 import { AGE_GROUP_LABELS, AGE_GROUP_OPTIONS, AVAILABILITY_AGE_GROUPS } from '../constants/ageGroups';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
@@ -149,7 +151,7 @@ export default function DaycareProfile() {
           <div style={styles.tags}>
             {daycare.ageRange?.map(age  => <span key={age}  style={styles.tagOrange}>{AGE_GROUP_LABELS[age] || age}</span>)}
             {daycare.language?.map(lang => <span key={lang} style={styles.tagPurple}>{lang}</span>)}
-            {daycare.licensed && <span style={styles.tagGreen}>✓ Licensed</span>}
+            <LicensingBadge licensed={daycare.licensed} />
             {daycare.verified && <span style={styles.tagGreen}>✓ Verified</span>}
           </div>
         </div>
@@ -330,6 +332,9 @@ export default function DaycareProfile() {
         )}
       </div>
 
+      <footer style={{ padding: '12px 4px 4px', borderTop: '1px solid #FFE0B2' }}>
+        <ListingDisclaimer />
+      </footer>
     </div>
   );
 }

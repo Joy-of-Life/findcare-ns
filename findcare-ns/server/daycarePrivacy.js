@@ -5,6 +5,8 @@ function toPublicDaycare(daycare) {
     ? daycare.toObject()
     : { ...daycare };
 
+  delete publicDaycare.licensingStatusAttestations;
+
   if (publicDaycare.hideAddress) {
     publicDaycare.address = '';
     if (publicDaycare.coordinates?.lat != null && publicDaycare.coordinates?.lng != null) {
