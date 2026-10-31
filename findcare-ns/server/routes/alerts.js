@@ -1,6 +1,8 @@
 const express    = require('express');
 const router     = express.Router();
+const mongoose   = require('mongoose');
 const User       = require('../models/User');
+const Daycare    = require('../models/Daycare');
 const auth       = require('../middleware/auth');
 const SUPPORTED_AGE_GROUPS = require('../constants/ageGroups');
 const sendAvailabilityAlerts = require('../services/availabilityAlerts');
@@ -37,10 +39,16 @@ router.patch('/unsubscribe', auth, async (req, res) => {
 });
 
 // POST /api/alerts/notify — triggered when availability opens up
-router.post('/notify', async (req, res) => {
+router.post('/notify', auth, async (req, res) => {
   try {
+    if (req.user.role !== 'owner') {
+      return res.status(403).json({ error: 'Only daycare owners can trigger availability alerts' });
+    }
     const { daycareId, increasedAvailability } = req.body;
-    if (!daycareId || !increasedAvailability || typeof increasedAvailability !== 'object' ||
+    if (!mongoose.isValidObjectId(daycareId)) {
+      return res.status(400).json({ error: 'A valid daycare ID is required' });
+    }
+    if (!increasedAvailability || typeof increasedAvailability !== 'object' ||
         Array.isArray(increasedAvailability)) {
       return res.status(400).json({ error: 'Daycare ID and availability increases are required' });
     }
@@ -49,6 +57,11 @@ router.post('/notify', async (req, res) => {
     );
     if (hasInvalidIncrease) {
       return res.status(400).json({ error: 'Availability increases must contain valid age groups and positive whole-number counts' });
+    }
+    const daycare = await Daycare.findById(daycareId);
+    if (!daycare) return res.status(404).json({ error: 'Daycare not found' });
+    if (daycare.owner.toString() !== req.user.id) {
+      return res.status(403).json({ error: 'Not authorized to trigger alerts for this daycare' });
     }
     const result = await sendAvailabilityAlerts(daycareId, increasedAvailability);
     res.status(result.status).json(
