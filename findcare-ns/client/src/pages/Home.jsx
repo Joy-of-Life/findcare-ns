@@ -299,7 +299,7 @@ export default function Home() {
             </div>
             <div style={styles.statItem}>
               <div style={styles.metric}>Direct</div>
-              <div style={styles.metricLabel}>Listings from Daycare Owners</div>
+              <div style={styles.metricLabel}>Owner-Submitted</div>
             </div>
           </div>
         </div>
@@ -337,7 +337,7 @@ export default function Home() {
           <div style={styles.featureCard}>
             <div style={styles.featureIcon}>💸</div>
             <h3 style={styles.featureTitle}>Find Affordable Daycare Spots</h3>
-            <p style={styles.featureText}>Help parents compare local, budget-friendly childcare options</p>
+            <p style={styles.featureText}>Help parents compare local, budget-friendly childcare options.</p>
           </div>
         </div>
       </div>
