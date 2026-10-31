@@ -298,8 +298,8 @@ export default function Home() {
               <div style={styles.metricLabel}>NS Wide Coverage</div>
             </div>
             <div style={styles.statItem}>
-              <div style={styles.metric}>Trusted</div>
-              <div style={styles.metricLabel}>Verified Daycares</div>
+              <div style={styles.metric}>Direct</div>
+              <div style={styles.metricLabel}>Listings from Daycare Owners</div>
             </div>
           </div>
         </div>
@@ -320,7 +320,7 @@ export default function Home() {
 
       <div style={styles.section}>
         <div style={styles.sectionHeader}>
-          <p style={styles.sectionEyebrow}>Why Parents Trust Findcare NS</p>
+          <p style={styles.sectionEyebrow}>Why Parents Use FindCare NS</p>
           <h2 style={styles.sectionTitle}>Helping Families Find Care</h2>
         </div>
         <div style={styles.featureGrid}>
@@ -330,14 +330,14 @@ export default function Home() {
             <p style={styles.featureText}>No more calling 50 daycares one by one. Search, filter, and apply in minutes — not weeks.</p>
           </div>
           <div style={styles.featureCard}>
-            <div style={styles.featureIcon}>✅</div>
-            <h3 style={styles.featureTitle}>Verified & Trustworthy</h3>
-            <p style={styles.featureText}>Every listing is sourced from public licensing data and carefully organized for clarity.</p>
+            <div style={styles.featureIcon}>🤝</div>
+            <h3 style={styles.featureTitle}>Straight from Providers</h3>
+            <p style={styles.featureText}>Daycare owners create and update their own listings, so you see details directly from them. Always confirm with the provider before you decide.</p>
           </div>
           <div style={styles.featureCard}>
             <div style={styles.featureIcon}>💸</div>
             <h3 style={styles.featureTitle}>Find Affordable Daycare Spots</h3>
-            <p style={styles.featureText}>Help parents compare licensed, local, budget‑friendly childcare options.</p>
+            <p style={styles.featureText}>Help parents compare local, budget-friendly childcare options</p>
           </div>
         </div>
       </div>

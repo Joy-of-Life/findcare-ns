@@ -91,7 +91,7 @@ export default function WelcomePopup() {
           {[
             { value: Number.isFinite(daycareCount) ? `${daycareCount.toLocaleString()}+` : '...', label: 'Daycare Listings' },
             { value: 'NS',   label: 'Nova Scotia only'  },
-            { value: 'Verified', label: 'Trusted & Verified Listings'  },
+            { value: 'Real-Time', label: 'Updated by Providers' },
           ].map(s => (
             <div key={s.label} style={{ textAlign: 'center' }}>
               <span style={styles.statValue}>{s.value}</span>
