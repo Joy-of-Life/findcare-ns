@@ -67,7 +67,7 @@ export default function WelcomePopup() {
         <h2 style={styles.heading}>Finding the perfect daycare just got easier!</h2>
         <p style={styles.subheading}>Nova Scotia families, we're here for you.</p>
         <p style={styles.description}>
-          FindCare NS connects Nova Scotia parents with All available daycare centres.<br/>
+          From centres to home daycares, FindCare NS helps Nova Scotia parents find the right fit.<br/>
           Search by city, age group, language and availability — all in one place.
         </p>
 
