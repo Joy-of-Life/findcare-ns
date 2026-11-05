@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AGE_GROUP_OPTIONS, AVAILABILITY_AGE_GROUPS } from '../constants/ageGroups';
+import { AGE_GROUP_OPTIONS } from '../constants/ageGroups';
 import './SearchBar.css';
 
 export default function SearchBar({ onSearch }) {
@@ -78,10 +78,7 @@ export default function SearchBar({ onSearch }) {
 
       {showFilters && (
         <div id="findcare-search-filters" className="findcare-search__filters" style={styles.filtersRow}>
-          <select aria-label="Age group" value={ageRange} onChange={e => {
-            setAgeRange(e.target.value);
-            if (!AVAILABILITY_AGE_GROUPS.includes(e.target.value)) setAvailableOnly(false);
-          }} style={styles.select}>
+          <select aria-label="Age group" value={ageRange} onChange={e => setAgeRange(e.target.value)} style={styles.select}>
             <option value="">Age group</option>
             {AGE_GROUP_OPTIONS.map(({ value, label, range }) => (
               <option key={value} value={value}>{label} ({range})</option>
@@ -113,17 +110,15 @@ export default function SearchBar({ onSearch }) {
             <option value="4.5">4.5+ stars</option>
           </select>
 
-          {AVAILABILITY_AGE_GROUPS.includes(ageRange) && (
-            <label style={styles.checkLabel}>
-              <input
-                type="checkbox"
-                checked={availableOnly}
-                onChange={e => setAvailableOnly(e.target.checked)}
-                style={{ marginRight: '6px', accentColor: '#FF6B35' }}
-              />
-              Available spots only
-            </label>
-          )}
+          <label style={styles.checkLabel}>
+            <input
+              type="checkbox"
+              checked={availableOnly}
+              onChange={e => setAvailableOnly(e.target.checked)}
+              style={{ marginRight: '6px', accentColor: '#FF6B35' }}
+            />
+            Daycares with vacancies
+          </label>
         </div>
       )}
     </div>
