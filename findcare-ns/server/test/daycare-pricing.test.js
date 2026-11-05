@@ -55,6 +55,7 @@ test('daycare creation requires a daily rate and ignores legacy monthly price in
       phone: '902-555-0100',
       description: 'Care for infants',
       openHours: 'Mon–Fri, 7:00 AM – 5:00 PM',
+      dailyRateAttestationConfirmed: true,
       language: ['English'],
       ageRange: ['infant'],
       maxChildren: 3,
@@ -78,6 +79,14 @@ test('daycare creation requires a daily rate and ignores legacy monthly price in
     });
     assert.equal(missingRate.status, 400);
     assert.deepEqual(await missingRate.json(), { error: 'Enter a valid daily rate' });
+
+    const unconfirmedRate = await fetch(`http://127.0.0.1:${server.address().port}/api/daycares`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ ...baseListing, dailyRate: 25.5, dailyRateAttestationConfirmed: false }),
+    });
+    assert.equal(unconfirmedRate.status, 400);
+    assert.deepEqual(await unconfirmedRate.json(), { error: 'Confirm the daily rate attestation' });
 
     const withDailyRate = await fetch(`http://127.0.0.1:${server.address().port}/api/daycares`, {
       method: 'POST',

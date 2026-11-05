@@ -58,6 +58,7 @@ function createDaycareForm(daycare = {}) {
     city: daycare.city || '',
     phone: daycare.phone || '',
     dailyRate: daycare.dailyRate ?? '',
+    dailyRateAttestationConfirmed: false,
     openHours: daycare.openHours || '',
     opensAt: daycare.opensAt || parsedHours.opensAt,
     closesAt: daycare.closesAt || parsedHours.closesAt,
@@ -175,6 +176,14 @@ export default function OwnerPortal() {
 
   function handleChange(e) {
     const { name } = e.target;
+    if (name === 'dailyRate') {
+      setForm(current => ({
+        ...current,
+        dailyRate: e.target.value,
+        dailyRateAttestationConfirmed: false,
+      }));
+      return;
+    }
     if (name === 'licensed') {
       const licensed = e.target.value === '' ? '' : e.target.value === 'licensed';
       setForm(current => ({
@@ -285,6 +294,7 @@ export default function OwnerPortal() {
     if (form.dailyRate === '' || !Number.isFinite(Number(form.dailyRate)) || Number(form.dailyRate) < 0) {
       validationErrors.push('Daily rate');
     }
+    if (!form.dailyRateAttestationConfirmed) validationErrors.push('Daily rate confirmation');
     if (!form.language.length) validationErrors.push('Languages offered');
     if (!form.ageRange.length) validationErrors.push('Ages served');
     if (!Number.isInteger(Number(form.maxChildren)) || Number(form.maxChildren) < 1) {
@@ -602,17 +612,30 @@ export default function OwnerPortal() {
                   {cityOptions.map(city => <option key={city} value={city}>{city}</option>)}
                 </select>
               ) : (
-                <input
-                  id={f.name}
-                  type={f.type}
-                  name={f.name}
-                  value={form[f.name]}
-                  onChange={handleChange}
-                  style={styles.input}
-                  required
-                  min={f.name === 'dailyRate' ? '0' : undefined}
-                  step={f.name === 'dailyRate' ? '0.01' : undefined}
-                />
+                <>
+                  <input
+                    id={f.name}
+                    type={f.type}
+                    name={f.name}
+                    value={form[f.name]}
+                    onChange={handleChange}
+                    style={styles.input}
+                    required
+                    min={f.name === 'dailyRate' ? '0' : undefined}
+                    step={f.name === 'dailyRate' ? '0.01' : undefined}
+                  />
+                  {f.name === 'dailyRate' && (
+                    <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginTop: '10px', fontSize: '13px', lineHeight: 1.5, color: '#2C2C2A' }}>
+                      <input
+                        type="checkbox"
+                        name="dailyRateAttestationConfirmed"
+                        checked={form.dailyRateAttestationConfirmed}
+                        onChange={handleChange}
+                      />
+                      <span>I confirm that the daily rate entered is accurate and is the fee parents are charged for this care, before any government fee reductions or subsidies.</span>
+                    </label>
+                  )}
+                </>
               )}
             </div>
           ))}
@@ -634,22 +657,6 @@ export default function OwnerPortal() {
             </span>
           </span>
         </label>
-        {!isEditing && (
-          <label style={styles.addressPrivacy}>
-            <input
-              type="checkbox"
-              name="unlicensedHomeProvider"
-              checked={form.unlicensedHomeProvider}
-              onChange={handleChange}
-            />
-            <span>
-              <strong>I am an unlicensed home child care provider</strong>
-              <span style={styles.addressPrivacyNote}>
-                Select this if you provide child care from your home without a provincial licence.
-              </span>
-            </span>
-          </label>
-        )}
         <div style={{ ...styles.field, marginTop: '12px' }}>
           <label style={styles.label}>Description *</label>
           <textarea name="description" value={form.description} onChange={handleChange}

@@ -315,6 +315,9 @@ router.post('/', auth, async (req, res) => {
     if (req.body.licensingStatusAttestationConfirmed !== true) {
       return res.status(400).json({ error: 'Confirm the licensing status attestation' });
     }
+    if (req.body.dailyRateAttestationConfirmed !== true) {
+      return res.status(400).json({ error: 'Confirm the daily rate attestation' });
+    }
     if (req.body.licensed && req.body.unlicensedHomeProvider) {
       return res.status(400).json({ error: 'An unlicensed home provider cannot be marked as licensed' });
     }
@@ -362,6 +365,9 @@ router.patch('/:id', auth, async (req, res) => {
   try {
     if (req.body.licensingStatusAttestationConfirmed !== true) {
       return res.status(400).json({ error: 'Confirm the licensing status attestation' });
+    }
+    if (req.body.dailyRateAttestationConfirmed !== true) {
+      return res.status(400).json({ error: 'Confirm the daily rate attestation' });
     }
     const daycare = await Daycare.findById(req.params.id);
     if (!daycare) return res.status(404).json({ error: 'Daycare not found' });
