@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import BrandIcon from '../components/BrandIcon';
 
@@ -6,16 +6,21 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 export default function Register() {
   const [searchParams] = useSearchParams();
+  const requestedRole = searchParams.get('role') === 'owner' ? 'owner' : 'parent';
   const [form, setForm]       = useState(() => ({
     name: '',
     email: '',
     password: '',
-    role: searchParams.get('role') === 'owner' ? 'owner' : 'parent',
+    role: requestedRole,
   }));
   const [error, setError]     = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate              = useNavigate();
+
+  useEffect(() => {
+    setForm(current => current.role === requestedRole ? current : { ...current, role: requestedRole });
+  }, [requestedRole]);
 
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value });

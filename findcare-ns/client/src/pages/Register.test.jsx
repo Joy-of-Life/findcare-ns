@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import Register from './Register';
 
 jest.mock('react-router-dom', () => {
@@ -32,5 +32,21 @@ test('keeps parent as the default for normal registration links', () => {
   const parentRole = screen.getByText('👨‍👩‍👧 Parent looking for childcare').parentElement;
 
   expect(parentRole.style.borderColor).toBe('#ff6b35');
+  expect(ownerRole.style.borderColor).toBe('#ffcc80');
+});
+
+test('updates the selected role when navigating between Register and List your daycare', async () => {
+  const { rerender } = renderRegister('/register');
+  const ownerRole = screen.getByText('🏫 Daycare owner or provider').parentElement;
+  const parentRole = screen.getByText('👨‍👩‍👧 Parent looking for childcare').parentElement;
+
+  window.history.replaceState({}, '', '/register?role=owner');
+  rerender(<Register />);
+  await waitFor(() => expect(ownerRole.style.borderColor).toBe('#ff6b35'));
+  expect(parentRole.style.borderColor).toBe('#ffcc80');
+
+  window.history.replaceState({}, '', '/register');
+  rerender(<Register />);
+  await waitFor(() => expect(parentRole.style.borderColor).toBe('#ff6b35'));
   expect(ownerRole.style.borderColor).toBe('#ffcc80');
 });
