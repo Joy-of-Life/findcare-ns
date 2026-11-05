@@ -314,11 +314,11 @@ export default function OwnerPortal() {
     if (!form.address.trim()) validationErrors.push('Address');
     if (!cityOptions.includes(form.city)) validationErrors.push('A city or community in Nova Scotia');
     if (!form.phone.trim()) validationErrors.push('Phone');
-    if (!form.description.trim()) validationErrors.push('Description');
     if (form.dailyRate === '' || !Number.isFinite(Number(form.dailyRate)) || Number(form.dailyRate) < 0) {
       validationErrors.push('Daily rate');
     }
     if (!form.dailyRateAttestationConfirmed) validationErrors.push('Daily rate confirmation');
+    if (!form.description.trim()) validationErrors.push('Description');
     if (!form.language.length) validationErrors.push('Languages offered');
     if (!PROVIDER_TYPES.some(providerType => providerType.value === form.providerType)) {
       validationErrors.push('Provider type');
