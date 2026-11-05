@@ -9,7 +9,7 @@ export default function SearchBar({ onSearch }) {
   const [maxPrice, setMaxPrice]           = useState('');
   const [rating, setRating]               = useState('');
   const [availabilityStatus, setAvailabilityStatus] = useState('');
-  const [showFilters, setShowFilters]     = useState(false);
+  const [showFilters, setShowFilters]     = useState(true);
 
   function handleSearch() {
     onSearch({ query, ageRange, language, maxPrice, rating, availabilityStatus });

@@ -90,14 +90,26 @@ function matchesSearch(daycare, terms) {
 }
 
 function hasAvailableSpots(daycare, ageRange) {
-  if (ageRange) return Number(daycare.availability?.[ageRange] || 0) > 0;
-  return SUPPORTED_AGE_GROUPS.some(group => Number(daycare.availability?.[group] || 0) > 0);
+  const servedAgeGroups = Array.isArray(daycare.ageRange) && daycare.ageRange.length
+    ? daycare.ageRange
+    : SUPPORTED_AGE_GROUPS;
+  const ageGroups = ageRange ? [ageRange] : servedAgeGroups;
+  return ageGroups.some(group =>
+    servedAgeGroups.includes(group) && Number(daycare.availability?.[group] || 0) > 0
+  );
 }
 
 function matchesVacancyStatus(daycare, vacancyStatus, ageRange) {
   if (!vacancyStatus) return true;
-  const hasOpenSpots = hasAvailableSpots(daycare, ageRange);
-  return vacancyStatus === 'open' ? hasOpenSpots : !hasOpenSpots;
+  if (vacancyStatus === 'open') return hasAvailableSpots(daycare, ageRange);
+
+  const servedAgeGroups = Array.isArray(daycare.ageRange) && daycare.ageRange.length
+    ? daycare.ageRange
+    : SUPPORTED_AGE_GROUPS;
+  const ageGroups = ageRange ? [ageRange] : servedAgeGroups;
+  return ageGroups.some(group =>
+    servedAgeGroups.includes(group) && Number(daycare.availability?.[group] || 0) <= 0
+  );
 }
 
 // GET /api/daycares — search with filters
@@ -190,10 +202,19 @@ router.get('/', async (req, res) => {
     if (vacancyStatus) {
       const openSpotFilters = ageRange
         ? [{ [`availability.${ageRange}`]: { $gt: 0 } }]
-        : SUPPORTED_AGE_GROUPS.map(group => ({ [`availability.${group}`]: { $gt: 0 } }));
+        : SUPPORTED_AGE_GROUPS.map(group => ({
+          ageRange: group,
+          [`availability.${group}`]: { $gt: 0 },
+        }));
+      const waitlistFilters = ageRange
+        ? [{ [`availability.${ageRange}`]: { $not: { $gt: 0 } } }]
+        : SUPPORTED_AGE_GROUPS.map(group => ({
+          ageRange: group,
+          [`availability.${group}`]: { $not: { $gt: 0 } },
+        }));
       const availabilityFilter = vacancyStatus === 'open'
         ? (ageRange ? openSpotFilters[0] : { $or: openSpotFilters })
-        : { $nor: openSpotFilters };
+        : (ageRange ? waitlistFilters[0] : { $or: waitlistFilters });
       query.$and = [...(query.$and || []), availabilityFilter];
     }
 

@@ -5,7 +5,7 @@ test('vacancy dropdown is first and offers Any status, Open, and Waitlist', () =
   const onSearch = jest.fn();
   render(<SearchBar onSearch={onSearch} />);
 
-  fireEvent.click(screen.getByRole('button', { name: 'Toggle search filters' }));
+  expect(screen.getByRole('button', { name: 'Toggle search filters' }).getAttribute('aria-expanded')).toBe('true');
   fireEvent.change(screen.getByRole('combobox', { name: 'Vacancy' }), {
     target: { value: 'open' },
   });
@@ -28,7 +28,6 @@ test('vacancy status remains selected when clearing the age group', () => {
   const onSearch = jest.fn();
   render(<SearchBar onSearch={onSearch} />);
 
-  fireEvent.click(screen.getByRole('button', { name: 'Toggle search filters' }));
   fireEvent.change(screen.getByRole('combobox', { name: 'Vacancy' }), {
     target: { value: 'waitlist' },
   });

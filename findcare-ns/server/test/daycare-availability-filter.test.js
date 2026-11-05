@@ -38,6 +38,7 @@ test('Open vacancy status without an age group matches openings in any supported
   assert.deepEqual(receivedQuery, {
     $and: [{
       $or: SUPPORTED_AGE_GROUPS.map(group => ({
+        ageRange: group,
         [`availability.${group}`]: { $gt: 0 },
       })),
     }],
@@ -61,7 +62,7 @@ test('Open vacancy status with an age group matches openings in that category', 
   });
 });
 
-test('Waitlist status without an age group excludes daycares with openings in any category', async () => {
+test('Waitlist status without an age group finds zero openings in any served category', async () => {
   let receivedQuery;
   Daycare.find = async query => {
     receivedQuery = query;
@@ -72,14 +73,15 @@ test('Waitlist status without an age group excludes daycares with openings in an
 
   assert.deepEqual(receivedQuery, {
     $and: [{
-      $nor: SUPPORTED_AGE_GROUPS.map(group => ({
-        [`availability.${group}`]: { $gt: 0 },
+      $or: SUPPORTED_AGE_GROUPS.map(group => ({
+        ageRange: group,
+        [`availability.${group}`]: { $not: { $gt: 0 } },
       })),
     }],
   });
 });
 
-test('Waitlist status with an age group matches daycares without openings for that category', async () => {
+test('Waitlist status with an age group finds no openings for that served category', async () => {
   let receivedQuery;
   Daycare.find = async query => {
     receivedQuery = query;
@@ -91,20 +93,31 @@ test('Waitlist status with an age group matches daycares without openings for th
   assert.deepEqual(receivedQuery, {
     ageRange: { $in: ['infant'] },
     $and: [{
-      $nor: [{ 'availability.infant': { $gt: 0 } }],
+      'availability.infant': { $not: { $gt: 0 } },
     }],
   });
 });
 
-test('vacancy status filters returned listings instead of relying only on the database query', async () => {
+test('Waitlist without an age group returns daycares with no spots in at least one served age category', async () => {
   Daycare.find = async () => [
-    { name: 'Open centre', availability: { infant: 1 } },
-    { name: 'Waitlist centre', availability: { infant: 0 } },
+    { name: 'Open centre', ageRange: ['infant'], availability: { infant: 1 } },
+    { name: 'Infant waitlist', ageRange: ['infant', 'toddler'], availability: { infant: 0, toddler: 2 } },
+    { name: 'Open only in a different age', ageRange: ['infant'], availability: { infant: 1, toddler: 0 } },
   ];
 
-  const openResults = await requestListings('?availabilityStatus=open');
   const waitlistResults = await requestListings('?availabilityStatus=waitlist');
 
-  assert.deepEqual(openResults.map(daycare => daycare.name), ['Open centre']);
-  assert.deepEqual(waitlistResults.map(daycare => daycare.name), ['Waitlist centre']);
+  assert.deepEqual(waitlistResults.map(daycare => daycare.name), ['Infant waitlist']);
+});
+
+test('Waitlist with an age group returns daycares with no spots for that served category', async () => {
+  Daycare.find = async () => [
+    { name: 'Infant waitlist', ageRange: ['infant', 'toddler'], availability: { infant: 0, toddler: 2 } },
+    { name: 'Toddler waitlist', ageRange: ['infant', 'toddler'], availability: { infant: 2, toddler: 0 } },
+    { name: 'Infant not served', ageRange: ['toddler'], availability: { infant: 0, toddler: 1 } },
+  ];
+
+  const waitlistResults = await requestListings('?availabilityStatus=waitlist&ageRange=infant');
+
+  assert.deepEqual(waitlistResults.map(daycare => daycare.name), ['Infant waitlist']);
 });
