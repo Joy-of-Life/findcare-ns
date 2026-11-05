@@ -8,7 +8,7 @@ import MapView from '../components/MapView';
 import WelcomePopup from '../components/WelcomePopup';
 import LicensingBadge from '../components/LicensingBadge';
 import ListingDisclaimer from '../components/ListingDisclaimer';
-import { AGE_GROUP_DISPLAY_LABELS, formatDaysOpen } from '../constants/ageGroups';
+import { AGE_GROUP_DISPLAY_LABELS, AGE_GROUP_OPTIONS, formatDaysOpen } from '../constants/ageGroups';
 
 export default function Home() {
   const [results, setResults] = useState([]);
@@ -584,15 +584,26 @@ export default function Home() {
               {!loading && view === 'list' && results.map((daycare) => (
                 <div key={daycare._id} style={styles.card}>
                   <div style={styles.cardTop}>
-                    <h3
-                      style={{ ...styles.cardName, cursor: 'pointer', color: '#FF6B35' }}
-                      onClick={() => {
-                        setShowPopup(false);
-                        navigate(`/daycare/${daycare._id}`);
-                      }}
-                    >
-                      {daycare.name}
-                    </h3>
+                    <div style={styles.cardHeading}>
+                      <h3
+                        style={{ ...styles.cardName, cursor: 'pointer', color: '#FF6B35' }}
+                        onClick={() => {
+                          setShowPopup(false);
+                          navigate(`/daycare/${daycare._id}`);
+                        }}
+                      >
+                        {daycare.name}
+                      </h3>
+                      <div style={styles.providerDetails}>
+                        <LicensingBadge licensed={daycare.licensed} />
+                        {daycare.maxChildren > 0 && (
+                          <span style={styles.tagCapacity}>Max {daycare.maxChildren} children</span>
+                        )}
+                        {daycare.daysOpen?.length > 0 && (
+                          <span style={styles.tagDays}>Open: {formatDaysOpen(daycare.daysOpen)}</span>
+                        )}
+                      </div>
+                    </div>
                     <span style={styles.ratingBadge}>★ {daycare.rating || 'New'}</span>
                   </div>
                   <p style={styles.cardAddress}>📍 {daycare.hideAddress ? daycare.city : `${daycare.address}, ${daycare.city}`}</p>
@@ -601,41 +612,49 @@ export default function Home() {
                       📍 {daycare.distanceFromUser} km away
                     </p>
                   )}
-                  <div style={styles.tags}>
-                    <LicensingBadge licensed={daycare.licensed} />
-                    {daycare.ageRange?.map((age) => (
-                      <span key={age} style={styles.tagOrange}>{AGE_GROUP_DISPLAY_LABELS[age] || age}</span>
-                    ))}
-                    {daycare.language?.map((lang) => (
-                      <span key={lang} style={styles.tagPurple}>{lang}</span>
-                    ))}
-                    {daycare.acceptsSubsidy && <span style={styles.tagCapacity}>Accepts subsidy</span>}
-                    {daycare.mealsProvided && <span style={styles.tagDays}>Meals provided</span>}
-                    {daycare.outdoorPlaySpace && <span style={styles.tagDays}>Outdoor play space</span>}
-                    {daycare.maxChildren > 0 && (
-                      <span style={styles.tagCapacity}>Max {daycare.maxChildren} children</span>
+                  <div style={styles.detailRows}>
+                    {daycare.ageRange?.length > 0 && (
+                      <div style={styles.detailRow} aria-label="Age groups served">
+                        {daycare.ageRange.map((age) => (
+                          <span key={age} style={styles.tagOrange}>{AGE_GROUP_DISPLAY_LABELS[age] || age}</span>
+                        ))}
+                      </div>
                     )}
-                    {daycare.daysOpen?.length > 0 && (
-                      <span style={styles.tagDays}>Open: {formatDaysOpen(daycare.daysOpen)}</span>
+                    {daycare.language?.length > 0 && (
+                      <div style={styles.detailRow} aria-label="Languages">
+                        {daycare.language.map((lang) => (
+                          <span key={lang} style={styles.tagPurple}>{lang}</span>
+                        ))}
+                      </div>
                     )}
-                    {['infant', 'toddler', 'preschool'].map((age) => {
-                      const spots = daycare.availability?.[age];
-                      if (spots === undefined) return null;
-                      return (
-                        <span
-                          key={age}
-                          style={{
-                            fontSize: '12px',
-                            padding: '2px 8px',
-                            borderRadius: '20px',
-                            background: spots > 0 ? '#E8F5E9' : '#FFEBEE',
-                            color: spots > 0 ? '#2E7D32' : '#C62828',
-                          }}
-                        >
-                          {age}: {spots > 0 ? `${spots} open` : 'waitlist'}
-                        </span>
-                      );
-                    })}
+                    {(daycare.acceptsSubsidy || daycare.mealsProvided || daycare.outdoorPlaySpace) && (
+                      <div style={styles.detailRow} aria-label="Daycare features">
+                        {daycare.acceptsSubsidy && <span style={styles.tagCapacity}>Accepts subsidy</span>}
+                        {daycare.mealsProvided && <span style={styles.tagDays}>Meals provided</span>}
+                        {daycare.outdoorPlaySpace && <span style={styles.tagDays}>Outdoor play space</span>}
+                      </div>
+                    )}
+                    {AGE_GROUP_OPTIONS.some(({ value }) =>
+                      daycare.ageRange?.includes(value) && daycare.availability?.[value] !== undefined
+                    ) && (
+                      <div style={styles.vacancyPanel} aria-label="Vacancy details">
+                        <span style={styles.vacancyTitle}>Vacancies</span>
+                        <div style={styles.vacancyBadges}>
+                          {AGE_GROUP_OPTIONS.map(({ value: age, label }) => {
+                            const spots = daycare.availability?.[age];
+                            if (!daycare.ageRange?.includes(age) || spots === undefined) return null;
+                            return (
+                              <span
+                                key={age}
+                                style={spots > 0 ? styles.vacancyOpen : styles.vacancyWaitlist}
+                              >
+                                {label}: {spots > 0 ? `${spots} open` : 'Waitlist'}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div style={styles.cardFooter}>
                     <span style={styles.price}>${daycare.monthlyPrice}/month</span>
@@ -1335,13 +1354,28 @@ const styles = {
   cardTop: {
     display: 'flex',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
+    gap: '10px',
     marginBottom: '6px',
   },
+  cardHeading: {
+    display: 'flex',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: '8px',
+    minWidth: 0,
+  },
   cardName: {
+    margin: 0,
     fontSize: '16px',
     fontWeight: '500',
     color: '#2C2C2A',
+  },
+  providerDetails: {
+    display: 'flex',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: '6px',
   },
   ratingBadge: {
     fontSize: '13px',
@@ -1356,11 +1390,15 @@ const styles = {
     color: '#6B7280',
     marginBottom: '10px',
   },
-  tags: {
+  detailRows: {
+    display: 'grid',
+    gap: '7px',
+    marginBottom: '10px',
+  },
+  detailRow: {
     display: 'flex',
     gap: '6px',
     flexWrap: 'wrap',
-    marginBottom: '10px',
   },
   tagOrange: {
     fontSize: '12px',
@@ -1393,6 +1431,46 @@ const styles = {
     padding: '2px 8px',
     borderRadius: '20px',
     border: '1px solid #D6DFD7',
+  },
+  vacancyPanel: {
+    display: 'flex',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: '8px 12px',
+    padding: '9px 11px',
+    borderRadius: '10px',
+    border: '1px solid #8FC5A0',
+    background: '#E8F5EC',
+  },
+  vacancyTitle: {
+    color: '#174C2B',
+    fontSize: '12px',
+    fontWeight: 700,
+    textTransform: 'uppercase',
+    letterSpacing: '0.04em',
+  },
+  vacancyBadges: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '6px',
+  },
+  vacancyOpen: {
+    fontSize: '12px',
+    fontWeight: 700,
+    padding: '3px 9px',
+    borderRadius: '20px',
+    background: '#1B5E20',
+    color: '#FFFFFF',
+    border: '1px solid #174C1B',
+  },
+  vacancyWaitlist: {
+    fontSize: '12px',
+    fontWeight: 700,
+    padding: '3px 9px',
+    borderRadius: '20px',
+    background: '#FCE8E6',
+    color: '#8E1B16',
+    border: '1px solid #D98A84',
   },
   cardFooter: {
     display: 'flex',
