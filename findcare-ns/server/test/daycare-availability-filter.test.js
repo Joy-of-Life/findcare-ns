@@ -26,14 +26,14 @@ async function requestListings(query) {
   }
 }
 
-test('vacancy filter without an age group matches openings in any supported category', async () => {
+test('Open vacancy status without an age group matches openings in any supported category', async () => {
   let receivedQuery;
   Daycare.find = async query => {
     receivedQuery = query;
     return [];
   };
 
-  await requestListings('?availableOnly=true');
+  await requestListings('?availabilityStatus=open');
 
   assert.deepEqual(receivedQuery, {
     $and: [{
@@ -44,19 +44,54 @@ test('vacancy filter without an age group matches openings in any supported cate
   });
 });
 
-test('vacancy filter with an age group matches openings in that category', async () => {
+test('Open vacancy status with an age group matches openings in that category', async () => {
   let receivedQuery;
   Daycare.find = async query => {
     receivedQuery = query;
     return [];
   };
 
-  await requestListings('?availableOnly=true&ageRange=infant');
+  await requestListings('?availabilityStatus=open&ageRange=infant');
 
   assert.deepEqual(receivedQuery, {
     ageRange: { $in: ['infant'] },
     $and: [{
       'availability.infant': { $gt: 0 },
+    }],
+  });
+});
+
+test('Waitlist status without an age group excludes daycares with openings in any category', async () => {
+  let receivedQuery;
+  Daycare.find = async query => {
+    receivedQuery = query;
+    return [];
+  };
+
+  await requestListings('?availabilityStatus=waitlist');
+
+  assert.deepEqual(receivedQuery, {
+    $and: [{
+      $nor: SUPPORTED_AGE_GROUPS.map(group => ({
+        [`availability.${group}`]: { $gt: 0 },
+      })),
+    }],
+  });
+});
+
+test('Waitlist status with an age group matches daycares without openings for that category', async () => {
+  let receivedQuery;
+  Daycare.find = async query => {
+    receivedQuery = query;
+    return [];
+  };
+
+  await requestListings('?availabilityStatus=waitlist&ageRange=infant');
+
+  assert.deepEqual(receivedQuery, {
+    ageRange: { $in: ['infant'] },
+    $and: [{
+      $nor: [{ 'availability.infant': { $gt: 0 } }],
     }],
   });
 });

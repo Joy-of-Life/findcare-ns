@@ -138,7 +138,7 @@ export default function Home() {
       if (filters.language) params.append('language', filters.language);
       if (filters.maxPrice) params.append('maxPrice', filters.maxPrice);
       if (filters.rating) params.append('rating', filters.rating);
-      if (filters.availableOnly) params.append('availableOnly', 'true');
+      if (filters.availabilityStatus) params.append('availabilityStatus', filters.availabilityStatus);
       if (filters.voiceQuery || filters.query || filters.search) {
         params.append('search', filters.voiceQuery || filters.query || filters.search);
       }

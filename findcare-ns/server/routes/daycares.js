@@ -89,6 +89,11 @@ function matchesSearch(daycare, terms) {
   return terms.every(term => searchableText.includes(term.toLowerCase()));
 }
 
+function hasAvailableSpots(daycare, ageRange) {
+  if (ageRange) return Number(daycare.availability?.[ageRange] || 0) > 0;
+  return SUPPORTED_AGE_GROUPS.some(group => Number(daycare.availability?.[group] || 0) > 0);
+}
+
 // GET /api/daycares — search with filters
 router.get('/cities', (req, res) => {
   res.json(NOVA_SCOTIA_CITIES);
@@ -96,14 +101,17 @@ router.get('/cities', (req, res) => {
 
 router.get('/', async (req, res) => {
   try {
-    const { city, search, ageRange, maxPrice, language, rating, availableOnly, lat, lng, sortByDistance } = req.query;
+    const { city, search, ageRange, maxPrice, language, rating, availabilityStatus, availableOnly, lat, lng, sortByDistance } = req.query;
     const searchTerms = typeof search === 'string'
       ? search.trim().split(/\s+/)
         .map(term => term.replace(/^[^\w]+|[^\w]+$/g, '').toLowerCase())
         .filter(term => term && !SEARCH_STOP_WORDS.has(term))
       : [];
-    const onlyAvailable = availableOnly === true || availableOnly === 'true' ||
+    const legacyOpenIntent = availableOnly === true || availableOnly === 'true' ||
       (typeof search === 'string' && /\b(open|available)\s+spots?\b/i.test(search));
+    const vacancyStatus = availabilityStatus === 'open' || availabilityStatus === 'waitlist'
+      ? availabilityStatus
+      : legacyOpenIntent ? 'open' : '';
     const query = {};
 
     // If lat/lng provided, filter by distance (hardcoded to 25km)
@@ -155,10 +163,11 @@ router.get('/', async (req, res) => {
       if (maxPrice) result = result.filter(d => d.monthlyPrice <= Number(maxPrice));
       if (language) result = result.filter(d => d.language && d.language.includes(language));
       if (rating) result = result.filter(d => d.rating >= Number(rating));
-      if (onlyAvailable) {
-        result = result.filter(d => ageRange
-          ? (d.availability?.[ageRange] || 0) > 0
-          : SUPPORTED_AGE_GROUPS.some(group => (d.availability?.[group] || 0) > 0));
+      if (vacancyStatus) {
+        result = result.filter(d => {
+          const hasOpenSpots = hasAvailableSpots(d, ageRange);
+          return vacancyStatus === 'open' ? hasOpenSpots : !hasOpenSpots;
+        });
       }
 
       return res.json(result.sort((a, b) => a.distanceFromUser - b.distanceFromUser).map(toPublicDaycare));
@@ -177,10 +186,13 @@ router.get('/', async (req, res) => {
     if (rating)   query.rating       = { $gte: Number(rating) };
     if (ageRange) query.ageRange     = { $in: [ageRange] };
 
-    if (onlyAvailable) {
-      const availabilityFilter = ageRange
-        ? { [`availability.${ageRange}`]: { $gt: 0 } }
-        : { $or: SUPPORTED_AGE_GROUPS.map(group => ({ [`availability.${group}`]: { $gt: 0 } })) };
+    if (vacancyStatus) {
+      const openSpotFilters = ageRange
+        ? [{ [`availability.${ageRange}`]: { $gt: 0 } }]
+        : SUPPORTED_AGE_GROUPS.map(group => ({ [`availability.${group}`]: { $gt: 0 } }));
+      const availabilityFilter = vacancyStatus === 'open'
+        ? (ageRange ? openSpotFilters[0] : { $or: openSpotFilters })
+        : { $nor: openSpotFilters };
       query.$and = [...(query.$and || []), availabilityFilter];
     }
 

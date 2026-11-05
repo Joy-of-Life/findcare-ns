@@ -8,11 +8,11 @@ export default function SearchBar({ onSearch }) {
   const [language, setLanguage]           = useState('');
   const [maxPrice, setMaxPrice]           = useState('');
   const [rating, setRating]               = useState('');
-  const [availableOnly, setAvailableOnly] = useState(false);
+  const [availabilityStatus, setAvailabilityStatus] = useState('');
   const [showFilters, setShowFilters]     = useState(false);
 
   function handleSearch() {
-    onSearch({ query, ageRange, language, maxPrice, rating, availableOnly });
+    onSearch({ query, ageRange, language, maxPrice, rating, availabilityStatus });
   }
 
   function handleKeyDown(e) {
@@ -110,14 +110,18 @@ export default function SearchBar({ onSearch }) {
             <option value="4.5">4.5+ stars</option>
           </select>
 
-          <label style={styles.checkLabel}>
-            <input
-              type="checkbox"
-              checked={availableOnly}
-              onChange={e => setAvailableOnly(e.target.checked)}
-              style={{ marginRight: '6px', accentColor: '#FF6B35' }}
-            />
-            Daycares with vacancies
+          <label style={styles.vacancyFilter}>
+            <span>Daycare Vacancies</span>
+            <select
+              aria-label="Daycare Vacancies"
+              value={availabilityStatus}
+              onChange={e => setAvailabilityStatus(e.target.value)}
+              style={styles.select}
+            >
+              <option value="">Any status</option>
+              <option value="open">Open</option>
+              <option value="waitlist">Waitlist</option>
+            </select>
           </label>
         </div>
       )}
@@ -135,6 +139,6 @@ const styles = {
   filterToggle: { width: '42px', height: '42px', display: 'grid', placeItems: 'center', flexShrink: 0, border: 'none', borderLeft: '1px solid #E7E1D7', borderRadius: 0, background: 'transparent', color: '#777', cursor: 'pointer' },
   filtersRow: { position: 'absolute', top: 'calc(100% + 10px)', right: 0, width: 'min(100%, 620px)', display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '10px', padding: '16px', border: '1px solid #E3D9C9', borderRadius: '14px', background: '#FFF9EA', boxShadow: '0 14px 30px rgba(24, 20, 15, 0.2)' },
   select: { minWidth: 0, padding: '10px 12px', borderRadius: '9px', border: '1px solid #D8CCBC', background: '#fff', fontSize: '13px', color: '#555', cursor: 'pointer' },
-  checkLabel: { gridColumn: '1 / -1', display: 'flex', alignItems: 'center', fontSize: '13px', color: '#5C625D', cursor: 'pointer', fontWeight: '500' },
+  vacancyFilter: { display: 'grid', gap: '5px', fontSize: '12px', color: '#5C625D', fontWeight: '500' },
   btn: { minWidth: '144px', height: '54px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '0 20px', flexShrink: 0, background: '#FF665F', color: '#fff', border: 'none', borderRadius: '11px', fontSize: '15px', fontWeight: '600', cursor: 'pointer', boxShadow: '0 3px 8px rgba(255, 102, 95, 0.18)', transition: 'background 180ms ease, box-shadow 180ms ease, transform 180ms ease' },
 };
