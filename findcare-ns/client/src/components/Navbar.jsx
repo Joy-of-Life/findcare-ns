@@ -86,7 +86,7 @@ export default function Navbar() {
           {!user ? (
             <>
               <Link 
-                to="/register" 
+                to="/register?role=owner"
                 className="findcare-navbar__list-button"
                 style={hoveredBtn === 'list' ? styles.listBtnHover : styles.listBtn}
                 onMouseEnter={() => setHoveredBtn('list')}

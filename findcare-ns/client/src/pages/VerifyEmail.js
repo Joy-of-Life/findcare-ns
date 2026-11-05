@@ -55,8 +55,7 @@ export default function VerifyEmail() {
               <div style={styles.iconSuccess}>✓</div>
             </div>
             <h1 style={styles.title}>Email verified! 🎉</h1>
-            <p style={styles.sub}>{message}</p>
-            <p style={styles.sub}>You can now log in to your FindCare account.</p>
+            <p style={styles.sub}>Thanks for confirming. You can now log in to your FindCare account.</p>
             <button onClick={() => navigate('/login')} style={styles.btn}>
               🔓 Log in to FindCare
             </button>

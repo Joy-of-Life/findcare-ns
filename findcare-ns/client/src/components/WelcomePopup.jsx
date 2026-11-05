@@ -41,7 +41,7 @@ export default function WelcomePopup() {
   function handleOwner() {
     sessionStorage.setItem('welcomeSeen', 'true');
     setShow(false);
-    navigate('/register');
+    navigate('/register?role=owner');
   }
 
   function handleParent() {

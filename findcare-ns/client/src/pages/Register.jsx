@@ -1,11 +1,17 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import BrandIcon from '../components/BrandIcon';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 export default function Register() {
-  const [form, setForm]       = useState({ name: '', email: '', password: '', role: 'parent' });
+  const [searchParams] = useSearchParams();
+  const [form, setForm]       = useState(() => ({
+    name: '',
+    email: '',
+    password: '',
+    role: searchParams.get('role') === 'owner' ? 'owner' : 'parent',
+  }));
   const [error, setError]     = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);

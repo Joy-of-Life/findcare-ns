@@ -498,7 +498,7 @@ export default function Home() {
           <div style={styles.footerColumn}>
             <h4 style={styles.footerTitle}>Legal & Help</h4>
             <div style={styles.footerList}>
-              <Link to="/register" style={styles.footerLink}>List your daycare</Link>
+              <Link to="/register?role=owner" style={styles.footerLink}>List your daycare</Link>
               <Link to="/login" style={styles.footerLink}>Login</Link>
               <Link to="/register" style={styles.footerLink}>Register</Link>
               <Link to="/about" style={styles.footerLink}>Support</Link>
