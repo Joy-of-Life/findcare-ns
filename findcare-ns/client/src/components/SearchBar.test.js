@@ -1,12 +1,12 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import SearchBar from './SearchBar';
 
-test('vacancy dropdown offers Open and Waitlist without requiring an age group', () => {
+test('vacancy dropdown is first and offers Any status, Open, and Waitlist', () => {
   const onSearch = jest.fn();
   render(<SearchBar onSearch={onSearch} />);
 
   fireEvent.click(screen.getByRole('button', { name: 'Toggle search filters' }));
-  fireEvent.change(screen.getByRole('combobox', { name: 'Daycare Vacancies' }), {
+  fireEvent.change(screen.getByRole('combobox', { name: 'Vacancy' }), {
     target: { value: 'open' },
   });
   fireEvent.click(screen.getByRole('button', { name: 'Search' }));
@@ -19,6 +19,8 @@ test('vacancy dropdown offers Open and Waitlist without requiring an age group',
     rating: '',
     availabilityStatus: 'open',
   });
+  expect(screen.getAllByRole('combobox')[0].getAttribute('aria-label')).toBe('Vacancy');
+  expect(screen.getByRole('option', { name: 'Any status' })).not.toBeNull();
   expect(screen.getByRole('option', { name: 'Waitlist' })).not.toBeNull();
 });
 
@@ -27,7 +29,7 @@ test('vacancy status remains selected when clearing the age group', () => {
   render(<SearchBar onSearch={onSearch} />);
 
   fireEvent.click(screen.getByRole('button', { name: 'Toggle search filters' }));
-  fireEvent.change(screen.getByRole('combobox', { name: 'Daycare Vacancies' }), {
+  fireEvent.change(screen.getByRole('combobox', { name: 'Vacancy' }), {
     target: { value: 'waitlist' },
   });
   fireEvent.change(screen.getByRole('combobox', { name: 'Age group' }), {
@@ -37,5 +39,5 @@ test('vacancy status remains selected when clearing the age group', () => {
     target: { value: '' },
   });
 
-  expect(screen.getByRole('combobox', { name: 'Daycare Vacancies' }).value).toBe('waitlist');
+  expect(screen.getByRole('combobox', { name: 'Vacancy' }).value).toBe('waitlist');
 });

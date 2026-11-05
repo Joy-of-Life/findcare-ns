@@ -95,3 +95,16 @@ test('Waitlist status with an age group matches daycares without openings for th
     }],
   });
 });
+
+test('vacancy status filters returned listings instead of relying only on the database query', async () => {
+  Daycare.find = async () => [
+    { name: 'Open centre', availability: { infant: 1 } },
+    { name: 'Waitlist centre', availability: { infant: 0 } },
+  ];
+
+  const openResults = await requestListings('?availabilityStatus=open');
+  const waitlistResults = await requestListings('?availabilityStatus=waitlist');
+
+  assert.deepEqual(openResults.map(daycare => daycare.name), ['Open centre']);
+  assert.deepEqual(waitlistResults.map(daycare => daycare.name), ['Waitlist centre']);
+});

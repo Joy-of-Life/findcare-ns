@@ -78,6 +78,18 @@ export default function SearchBar({ onSearch }) {
 
       {showFilters && (
         <div id="findcare-search-filters" className="findcare-search__filters" style={styles.filtersRow}>
+          <select
+            aria-label="Vacancy"
+            value={availabilityStatus}
+            onChange={e => setAvailabilityStatus(e.target.value)}
+            style={styles.select}
+          >
+            <option value="">Vacancy</option>
+            <option value="any">Any status</option>
+            <option value="open">Open</option>
+            <option value="waitlist">Waitlist</option>
+          </select>
+
           <select aria-label="Age group" value={ageRange} onChange={e => setAgeRange(e.target.value)} style={styles.select}>
             <option value="">Age group</option>
             {AGE_GROUP_OPTIONS.map(({ value, label, range }) => (
@@ -110,19 +122,6 @@ export default function SearchBar({ onSearch }) {
             <option value="4.5">4.5+ stars</option>
           </select>
 
-          <label style={styles.vacancyFilter}>
-            <span>Daycare Vacancies</span>
-            <select
-              aria-label="Daycare Vacancies"
-              value={availabilityStatus}
-              onChange={e => setAvailabilityStatus(e.target.value)}
-              style={styles.select}
-            >
-              <option value="">Any status</option>
-              <option value="open">Open</option>
-              <option value="waitlist">Waitlist</option>
-            </select>
-          </label>
         </div>
       )}
     </div>
@@ -137,8 +136,7 @@ const styles = {
   input: { flex: 1, minWidth: 0, border: 'none', background: 'transparent', fontSize: '15px', color: '#2C2C2A', outline: 'none' },
   clearBtn: { border: 'none', background: 'transparent', color: '#777', fontSize: '22px', lineHeight: 1, cursor: 'pointer', padding: '4px' },
   filterToggle: { width: '42px', height: '42px', display: 'grid', placeItems: 'center', flexShrink: 0, border: 'none', borderLeft: '1px solid #E7E1D7', borderRadius: 0, background: 'transparent', color: '#777', cursor: 'pointer' },
-  filtersRow: { position: 'absolute', top: 'calc(100% + 10px)', right: 0, width: 'min(100%, 620px)', display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '10px', padding: '16px', border: '1px solid #E3D9C9', borderRadius: '14px', background: '#FFF9EA', boxShadow: '0 14px 30px rgba(24, 20, 15, 0.2)' },
+  filtersRow: { border: '1px solid #E3D9C9', borderRadius: '14px', background: '#FFF9EA', boxShadow: '0 14px 30px rgba(24, 20, 15, 0.2)' },
   select: { minWidth: 0, padding: '10px 12px', borderRadius: '9px', border: '1px solid #D8CCBC', background: '#fff', fontSize: '13px', color: '#555', cursor: 'pointer' },
-  vacancyFilter: { display: 'grid', gap: '5px', fontSize: '12px', color: '#5C625D', fontWeight: '500' },
   btn: { minWidth: '144px', height: '54px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '0 20px', flexShrink: 0, background: '#FF665F', color: '#fff', border: 'none', borderRadius: '11px', fontSize: '15px', fontWeight: '600', cursor: 'pointer', boxShadow: '0 3px 8px rgba(255, 102, 95, 0.18)', transition: 'background 180ms ease, box-shadow 180ms ease, transform 180ms ease' },
 };

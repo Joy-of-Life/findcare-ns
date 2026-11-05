@@ -94,6 +94,12 @@ function hasAvailableSpots(daycare, ageRange) {
   return SUPPORTED_AGE_GROUPS.some(group => Number(daycare.availability?.[group] || 0) > 0);
 }
 
+function matchesVacancyStatus(daycare, vacancyStatus, ageRange) {
+  if (!vacancyStatus) return true;
+  const hasOpenSpots = hasAvailableSpots(daycare, ageRange);
+  return vacancyStatus === 'open' ? hasOpenSpots : !hasOpenSpots;
+}
+
 // GET /api/daycares — search with filters
 router.get('/cities', (req, res) => {
   res.json(NOVA_SCOTIA_CITIES);
@@ -163,12 +169,7 @@ router.get('/', async (req, res) => {
       if (maxPrice) result = result.filter(d => d.monthlyPrice <= Number(maxPrice));
       if (language) result = result.filter(d => d.language && d.language.includes(language));
       if (rating) result = result.filter(d => d.rating >= Number(rating));
-      if (vacancyStatus) {
-        result = result.filter(d => {
-          const hasOpenSpots = hasAvailableSpots(d, ageRange);
-          return vacancyStatus === 'open' ? hasOpenSpots : !hasOpenSpots;
-        });
-      }
+      result = result.filter(d => matchesVacancyStatus(d, vacancyStatus, ageRange));
 
       return res.json(result.sort((a, b) => a.distanceFromUser - b.distanceFromUser).map(toPublicDaycare));
     }
@@ -197,6 +198,10 @@ router.get('/', async (req, res) => {
     }
 
     const daycares = await Daycare.find(query);
+    const matchingDaycares = daycares.filter(daycare => {
+      const item = typeof daycare.toObject === 'function' ? daycare.toObject() : daycare;
+      return matchesVacancyStatus(item, vacancyStatus, ageRange);
+    });
     const hasValidLocation = lat != null && lng != null &&
       Number.isFinite(Number(lat)) && Number.isFinite(Number(lng)) &&
       Number(lat) >= -90 && Number(lat) <= 90 &&
@@ -208,7 +213,7 @@ router.get('/', async (req, res) => {
     if (sortByDistance === 'true' && hasValidLocation) {
       const userLat = Number(lat);
       const userLng = Number(lng);
-      const withDistance = daycares.map(daycare => {
+      const withDistance = matchingDaycares.map(daycare => {
         const item = typeof daycare.toObject === 'function' ? daycare.toObject() : { ...daycare };
         const daycareLat = Number(item.coordinates?.lat);
         const daycareLng = Number(item.coordinates?.lng);
@@ -238,7 +243,7 @@ router.get('/', async (req, res) => {
       })));
     }
 
-    res.json(daycares.sort(ratingAndNameOrder).map(toPublicDaycare));
+    res.json(matchingDaycares.sort(ratingAndNameOrder).map(toPublicDaycare));
 
   } catch (err) {
     console.error(err);

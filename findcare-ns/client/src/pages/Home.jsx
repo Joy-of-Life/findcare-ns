@@ -138,7 +138,9 @@ export default function Home() {
       if (filters.language) params.append('language', filters.language);
       if (filters.maxPrice) params.append('maxPrice', filters.maxPrice);
       if (filters.rating) params.append('rating', filters.rating);
-      if (filters.availabilityStatus) params.append('availabilityStatus', filters.availabilityStatus);
+      if (filters.availabilityStatus && filters.availabilityStatus !== 'any') {
+        params.append('availabilityStatus', filters.availabilityStatus);
+      }
       if (filters.voiceQuery || filters.query || filters.search) {
         params.append('search', filters.voiceQuery || filters.query || filters.search);
       }
@@ -268,7 +270,7 @@ export default function Home() {
           </div>
 
           <div style={styles.popularWrap}>
-            <span style={styles.popularLabel}>Popular locations:</span>
+            <span style={styles.popularLabel}>Popular Locations:</span>
             <div style={styles.cityGrid}>
               {['Halifax', 'Dartmouth', 'Bedford', 'Lower Sackville', 'Truro', 'New Glasgow', 'Sydney', 'Kentville'].map((city) => (
                 <button 
