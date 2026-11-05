@@ -26,8 +26,7 @@ const DAYS_OPEN = [
 ];
 const DEFAULT_AVAILABILITY = Object.fromEntries(AGE_GROUP_OPTIONS.map(({ value }) => [value, 0]));
 
-function getCapacityDetails(providerType, ageRange = []) {
-  const schoolAgeOnly = ageRange.length === 1 && ageRange[0] === 'school-age';
+function getCapacityDetails(providerType) {
   if (providerType === 'licensedCentre') {
     return {
       label: 'License-approved capacity *',
@@ -38,15 +37,15 @@ function getCapacityDetails(providerType, ageRange = []) {
   if (providerType === 'regulatedFamilyHome') {
     return {
       label: 'Maximum approved home capacity *',
-      help: `Regulated family homes may care for up to ${schoolAgeOnly ? 9 : 7} children at a time, including the provider’s own children. Age-mix limits also apply${schoolAgeOnly ? '.' : '; school-age-only care may have a limit of 9.'}`,
+      help: 'Regulated family homes may care for up to 7 children at a time, including the provider’s own children. Age-mix limits also apply.',
       confirmation: 'I confirm this capacity follows my licensed family home agency’s approval and provincial age-mix rules, including my own children.',
     };
   }
   if (providerType === 'unlicensedHome') {
     return {
       label: 'Maximum home care capacity *',
-      help: `Unlicensed care is limited to ${schoolAgeOnly ? 8 : 6} children at a time, including the provider’s own children${schoolAgeOnly ? ' (school-age only).' : ' (any ages); school-age-only care may include up to 8.'}`,
-      confirmation: `I confirm this capacity follows the unlicensed care limits, including my own children (${schoolAgeOnly ? 'up to 8 school-age children only' : 'up to 6 children of any ages'}).`,
+      help: 'Unlicensed care is limited to 6 children at a time, including the provider’s own children.',
+      confirmation: 'I confirm this capacity follows the unlicensed care limit of up to 6 children, including my own children.',
     };
   }
   return {
@@ -95,7 +94,7 @@ function createDaycareForm(daycare = {}) {
     dailyRate: daycare.dailyRate ?? '',
     dailyRateAttestationConfirmed: false,
     providerType: daycare.providerType || '',
-    unlicensedDisclosureAttestationConfirmed: false,
+    providerStatusAttestationConfirmed: false,
     capacityAttestationConfirmed: false,
     openHours: daycare.openHours || '',
     opensAt: daycare.opensAt || parsedHours.opensAt,
@@ -212,7 +211,7 @@ export default function OwnerPortal() {
       setForm(current => ({
         ...current,
         providerType: e.target.value,
-        unlicensedDisclosureAttestationConfirmed: false,
+        providerStatusAttestationConfirmed: false,
         capacityAttestationConfirmed: false,
       }));
       return;
@@ -324,8 +323,8 @@ export default function OwnerPortal() {
     if (!PROVIDER_TYPES.some(providerType => providerType.value === form.providerType)) {
       validationErrors.push('Provider type');
     }
-    if (form.providerType === 'unlicensedHome' && !form.unlicensedDisclosureAttestationConfirmed) {
-      validationErrors.push('Unlicensed provider disclosure');
+    if (form.providerType && !form.providerStatusAttestationConfirmed) {
+      validationErrors.push('Provider status confirmation');
     }
     if (!form.ageRange.length) validationErrors.push('Ages served');
     if (!Number.isInteger(Number(form.maxChildren)) || Number(form.maxChildren) < 1) {
@@ -372,7 +371,7 @@ export default function OwnerPortal() {
           openHours: formatOpenHours(form.daysOpen, form.opensAt, form.closesAt),
           maxChildren: Number(form.maxChildren),
           capacityAttestationConfirmed: form.capacityAttestationConfirmed,
-          unlicensedDisclosureAttestationConfirmed: form.unlicensedDisclosureAttestationConfirmed,
+          providerStatusAttestationConfirmed: form.providerStatusAttestationConfirmed,
           dailyRate: Number(form.dailyRate),
           coordinates: hasCoordinates ? { lat: latitude, lng: longitude } : undefined,
           complianceAttestation: isEditing ? undefined : attestation,
@@ -429,10 +428,10 @@ export default function OwnerPortal() {
             <p>Your current facility licence determines the approved capacity. Any program- or age-specific limits also apply.</p>
           )}
           {form.providerType === 'regulatedFamilyHome' && (
-            <p>Regulated family home care is generally limited to 7 children at a time, including the provider’s own children, with age-mix limits. School-age-only care may have up to 9.</p>
+            <p>Regulated family home care is limited to 7 children at a time, including the provider’s own children. Age-mix limits also apply.</p>
           )}
           {form.providerType === 'unlicensedHome' && (
-            <p>Unlicensed care is limited to 6 children of any ages, including the provider’s own children, or up to 8 school-age children only.</p>
+            <p>Unlicensed care is limited to 6 children at a time, including the provider’s own children.</p>
           )}
           <a href={form.providerType === 'licensedCentre'
             ? 'https://childcarenovascotia.ca/operators/current-operators/licensing'
@@ -611,15 +610,19 @@ export default function OwnerPortal() {
                       <option key={providerType.value} value={providerType.value}>{providerType.label}</option>
                     ))}
                   </select>
-                  {form.providerType === 'unlicensedHome' && (
+                  {form.providerType && (
                     <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginTop: '10px', fontSize: '13px', lineHeight: 1.5, color: '#2C2C2A' }}>
                       <input
                         type="checkbox"
-                        name="unlicensedDisclosureAttestationConfirmed"
-                        checked={form.unlicensedDisclosureAttestationConfirmed}
+                        name="providerStatusAttestationConfirmed"
+                        checked={form.providerStatusAttestationConfirmed}
                         onChange={handleChange}
                       />
-                      <span>I understand this is unlicensed home care and will not represent or market it as a provincially licensed child care program.</span>
+                      <span>{form.providerType === 'licensedCentre'
+                        ? 'I confirm that this centre currently holds a valid provincial child care licence, and I will update my listing if its licensing status changes.'
+                        : form.providerType === 'regulatedFamilyHome'
+                          ? 'I confirm that I operate this home daycare under a licensed family home day care agency, and I will update my listing if my approval status changes.'
+                          : 'I confirm that this home daycare is not provincially licensed, and I will not represent or market it as a licensed child care program.'}</span>
                     </label>
                   )}
                 </>
@@ -730,20 +733,21 @@ export default function OwnerPortal() {
               </div>
             </div>
             <div className="owner-max-children">
-              <label style={styles.label} htmlFor="maxChildren">{getCapacityDetails(form.providerType, form.ageRange).label}</label>
+              <label style={styles.label} htmlFor="maxChildren">{getCapacityDetails(form.providerType).label}</label>
               <input
                 id="maxChildren"
                 type="number"
                 name="maxChildren"
                 min="1"
+                max={form.providerType === 'regulatedFamilyHome' ? 7 : form.providerType === 'unlicensedHome' ? 6 : undefined}
                 step="1"
                 value={form.maxChildren}
                 onChange={handleChange}
                 style={styles.input}
                 required
               />
-              <p className="owner-capacity-note">{getCapacityDetails(form.providerType, form.ageRange).help}</p>
-              {getCapacityDetails(form.providerType, form.ageRange).confirmation && (
+              <p className="owner-capacity-note">{getCapacityDetails(form.providerType).help}</p>
+              {getCapacityDetails(form.providerType).confirmation && (
                 <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginTop: '10px', fontSize: '13px', lineHeight: 1.5, color: '#2C2C2A' }}>
                   <input
                     type="checkbox"
@@ -751,7 +755,7 @@ export default function OwnerPortal() {
                     checked={form.capacityAttestationConfirmed}
                     onChange={handleChange}
                   />
-                  <span>{getCapacityDetails(form.providerType, form.ageRange).confirmation}</span>
+                  <span>{getCapacityDetails(form.providerType).confirmation}</span>
                 </label>
               )}
             </div>

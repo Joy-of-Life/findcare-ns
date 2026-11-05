@@ -35,6 +35,21 @@ test('daycare creation and edits require provider capacity attestation', async (
       error: 'Confirm the provider capacity attestation',
     });
 
+    const missingStatusResponse = await fetch(baseUrl, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        dailyRateAttestationConfirmed: true,
+        providerType: 'licensedCentre',
+        capacityAttestationConfirmed: true,
+        providerStatusAttestationConfirmed: false,
+      }),
+    });
+    assert.equal(missingStatusResponse.status, 400);
+    assert.deepEqual(await missingStatusResponse.json(), {
+      error: 'Confirm the provider status attestation',
+    });
+
     const editResponse = await fetch(`${baseUrl}/000000000000000000000001`, {
       method: 'PATCH',
       headers,
@@ -46,6 +61,20 @@ test('daycare creation and edits require provider capacity attestation', async (
     assert.equal(editResponse.status, 400);
     assert.deepEqual(await editResponse.json(), {
       error: 'Confirm the provider capacity attestation',
+    });
+
+    const missingEditStatusResponse = await fetch(`${baseUrl}/000000000000000000000001`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({
+        dailyRateAttestationConfirmed: true,
+        capacityAttestationConfirmed: true,
+        providerStatusAttestationConfirmed: false,
+      }),
+    });
+    assert.equal(missingEditStatusResponse.status, 400);
+    assert.deepEqual(await missingEditStatusResponse.json(), {
+      error: 'Confirm the provider status attestation',
     });
   } finally {
     await new Promise((resolve, reject) => server.close(err => err ? reject(err) : resolve()));

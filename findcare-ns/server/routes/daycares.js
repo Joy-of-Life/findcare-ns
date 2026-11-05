@@ -59,10 +59,7 @@ function validateOwnerListing(fields) {
   if (!Number.isInteger(Number(fields.maxChildren)) || Number(fields.maxChildren) < 1) return 'Enter the maximum number of children';
   if (!PROVIDER_TYPES.includes(fields.providerType)) return 'Select a provider type';
   if (fields.providerType !== 'licensedCentre') {
-    const schoolAgeOnly = fields.ageRange.length === 1 && fields.ageRange[0] === 'school-age';
-    const capacityLimit = fields.providerType === 'regulatedFamilyHome'
-      ? (schoolAgeOnly ? 9 : 7)
-      : (schoolAgeOnly ? 8 : 6);
+    const capacityLimit = fields.providerType === 'regulatedFamilyHome' ? 7 : 6;
     if (Number(fields.maxChildren) > capacityLimit) {
       return `The maximum capacity for this provider type and age range is ${capacityLimit}`;
     }
@@ -329,9 +326,8 @@ router.post('/', auth, async (req, res) => {
     if (req.body.capacityAttestationConfirmed !== true) {
       return res.status(400).json({ error: 'Confirm the provider capacity attestation' });
     }
-    if (req.body.providerType === 'unlicensedHome' &&
-        req.body.unlicensedDisclosureAttestationConfirmed !== true) {
-      return res.status(400).json({ error: 'Confirm the unlicensed provider disclosure' });
+    if (req.body.providerStatusAttestationConfirmed !== true) {
+      return res.status(400).json({ error: 'Confirm the provider status attestation' });
     }
     const attestation = req.body.complianceAttestation;
     if (!attestation) {
@@ -351,7 +347,7 @@ router.post('/', auth, async (req, res) => {
     delete listingFields.monthlyPrice;
     delete listingFields.capacityAttestationConfirmed;
     delete listingFields.dailyRateAttestationConfirmed;
-    delete listingFields.unlicensedDisclosureAttestationConfirmed;
+    delete listingFields.providerStatusAttestationConfirmed;
     delete listingFields.complianceAttestation;
     const licensed = req.body.providerType !== 'unlicensedHome';
     const daycare = new Daycare({
@@ -361,7 +357,7 @@ router.post('/', auth, async (req, res) => {
       complianceAttestation: {
         ...attestation,
         capacityConfirmed: true,
-        unlicensedDisclosureConfirmed: req.body.unlicensedDisclosureAttestationConfirmed === true,
+        unlicensedDisclosureConfirmed: req.body.providerType === 'unlicensedHome',
         marketingOptIn: attestation.marketingOptIn === true,
         acceptedAt: new Date(),
       },
@@ -373,7 +369,8 @@ router.post('/', auth, async (req, res) => {
         providerType: req.body.providerType,
         maxChildren: Number(req.body.maxChildren),
         ageRange: req.body.ageRange,
-        unlicensedDisclosureConfirmed: req.body.unlicensedDisclosureAttestationConfirmed === true,
+        providerStatusConfirmed: true,
+        unlicensedDisclosureConfirmed: req.body.providerType === 'unlicensedHome',
         acceptedAt: new Date(),
       }],
       owner: req.user.id
@@ -394,6 +391,9 @@ router.patch('/:id', auth, async (req, res) => {
     if (req.body.capacityAttestationConfirmed !== true) {
       return res.status(400).json({ error: 'Confirm the provider capacity attestation' });
     }
+    if (req.body.providerStatusAttestationConfirmed !== true) {
+      return res.status(400).json({ error: 'Confirm the provider status attestation' });
+    }
     const daycare = await Daycare.findById(req.params.id);
     if (!daycare) return res.status(404).json({ error: 'Daycare not found' });
     if (daycare.owner.toString() !== req.user.id) {
@@ -406,9 +406,6 @@ router.patch('/:id', auth, async (req, res) => {
       return res.status(400).json({ error: 'Select a provider type' });
     }
     const licensed = updates.providerType !== 'unlicensedHome';
-    if (!licensed && req.body.unlicensedDisclosureAttestationConfirmed !== true) {
-      return res.status(400).json({ error: 'Confirm the unlicensed provider disclosure' });
-    }
     updates.licensed = licensed;
     updates.unlicensedHomeProvider = !licensed;
     if (!Object.keys(updates).length) {
@@ -422,10 +419,11 @@ router.patch('/:id', auth, async (req, res) => {
       { licensed, acceptedAt: new Date() },
     ];
     updates.providerCapacityAttestations = [
-      ...(daycare.providerCapacityAttestations || []).map(({ providerType, maxChildren, ageRange, unlicensedDisclosureConfirmed, acceptedAt }) => ({
+      ...(daycare.providerCapacityAttestations || []).map(({ providerType, maxChildren, ageRange, providerStatusConfirmed, unlicensedDisclosureConfirmed, acceptedAt }) => ({
         providerType,
         maxChildren,
         ageRange,
+        providerStatusConfirmed,
         unlicensedDisclosureConfirmed,
         acceptedAt,
       })),
@@ -433,7 +431,8 @@ router.patch('/:id', auth, async (req, res) => {
         providerType: updates.providerType,
         maxChildren: Number(updates.maxChildren ?? daycare.maxChildren),
         ageRange: updates.ageRange ?? daycare.ageRange,
-        unlicensedDisclosureConfirmed: req.body.unlicensedDisclosureAttestationConfirmed === true,
+        providerStatusConfirmed: true,
+        unlicensedDisclosureConfirmed: updates.providerType === 'unlicensedHome',
         acceptedAt: new Date(),
       },
     ];

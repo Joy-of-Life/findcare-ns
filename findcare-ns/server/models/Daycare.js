@@ -24,6 +24,7 @@ const providerCapacityAttestationSchema = new mongoose.Schema({
   providerType: { type: String, enum: PROVIDER_TYPES, required: true },
   maxChildren: { type: Number, min: 1, required: true },
   ageRange: { type: [{ type: String, enum: SUPPORTED_AGE_GROUPS }], default: [] },
+  providerStatusConfirmed: { type: Boolean, default: false },
   unlicensedDisclosureConfirmed: { type: Boolean, default: false },
   acceptedAt: { type: Date, required: true },
 }, { _id: false });
