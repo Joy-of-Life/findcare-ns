@@ -152,7 +152,7 @@ export default function DaycareProfile() {
           <div style={styles.tags}>
             {daycare.ageRange?.map(age  => <span key={age}  style={styles.tagOrange}>{AGE_GROUP_LABELS[age] || age}</span>)}
             {daycare.language?.map(lang => <span key={lang} style={styles.tagPurple}>{lang}</span>)}
-            <LicensingBadge licensed={daycare.licensed} />
+            <LicensingBadge licensed={daycare.licensed} providerType={daycare.providerType} />
             {daycare.verified && <span style={styles.tagGreen}>✓ Verified</span>}
           </div>
         </div>

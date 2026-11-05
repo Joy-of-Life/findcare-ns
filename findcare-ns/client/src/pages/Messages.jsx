@@ -335,7 +335,13 @@ export default function Messages() {
               <option value="">Choose a saved daycare...</option>
               {savedDaycares.map(d => (
                 <option key={d._id} value={d._id}>
-                  {d.name} — {d.city} ({d.licensed ? 'Licensed' : 'Unlicensed'})
+                  {d.name} — {d.city} ({d.providerType === 'licensedCentre'
+                    ? 'Licensed centre'
+                    : d.providerType === 'regulatedFamilyHome'
+                      ? 'Regulated family home'
+                      : d.providerType === 'unlicensedHome'
+                        ? 'Unlicensed home'
+                        : d.licensed ? 'Licensed' : 'Unlicensed'})
                 </option>
               ))}
             </select>

@@ -129,7 +129,7 @@ export default function Compare() {
           {selected.map(d => (
             <span key={d._id} style={styles.selectedBadge}>
               {d.name}
-              <LicensingBadge licensed={d.licensed} />
+              <LicensingBadge licensed={d.licensed} providerType={d.providerType} />
               <span onClick={() => toggleSelect(d)} style={{ marginLeft: '6px', cursor: 'pointer', color: '#C62828' }}>×</span>
             </span>
           ))}
@@ -179,7 +179,7 @@ export default function Compare() {
             <div style={styles.labelCell}>Licensing status</div>
             {selected.map(d => (
               <div key={d._id} style={styles.valueCell}>
-                <LicensingBadge licensed={d.licensed} />
+                <LicensingBadge licensed={d.licensed} providerType={d.providerType} />
               </div>
             ))}
 
@@ -294,7 +294,7 @@ export default function Compare() {
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                     <div style={styles.resultName}>{daycare.name}</div>
-                    <LicensingBadge licensed={daycare.licensed} />
+                    <LicensingBadge licensed={daycare.licensed} providerType={daycare.providerType} />
                   </div>
                   <div style={styles.resultAddr}>📍 {daycare.city} · {formatDailyRate(daycare.dailyRate)}</div>
                 </div>

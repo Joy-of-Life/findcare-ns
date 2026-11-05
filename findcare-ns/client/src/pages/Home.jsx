@@ -596,7 +596,7 @@ export default function Home() {
                         {daycare.name}
                       </h3>
                       <div style={styles.providerDetails}>
-                        <LicensingBadge licensed={daycare.licensed} />
+                        <LicensingBadge licensed={daycare.licensed} providerType={daycare.providerType} />
                         {daycare.maxChildren > 0 && (
                           <span style={styles.tagCapacity}>Max {daycare.maxChildren} children</span>
                         )}

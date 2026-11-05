@@ -4,7 +4,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const daycareRoutes = require('../routes/daycares');
 
-test('daycare creation and edits require licensing-status attestation', async () => {
+test('daycare creation and edits require provider capacity attestation', async () => {
   const originalJwtSecret = process.env.JWT_SECRET;
   process.env.JWT_SECRET = 'licensing-attestation-test-secret';
   const app = express();
@@ -24,21 +24,28 @@ test('daycare creation and edits require licensing-status attestation', async ()
     const createResponse = await fetch(baseUrl, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ licensed: false }),
+      body: JSON.stringify({
+        dailyRateAttestationConfirmed: true,
+        providerType: 'licensedCentre',
+        capacityAttestationConfirmed: false,
+      }),
     });
     assert.equal(createResponse.status, 400);
     assert.deepEqual(await createResponse.json(), {
-      error: 'Confirm the licensing status attestation',
+      error: 'Confirm the provider capacity attestation',
     });
 
     const editResponse = await fetch(`${baseUrl}/000000000000000000000001`, {
       method: 'PATCH',
       headers,
-      body: JSON.stringify({ name: 'Updated daycare' }),
+      body: JSON.stringify({
+        dailyRateAttestationConfirmed: true,
+        capacityAttestationConfirmed: false,
+      }),
     });
     assert.equal(editResponse.status, 400);
     assert.deepEqual(await editResponse.json(), {
-      error: 'Confirm the licensing status attestation',
+      error: 'Confirm the provider capacity attestation',
     });
   } finally {
     await new Promise((resolve, reject) => server.close(err => err ? reject(err) : resolve()));

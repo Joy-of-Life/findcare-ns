@@ -6,6 +6,7 @@ function toPublicDaycare(daycare) {
     : { ...daycare };
 
   delete publicDaycare.licensingStatusAttestations;
+  delete publicDaycare.providerCapacityAttestations;
 
   if (publicDaycare.hideAddress) {
     publicDaycare.address = '';

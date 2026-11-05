@@ -101,7 +101,7 @@ export default function MapView({ daycares, ageGroup }) {
                     📍 {daycare.hideAddress ? daycare.city : `${daycare.address}, ${daycare.city}`}
                   </p>
                   <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '8px' }}>
-                    <LicensingBadge licensed={daycare.licensed} />
+                    <LicensingBadge licensed={daycare.licensed} providerType={daycare.providerType} />
                     {daycare.ageRange?.map(age => (
                       <span key={age} style={{
                         fontSize: '11px', padding: '2px 7px',

@@ -1,5 +1,11 @@
-export default function LicensingBadge({ licensed }) {
+export default function LicensingBadge({ licensed, providerType }) {
+  const providerLabels = {
+    licensedCentre: 'Licensed centre',
+    regulatedFamilyHome: 'Regulated family home',
+    unlicensedHome: 'Unlicensed home',
+  };
   const isLicensed = licensed === true;
+  const label = providerLabels[providerType] || (isLicensed ? 'Licensed' : 'Unlicensed');
 
   return (
     <span
@@ -16,7 +22,7 @@ export default function LicensingBadge({ licensed }) {
         border: `1px solid ${isLicensed ? '#A5D6A7' : '#EF9A9A'}`,
       }}
     >
-      {isLicensed ? 'Licensed' : 'Unlicensed'}
+      {label}
     </span>
   );
 }

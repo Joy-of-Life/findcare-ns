@@ -56,20 +56,20 @@ test('daycare creation requires a daily rate and ignores legacy monthly price in
       description: 'Care for infants',
       openHours: 'Mon–Fri, 7:00 AM – 5:00 PM',
       dailyRateAttestationConfirmed: true,
+      capacityAttestationConfirmed: true,
+      unlicensedDisclosureAttestationConfirmed: true,
       language: ['English'],
       ageRange: ['infant'],
       maxChildren: 3,
       daysOpen: ['mon', 'tue', 'wed', 'thu', 'fri'],
       opensAt: '07:00',
       closesAt: '17:00',
-      licensed: false,
-      licensingStatusAttestationConfirmed: true,
       complianceAttestation: {
-        capacityConfirmed: true,
         unlicensedDisclosureConfirmed: true,
         guidanceRead: true,
         termsAccepted: true,
       },
+      providerType: 'unlicensedHome',
     };
 
     const missingRate = await fetch(`http://127.0.0.1:${server.address().port}/api/daycares`, {
@@ -88,6 +88,20 @@ test('daycare creation requires a daily rate and ignores legacy monthly price in
     assert.equal(unconfirmedRate.status, 400);
     assert.deepEqual(await unconfirmedRate.json(), { error: 'Confirm the daily rate attestation' });
 
+    const unconfirmedUnlicensedDisclosure = await fetch(`http://127.0.0.1:${server.address().port}/api/daycares`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        ...baseListing,
+        dailyRate: 25.5,
+        unlicensedDisclosureAttestationConfirmed: false,
+      }),
+    });
+    assert.equal(unconfirmedUnlicensedDisclosure.status, 400);
+    assert.deepEqual(await unconfirmedUnlicensedDisclosure.json(), {
+      error: 'Confirm the unlicensed provider disclosure',
+    });
+
     const withDailyRate = await fetch(`http://127.0.0.1:${server.address().port}/api/daycares`, {
       method: 'POST',
       headers,
@@ -98,6 +112,84 @@ test('daycare creation requires a daily rate and ignores legacy monthly price in
     assert.equal(withDailyRate.status, 201);
     assert.equal(savedDaycare.dailyRate, 25.5);
     assert.equal(savedDaycare.monthlyPrice, undefined);
+    assert.equal(savedDaycare.licensed, false);
+    assert.equal(savedDaycare.unlicensedHomeProvider, true);
+    assert.equal(savedDaycare.providerCapacityAttestations, undefined);
+
+    const overCapacity = await fetch(`http://127.0.0.1:${server.address().port}/api/daycares`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        ...baseListing,
+        dailyRate: 25.5,
+        providerType: 'unlicensedHome',
+        maxChildren: 7,
+        ageRange: ['infant', 'toddler'],
+      }),
+    });
+    assert.equal(overCapacity.status, 400);
+    assert.deepEqual(await overCapacity.json(), {
+      error: 'The maximum capacity for this provider type and age range is 6',
+    });
+
+    const regulatedFamilyOverCapacity = await fetch(`http://127.0.0.1:${server.address().port}/api/daycares`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        ...baseListing,
+        dailyRate: 25.5,
+        providerType: 'regulatedFamilyHome',
+        maxChildren: 8,
+      }),
+    });
+    assert.equal(regulatedFamilyOverCapacity.status, 400);
+    assert.deepEqual(await regulatedFamilyOverCapacity.json(), {
+      error: 'The maximum capacity for this provider type and age range is 7',
+    });
+
+    const licensedCentreCapacity = await fetch(`http://127.0.0.1:${server.address().port}/api/daycares`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        ...baseListing,
+        dailyRate: 25.5,
+        providerType: 'licensedCentre',
+        maxChildren: 24,
+      }),
+    });
+    assert.equal(licensedCentreCapacity.status, 201);
+    assert.equal((await licensedCentreCapacity.json()).licensed, true);
+
+    const schoolAgeExemption = await fetch(`http://127.0.0.1:${server.address().port}/api/daycares`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        ...baseListing,
+        dailyRate: 25.5,
+        providerType: 'unlicensedHome',
+        maxChildren: 8,
+        ageRange: ['school-age'],
+        complianceAttestation: {
+          unlicensedDisclosureConfirmed: true,
+          guidanceRead: true,
+          termsAccepted: true,
+        },
+      }),
+    });
+    assert.equal(schoolAgeExemption.status, 201);
+
+    const regulatedFamilySchoolAge = await fetch(`http://127.0.0.1:${server.address().port}/api/daycares`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        ...baseListing,
+        dailyRate: 25.5,
+        providerType: 'regulatedFamilyHome',
+        maxChildren: 9,
+        ageRange: ['school-age'],
+      }),
+    });
+    assert.equal(regulatedFamilySchoolAge.status, 201);
   } finally {
     await new Promise((resolve, reject) => server.close(err => err ? reject(err) : resolve()));
   }

@@ -183,7 +183,7 @@ export default function ParentDashboard() {
                 </div>
                 <div style={styles.daycareAddr}>📍 {daycare.hideAddress ? daycare.city : `${daycare.address}, ${daycare.city}`}</div>
                 <div style={styles.tags}>
-                  <LicensingBadge licensed={daycare.licensed} />
+                  <LicensingBadge licensed={daycare.licensed} providerType={daycare.providerType} />
                   {daycare.ageRange?.map(age => (
                     <span key={age} style={styles.tagOrange}>{AGE_GROUP_LABELS[age] || age}</span>
                   ))}

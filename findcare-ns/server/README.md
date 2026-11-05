@@ -30,6 +30,18 @@ New and updated daycare listings must use a city or community from
 `constants/novaScotiaCities.js`. The owner form loads this list from the API,
 and the API and Mongoose model enforce it on writes.
 
+## Provider types and capacity
+
+Daycare listings distinguish licensed child care centres, regulated family
+home child care, and unlicensed home care. Centre capacity must match the
+current facility licence. The API enforces the general capacity ceilings for
+home care: regulated family homes allow up to 7 children (or 9 for school-age
+only), while unlicensed care allows up to 6 children of any ages (or 8
+school-age children only). Family-home age-mix restrictions also apply;
+providers attest that the capacity they enter follows their licence, agency
+approval, or applicable provincial rules. See the [Nova Scotia Early Learning
+and Child Care Regulations](https://novascotia.ca/just/regulations/regs/elcc.htm).
+
 To seed a database from the local snapshot, run:
 
 ```sh

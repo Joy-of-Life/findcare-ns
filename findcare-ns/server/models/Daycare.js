@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const NOVA_SCOTIA_CITIES = require('../constants/novaScotiaCities');
 const SUPPORTED_AGE_GROUPS = require('../constants/ageGroups');
+const PROVIDER_TYPES = ['licensedCentre', 'regulatedFamilyHome', 'unlicensedHome'];
 
 const availabilitySchema = new mongoose.Schema({
   infant:    { type: Number, default: 0 },
@@ -12,10 +13,18 @@ const availabilitySchema = new mongoose.Schema({
 
 const complianceAttestationSchema = new mongoose.Schema({
   capacityConfirmed: { type: Boolean, required: true },
-  unlicensedDisclosureConfirmed: { type: Boolean, required: true },
-  guidanceRead: { type: Boolean, required: true },
+  unlicensedDisclosureConfirmed: { type: Boolean, default: false },
+  guidanceRead: { type: Boolean, default: false },
   termsAccepted: { type: Boolean, required: true },
   marketingOptIn: { type: Boolean, default: false },
+  acceptedAt: { type: Date, required: true },
+}, { _id: false });
+
+const providerCapacityAttestationSchema = new mongoose.Schema({
+  providerType: { type: String, enum: PROVIDER_TYPES, required: true },
+  maxChildren: { type: Number, min: 1, required: true },
+  ageRange: { type: [{ type: String, enum: SUPPORTED_AGE_GROUPS }], default: [] },
+  unlicensedDisclosureConfirmed: { type: Boolean, default: false },
   acceptedAt: { type: Date, required: true },
 }, { _id: false });
 
@@ -59,6 +68,7 @@ const daycareSchema = new mongoose.Schema({
     type: [{ type: String, enum: SUPPORTED_AGE_GROUPS }],
     default: []
   },
+  providerType: { type: String, enum: PROVIDER_TYPES },
   unlicensedHomeProvider: { type: Boolean, default: false },
   acceptsSubsidy: { type: Boolean, default: false },
   mealsProvided: { type: Boolean, default: false },
@@ -76,6 +86,7 @@ const daycareSchema = new mongoose.Schema({
   photos:       { type: [String] },
   availability: { type: availabilitySchema, default: () => ({}) },
   complianceAttestation: { type: complianceAttestationSchema },
+  providerCapacityAttestations: { type: [providerCapacityAttestationSchema], default: [] },
   licensingStatusAttestations: { type: [licensingStatusAttestationSchema], default: [] },
   rating:       { type: Number, default: 0 },
   reviewCount:  { type: Number, default: 0 },

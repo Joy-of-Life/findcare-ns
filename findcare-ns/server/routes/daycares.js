@@ -6,6 +6,7 @@ const auth     = require('../middleware/auth');
 const toPublicDaycare = require('../daycarePrivacy');
 const NOVA_SCOTIA_CITIES = require('../constants/novaScotiaCities');
 const SUPPORTED_AGE_GROUPS = require('../constants/ageGroups');
+const PROVIDER_TYPES = ['licensedCentre', 'regulatedFamilyHome', 'unlicensedHome'];
 const sendAvailabilityAlerts = require('../services/availabilityAlerts');
 const getAvailabilityIncreases = require('../services/availabilityChanges');
 
@@ -15,7 +16,7 @@ const OWNER_EDITABLE_FIELDS = [
   'name', 'address', 'city', 'phone', 'dailyRate', 'openHours', 'description',
   'language', 'ageRange', 'coordinates', 'availability', 'hideAddress', 'maxChildren',
   'daysOpen', 'opensAt', 'closesAt', 'acceptsSubsidy', 'mealsProvided', 'outdoorPlaySpace',
-  'licensed', 'unlicensedHomeProvider'
+  'providerType'
 ];
 const SUPPORTED_DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 
@@ -56,6 +57,16 @@ function validateOwnerListing(fields) {
     return 'Select at least one supported age group';
   }
   if (!Number.isInteger(Number(fields.maxChildren)) || Number(fields.maxChildren) < 1) return 'Enter the maximum number of children';
+  if (!PROVIDER_TYPES.includes(fields.providerType)) return 'Select a provider type';
+  if (fields.providerType !== 'licensedCentre') {
+    const schoolAgeOnly = fields.ageRange.length === 1 && fields.ageRange[0] === 'school-age';
+    const capacityLimit = fields.providerType === 'regulatedFamilyHome'
+      ? (schoolAgeOnly ? 9 : 7)
+      : (schoolAgeOnly ? 8 : 6);
+    if (Number(fields.maxChildren) > capacityLimit) {
+      return `The maximum capacity for this provider type and age range is ${capacityLimit}`;
+    }
+  }
   if (!Array.isArray(fields.daysOpen) || !fields.daysOpen.length || fields.daysOpen.some(day => !SUPPORTED_DAYS.includes(day))) {
     return 'Select at least one valid open day';
   }
@@ -309,26 +320,24 @@ router.get('/:id', async (req, res) => {
 // POST /api/daycares — create new daycare (owner only)
 router.post('/', auth, async (req, res) => {
   try {
-    if (typeof req.body.licensed !== 'boolean') {
-      return res.status(400).json({ error: 'Select a licensing status' });
-    }
-    if (req.body.licensingStatusAttestationConfirmed !== true) {
-      return res.status(400).json({ error: 'Confirm the licensing status attestation' });
-    }
     if (req.body.dailyRateAttestationConfirmed !== true) {
       return res.status(400).json({ error: 'Confirm the daily rate attestation' });
     }
-    if (req.body.licensed && req.body.unlicensedHomeProvider) {
-      return res.status(400).json({ error: 'An unlicensed home provider cannot be marked as licensed' });
+    if (!PROVIDER_TYPES.includes(req.body.providerType)) {
+      return res.status(400).json({ error: 'Select a provider type' });
+    }
+    if (req.body.capacityAttestationConfirmed !== true) {
+      return res.status(400).json({ error: 'Confirm the provider capacity attestation' });
+    }
+    if (req.body.providerType === 'unlicensedHome' &&
+        req.body.unlicensedDisclosureAttestationConfirmed !== true) {
+      return res.status(400).json({ error: 'Confirm the unlicensed provider disclosure' });
     }
     const attestation = req.body.complianceAttestation;
     if (!attestation) {
       return res.status(400).json({ error: 'Complete all required compliance attestations' });
     }
     const requiredAttestations = [
-      attestation.capacityConfirmed,
-      attestation.unlicensedDisclosureConfirmed,
-      ...(req.body.unlicensedHomeProvider ? [attestation.guidanceRead] : []),
       attestation.termsAccepted,
     ];
     if (requiredAttestations.some(confirmed => confirmed !== true)) {
@@ -340,21 +349,37 @@ router.post('/', auth, async (req, res) => {
     if (availabilityError) return res.status(400).json({ error: availabilityError });
     const listingFields = { ...req.body };
     delete listingFields.monthlyPrice;
+    delete listingFields.capacityAttestationConfirmed;
+    delete listingFields.dailyRateAttestationConfirmed;
+    delete listingFields.unlicensedDisclosureAttestationConfirmed;
+    delete listingFields.complianceAttestation;
+    const licensed = req.body.providerType !== 'unlicensedHome';
     const daycare = new Daycare({
       ...listingFields,
+      licensed,
+      unlicensedHomeProvider: !licensed,
       complianceAttestation: {
         ...attestation,
+        capacityConfirmed: true,
+        unlicensedDisclosureConfirmed: req.body.unlicensedDisclosureAttestationConfirmed === true,
         marketingOptIn: attestation.marketingOptIn === true,
         acceptedAt: new Date(),
       },
       licensingStatusAttestations: [{
-        licensed: req.body.licensed,
+        licensed,
+        acceptedAt: new Date(),
+      }],
+      providerCapacityAttestations: [{
+        providerType: req.body.providerType,
+        maxChildren: Number(req.body.maxChildren),
+        ageRange: req.body.ageRange,
+        unlicensedDisclosureConfirmed: req.body.unlicensedDisclosureAttestationConfirmed === true,
         acceptedAt: new Date(),
       }],
       owner: req.user.id
     });
     const saved = await daycare.save();
-    res.status(201).json(saved);
+    res.status(201).json(toPublicDaycare(saved));
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -363,11 +388,11 @@ router.post('/', auth, async (req, res) => {
 // PATCH /api/daycares/:id — update daycare (owner only)
 router.patch('/:id', auth, async (req, res) => {
   try {
-    if (req.body.licensingStatusAttestationConfirmed !== true) {
-      return res.status(400).json({ error: 'Confirm the licensing status attestation' });
-    }
     if (req.body.dailyRateAttestationConfirmed !== true) {
       return res.status(400).json({ error: 'Confirm the daily rate attestation' });
+    }
+    if (req.body.capacityAttestationConfirmed !== true) {
+      return res.status(400).json({ error: 'Confirm the provider capacity attestation' });
     }
     const daycare = await Daycare.findById(req.params.id);
     if (!daycare) return res.status(404).json({ error: 'Daycare not found' });
@@ -377,14 +402,15 @@ router.patch('/:id', auth, async (req, res) => {
     const updates = Object.fromEntries(
       Object.entries(req.body).filter(([field]) => OWNER_EDITABLE_FIELDS.includes(field))
     );
-    if (Object.prototype.hasOwnProperty.call(updates, 'licensed') && typeof updates.licensed !== 'boolean') {
-      return res.status(400).json({ error: 'Select a licensing status' });
+    if (!PROVIDER_TYPES.includes(updates.providerType)) {
+      return res.status(400).json({ error: 'Select a provider type' });
     }
-    const licensed = updates.licensed ?? daycare.licensed ?? false;
-    const unlicensedHomeProvider = updates.unlicensedHomeProvider ?? daycare.unlicensedHomeProvider;
-    if (licensed && unlicensedHomeProvider) {
-      return res.status(400).json({ error: 'An unlicensed home provider cannot be marked as licensed' });
+    const licensed = updates.providerType !== 'unlicensedHome';
+    if (!licensed && req.body.unlicensedDisclosureAttestationConfirmed !== true) {
+      return res.status(400).json({ error: 'Confirm the unlicensed provider disclosure' });
     }
+    updates.licensed = licensed;
+    updates.unlicensedHomeProvider = !licensed;
     if (!Object.keys(updates).length) {
       return res.status(400).json({ error: 'No editable daycare fields provided' });
     }
@@ -394,6 +420,22 @@ router.patch('/:id', auth, async (req, res) => {
         acceptedAt,
       })),
       { licensed, acceptedAt: new Date() },
+    ];
+    updates.providerCapacityAttestations = [
+      ...(daycare.providerCapacityAttestations || []).map(({ providerType, maxChildren, ageRange, unlicensedDisclosureConfirmed, acceptedAt }) => ({
+        providerType,
+        maxChildren,
+        ageRange,
+        unlicensedDisclosureConfirmed,
+        acceptedAt,
+      })),
+      {
+        providerType: updates.providerType,
+        maxChildren: Number(updates.maxChildren ?? daycare.maxChildren),
+        ageRange: updates.ageRange ?? daycare.ageRange,
+        unlicensedDisclosureConfirmed: req.body.unlicensedDisclosureAttestationConfirmed === true,
+        acceptedAt: new Date(),
+      },
     ];
     const validationError = validateOwnerListing({ ...daycare.toObject(), ...updates });
     if (validationError) return res.status(400).json({ error: validationError });
