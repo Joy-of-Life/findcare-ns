@@ -67,7 +67,9 @@ const daycareSchema = new mongoose.Schema({
   daysOpen:     { type: [{ type: String, enum: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] }], default: [] },
   opensAt:      { type: String },
   closesAt:     { type: String },
-  monthlyPrice: { type: Number },
+  dailyRate:     { type: Number, min: 0 },
+  // Retained only for legacy records; it is never selected or used as a daily rate.
+  monthlyPrice:  { type: Number, select: false },
   language:     { type: [String] },
   openHours:    { type: String },
   phone:        { type: String },

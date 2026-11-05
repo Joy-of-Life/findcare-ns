@@ -78,7 +78,12 @@ async function sendAvailabilityAlerts(daycareId, increasedAvailability = {}) {
               <p style="color:#6B7280;margin:0 0 4px">📍 ${daycare.hideAddress ? daycare.city : `${daycare.address}, ${daycare.city}`}</p>
               <p style="color:#6B7280;margin:0 0 4px">📞 ${daycare.phone}</p>
               <p style="color:#6B7280;margin:0 0 4px">🕐 ${daycare.openHours}</p>
-              <p style="color:#6B7280;margin:0">💰 $${daycare.monthlyPrice}/month</p>
+              <p style="color:#6B7280;margin:0">💰 ${
+                daycare.dailyRate !== null && daycare.dailyRate !== undefined && daycare.dailyRate !== '' &&
+                  Number.isFinite(Number(daycare.dailyRate)) && Number(daycare.dailyRate) >= 0
+                  ? `$${daycare.dailyRate}/day`
+                  : 'Daily rate not confirmed'
+              }</p>
             </div>
             <div style="background:#E1F5EE;border-radius:8px;padding:12px;margin-bottom:20px">
               <p style="color:#085041;margin:0;font-weight:500">

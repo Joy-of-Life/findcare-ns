@@ -9,6 +9,7 @@ import WelcomePopup from '../components/WelcomePopup';
 import LicensingBadge from '../components/LicensingBadge';
 import ListingDisclaimer from '../components/ListingDisclaimer';
 import { AGE_GROUP_DISPLAY_LABELS, AGE_GROUP_OPTIONS, formatDaysOpen } from '../constants/ageGroups';
+import { formatDailyRate } from '../utils/pricing';
 
 export default function Home() {
   const [results, setResults] = useState([]);
@@ -657,7 +658,7 @@ export default function Home() {
                     )}
                   </div>
                   <div style={styles.cardFooter}>
-                    <span style={styles.price}>${daycare.monthlyPrice}/month</span>
+                    <span style={styles.price}>{formatDailyRate(daycare.dailyRate)}</span>
                     <span style={styles.hours}>{daycare.openHours}</span>
                     {(!user || user.role === 'parent') && (
                       <button

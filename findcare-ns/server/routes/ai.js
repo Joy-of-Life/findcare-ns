@@ -23,7 +23,7 @@ router.post('/search', async (req, res) => {
         messages: [
           {
             role:    'system',
-            content: 'You are a daycare search assistant for Nova Scotia, Canada. Return valid JSON only with exactly these fields: city (Nova Scotia city name or null), ageRange ("infant", "toddler", "preschool", or null), language ("English", "French", or null), maxPrice (monthly CAD number or null), features (comma-separated string or null), availableOnly (boolean; true only when availability is explicitly requested), and summary (one sentence). Use null for unspecified or ambiguous values. Do not invent requirements.'
+            content: 'You are a daycare search assistant for Nova Scotia, Canada. Return valid JSON only with exactly these fields: city (Nova Scotia city name or null), ageRange ("infant", "toddler", "preschool", or null), language ("English", "French", or null), maxPrice (daily CAD number or null; only set when the user gives or clearly implies a daily budget), features (comma-separated string or null), availableOnly (boolean; true only when availability is explicitly requested), and summary (one sentence). Use null for unspecified or ambiguous values. Do not convert a monthly budget to a daily budget or invent requirements.'
           },
           {
             role:    'user',

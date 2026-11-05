@@ -48,7 +48,7 @@ test('waitlisted parents receive only increased categories they joined; saved no
     city: 'Halifax',
     phone: '902-555-0100',
     openHours: '7:00am – 5:00pm',
-    monthlyPrice: 700,
+    dailyRate: 45,
     availability: { infant: 2, toddler: 3, preschool: 4, kindergarten: 0, 'school-age': 1 },
   });
   Waitlist.find = async () => [
@@ -81,6 +81,7 @@ test('waitlisted parents receive only increased categories they joined; saved no
   assert.match(waitlistedEmail.html, /2 infant/);
   assert.doesNotMatch(waitlistedEmail.html, /4 preschool/);
   assert.match(waitlistedEmail.html, /joined the waitlist for infant/);
+  assert.match(waitlistedEmail.html, /\$45\/day/);
 
   const savedEmail = sentEmails.find(email => email.to === 'saved@example.com');
   assert.match(savedEmail.html, /2 infant/);
@@ -95,4 +96,31 @@ test('no alert is sent when there are no availability increases', async () => {
   const result = await sendAvailabilityAlerts('daycare-1', {});
 
   assert.equal(result.message, 'No availability increases to notify');
+});
+
+test('availability alert identifies unconfirmed daily rate without showing legacy monthly value', async () => {
+  const sentEmails = [];
+  Daycare.findById = async () => ({
+    name: 'Unconfirmed Daycare',
+    monthlyPrice: 700,
+    dailyRate: '',
+    availability: { infant: 1 },
+  });
+  Waitlist.find = async () => [];
+  User.find = async () => [{
+    _id: 'parent-saved',
+    name: 'Saved Parent',
+    email: 'saved@example.com',
+  }];
+  process.env.RESEND_API_KEY = 'test-api-key';
+  process.env.RESEND_FROM_EMAIL = 'FindCare <alerts@example.com>';
+  global.fetch = async (url, options) => {
+    sentEmails.push(JSON.parse(options.body));
+    return { ok: true, json: async () => ({ id: 'email-id' }) };
+  };
+
+  await sendAvailabilityAlerts('daycare-1', { infant: 1 });
+
+  assert.match(sentEmails[0].html, /Daily rate not confirmed/);
+  assert.doesNotMatch(sentEmails[0].html, /\$700\/month/);
 });

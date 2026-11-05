@@ -6,6 +6,7 @@ import MapView     from '../components/MapView';
 import LicensingBadge from '../components/LicensingBadge';
 import ListingDisclaimer from '../components/ListingDisclaimer';
 import { AGE_GROUP_LABELS, AGE_GROUP_OPTIONS, AVAILABILITY_AGE_GROUPS } from '../constants/ageGroups';
+import { formatDailyRate } from '../utils/pricing';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -165,7 +166,7 @@ export default function DaycareProfile() {
       {/* Key info */}
       <div style={styles.infoGrid}>
         {[
-          { label: 'Monthly price', value: `$${daycare.monthlyPrice}`,                                    icon: '💰' },
+          { label: 'Daily rate',    value: formatDailyRate(daycare.dailyRate),                             icon: '💰' },
           { label: 'Open hours',    value: daycare.openHours,                                              icon: '🕐' },
           { label: 'Phone',         value: daycare.phone,                                                  icon: '📞' },
           { label: 'Open spots',    value: totalSpots > 0 ? `${totalSpots} available` : 'Waitlist only',   icon: '🎈' },

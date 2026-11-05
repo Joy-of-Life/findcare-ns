@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AGE_GROUP_LABELS } from '../constants/ageGroups';
 import LicensingBadge from '../components/LicensingBadge';
 import ListingDisclaimer from '../components/ListingDisclaimer';
+import { formatDailyRate, hasDailyRate } from '../utils/pricing';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -76,6 +77,11 @@ export default function Compare() {
       ? { text: `${total} open`, color: '#2E7D32', bg: '#E8F5E9' }
       : { text: 'Waitlist',      color: '#E65100', bg: '#FFF3E0' };
   }
+
+  const lowestConfirmedDailyRate = Math.min(
+    ...selected.filter(daycare => hasDailyRate(daycare.dailyRate)).map(daycare => Number(daycare.dailyRate)),
+    Infinity
+  );
 
   return (
     <div style={styles.page}>
@@ -178,11 +184,11 @@ export default function Compare() {
             ))}
 
             {/* Price */}
-            <div style={styles.labelCell}>💰 Monthly price</div>
+            <div style={styles.labelCell}>💰 Daily rate</div>
             {selected.map(d => (
               <div key={d._id} style={styles.valueCell}>
-                <span style={{ fontWeight: '600' }}>${d.monthlyPrice}</span>
-                {d.monthlyPrice === Math.min(...selected.map(x => x.monthlyPrice)) && (
+                <span style={{ fontWeight: '600' }}>{formatDailyRate(d.dailyRate)}</span>
+                {hasDailyRate(d.dailyRate) && Number(d.dailyRate) === lowestConfirmedDailyRate && (
                   <span style={styles.bestBadge}>Lowest 🎉</span>
                 )}
               </div>
@@ -290,7 +296,7 @@ export default function Compare() {
                     <div style={styles.resultName}>{daycare.name}</div>
                     <LicensingBadge licensed={daycare.licensed} />
                   </div>
-                  <div style={styles.resultAddr}>📍 {daycare.city} · ${daycare.monthlyPrice}/mo</div>
+                  <div style={styles.resultAddr}>📍 {daycare.city} · {formatDailyRate(daycare.dailyRate)}</div>
                 </div>
                 <div style={{
                   width: '22px', height: '22px', borderRadius: '50%',

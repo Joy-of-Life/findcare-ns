@@ -12,7 +12,7 @@ const getAvailabilityIncreases = require('../services/availabilityChanges');
 const SEARCH_FIELDS = ['name', 'address', 'city', 'description', 'language', 'ageRange', 'openHours'];
 const SEARCH_STOP_WORDS = new Set(['a', 'an', 'and', 'care', 'childcare', 'daycare', 'daycares', 'find', 'for', 'in', 'looking', 'me', 'near', 'of', 'please', 'the', 'to', 'want', 'with']);
 const OWNER_EDITABLE_FIELDS = [
-  'name', 'address', 'city', 'phone', 'monthlyPrice', 'openHours', 'description',
+  'name', 'address', 'city', 'phone', 'dailyRate', 'openHours', 'description',
   'language', 'ageRange', 'coordinates', 'availability', 'hideAddress', 'maxChildren',
   'daysOpen', 'opensAt', 'closesAt', 'acceptsSubsidy', 'mealsProvided', 'outdoorPlaySpace',
   'licensed', 'unlicensedHomeProvider'
@@ -47,8 +47,9 @@ function validateOwnerListing(fields) {
   if (!NOVA_SCOTIA_CITIES.includes(fields.city.trim())) {
     return 'Select a city or community in Nova Scotia';
   }
-  if (fields.monthlyPrice === '' || !Number.isFinite(Number(fields.monthlyPrice)) || Number(fields.monthlyPrice) < 0) {
-    return 'Enter a valid monthly price';
+  if (fields.dailyRate === undefined || fields.dailyRate === null || fields.dailyRate === '' ||
+      !Number.isFinite(Number(fields.dailyRate)) || Number(fields.dailyRate) < 0) {
+    return 'Enter a valid daily rate';
   }
   if (!Array.isArray(fields.language) || !fields.language.length) return 'Select at least one language';
   if (!Array.isArray(fields.ageRange) || !fields.ageRange.length || fields.ageRange.some(age => !SUPPORTED_AGE_GROUPS.includes(age))) {
@@ -72,6 +73,13 @@ function validateOwnerListing(fields) {
     return 'Enter both valid map coordinates or leave both blank';
   }
   return '';
+}
+
+function matchesMaxDailyRate(daycare, maxPrice) {
+  if (maxPrice === undefined || maxPrice === null || maxPrice === '') return true;
+  return daycare.dailyRate !== null && daycare.dailyRate !== undefined && daycare.dailyRate !== '' &&
+    Number.isFinite(Number(daycare.dailyRate)) && Number(daycare.dailyRate) >= 0 &&
+    Number(daycare.dailyRate) <= Number(maxPrice);
 }
 
 function escapeRegex(value) {
@@ -178,7 +186,7 @@ router.get('/', async (req, res) => {
       if (searchTerms.length) result = result.filter(d => matchesSearch(d, searchTerms));
       if (city) result = result.filter(d => new RegExp(escapeRegex(city), 'i').test(d.city || ''));
       if (ageRange) result = result.filter(d => d.ageRange && d.ageRange.includes(ageRange));
-      if (maxPrice) result = result.filter(d => d.monthlyPrice <= Number(maxPrice));
+      result = result.filter(d => matchesMaxDailyRate(d, maxPrice));
       if (language) result = result.filter(d => d.language && d.language.includes(language));
       if (rating) result = result.filter(d => d.rating >= Number(rating));
       result = result.filter(d => matchesVacancyStatus(d, vacancyStatus, ageRange));
@@ -194,7 +202,7 @@ router.get('/', async (req, res) => {
         }))
       }));
     }
-    if (maxPrice) query.monthlyPrice = { $lte: Number(maxPrice) };
+    if (maxPrice !== undefined && maxPrice !== '') query.dailyRate = { $lte: Number(maxPrice) };
     if (language) query.language     = { $in: [language] };
     if (rating)   query.rating       = { $gte: Number(rating) };
     if (ageRange) query.ageRange     = { $in: [ageRange] };
@@ -221,7 +229,8 @@ router.get('/', async (req, res) => {
     const daycares = await Daycare.find(query);
     const matchingDaycares = daycares.filter(daycare => {
       const item = typeof daycare.toObject === 'function' ? daycare.toObject() : daycare;
-      return matchesVacancyStatus(item, vacancyStatus, ageRange);
+      return matchesMaxDailyRate(item, maxPrice) &&
+        matchesVacancyStatus(item, vacancyStatus, ageRange);
     });
     const hasValidLocation = lat != null && lng != null &&
       Number.isFinite(Number(lat)) && Number.isFinite(Number(lng)) &&
@@ -326,8 +335,10 @@ router.post('/', auth, async (req, res) => {
     if (validationError) return res.status(400).json({ error: validationError });
     const availabilityError = validateAvailability(req.body);
     if (availabilityError) return res.status(400).json({ error: availabilityError });
+    const listingFields = { ...req.body };
+    delete listingFields.monthlyPrice;
     const daycare = new Daycare({
-      ...req.body,
+      ...listingFields,
       complianceAttestation: {
         ...attestation,
         marketingOptIn: attestation.marketingOptIn === true,

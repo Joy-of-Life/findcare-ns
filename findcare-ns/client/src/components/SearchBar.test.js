@@ -19,6 +19,8 @@ test('vacancy dropdown is first and offers Any status, Open, and Waitlist', () =
     rating: '',
     availabilityStatus: 'open',
   });
+  expect(screen.getByRole('combobox', { name: 'Maximum daily price' })).not.toBeNull();
+  expect(screen.getByRole('option', { name: 'Under $30/day' })).not.toBeNull();
   expect(screen.getAllByRole('combobox')[0].getAttribute('aria-label')).toBe('Vacancy');
   expect(screen.getByRole('option', { name: 'Any status' })).not.toBeNull();
   expect(screen.getByRole('option', { name: 'Waitlist' })).not.toBeNull();

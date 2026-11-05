@@ -106,13 +106,13 @@ export default function SearchBar({ onSearch }) {
             <option value="Spanish">Spanish</option>
           </select>
 
-          <select aria-label="Maximum monthly price" value={maxPrice} onChange={e => setMaxPrice(e.target.value)} style={styles.select}>
+          <select aria-label="Maximum daily price" value={maxPrice} onChange={e => setMaxPrice(e.target.value)} style={styles.select}>
             <option value="">Any price</option>
-            <option value="600">Under $600</option>
-            <option value="700">Under $700</option>
-            <option value="800">Under $800</option>
-            <option value="900">Under $900</option>
-            <option value="1000">Under $1000</option>
+            <option value="20">Under $20/day</option>
+            <option value="25">Under $25/day</option>
+            <option value="30">Under $30/day</option>
+            <option value="35">Under $35/day</option>
+            <option value="40">Under $40/day</option>
           </select>
 
           <select aria-label="Minimum rating" value={rating} onChange={e => setRating(e.target.value)} style={styles.select}>

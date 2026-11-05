@@ -5,7 +5,7 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const EXAMPLE_SEARCHES = [
   'Find a bilingual daycare near downtown Halifax',
-  'Infant care under $800/month with open spots',
+  'Infant care under $30/day with open spots',
 ];
 
 export default function AISearchBar({ onSearch }) {
@@ -88,7 +88,7 @@ export default function AISearchBar({ onSearch }) {
             {parsed.city     && <span style={styles.filterTag}>📍 {parsed.city}</span>}
             {parsed.ageGroup && <span style={styles.filterTag}>👶 {parsed.ageGroup}</span>}
             {parsed.language && <span style={styles.filterTag}>🗣️ {parsed.language}</span>}
-            {parsed.maxPrice && <span style={styles.filterTag}>💰 Under ${parsed.maxPrice}/mo</span>}
+            {parsed.maxPrice && <span style={styles.filterTag}>💰 Under ${parsed.maxPrice}/day</span>}
             {parsed.features && <span style={styles.filterTag}>⭐ {parsed.features}</span>}
           </div>
         </div>

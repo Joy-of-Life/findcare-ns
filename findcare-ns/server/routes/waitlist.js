@@ -21,7 +21,7 @@ router.get('/my/all', auth, async (req, res) => {
       parent: req.user.id,
       status: 'active'
     })
-    .populate('daycare', 'name city address hideAddress monthlyPrice')
+    .populate('daycare', 'name city address hideAddress dailyRate')
     .sort({ createdAt: 1 });
     res.json(entries.map(entry => {
       const result = entry.toObject();

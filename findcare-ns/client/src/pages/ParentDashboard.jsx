@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { AGE_GROUP_LABELS } from '../constants/ageGroups';
 import LicensingBadge from '../components/LicensingBadge';
 import ListingDisclaimer from '../components/ListingDisclaimer';
+import { formatDailyRate } from '../utils/pricing';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -196,7 +197,7 @@ export default function ParentDashboard() {
                 <ListingDisclaimer />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-end' }}>
-                <span style={styles.price}>${daycare.monthlyPrice}/mo</span>
+                <span style={styles.price}>{formatDailyRate(daycare.dailyRate)}</span>
                 <button onClick={() => unsaveDaycare(daycare._id)} style={styles.btnRemove}>Remove</button>
               </div>
             </div>

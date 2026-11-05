@@ -3,6 +3,7 @@ import { useAuth }    from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { AGE_GROUP_LABELS, AGE_GROUP_OPTIONS, AVAILABILITY_AGE_GROUPS } from '../constants/ageGroups';
 import LicensingBadge from '../components/LicensingBadge';
+import { formatDailyRate } from '../utils/pricing';
 import './OwnerPortal.css';
 
 const API_URL    = process.env.REACT_APP_API_URL || 'http://localhost:5000';
@@ -56,7 +57,7 @@ function createDaycareForm(daycare = {}) {
     hideAddress: Boolean(daycare.hideAddress),
     city: daycare.city || '',
     phone: daycare.phone || '',
-    monthlyPrice: daycare.monthlyPrice ?? '',
+    dailyRate: daycare.dailyRate ?? '',
     openHours: daycare.openHours || '',
     opensAt: daycare.opensAt || parsedHours.opensAt,
     closesAt: daycare.closesAt || parsedHours.closesAt,
@@ -281,8 +282,8 @@ export default function OwnerPortal() {
     if (!cityOptions.includes(form.city)) validationErrors.push('A city or community in Nova Scotia');
     if (!form.phone.trim()) validationErrors.push('Phone');
     if (!form.description.trim()) validationErrors.push('Description');
-    if (form.monthlyPrice === '' || !Number.isFinite(Number(form.monthlyPrice)) || Number(form.monthlyPrice) < 0) {
-      validationErrors.push('Monthly price');
+    if (form.dailyRate === '' || !Number.isFinite(Number(form.dailyRate)) || Number(form.dailyRate) < 0) {
+      validationErrors.push('Daily rate');
     }
     if (!form.language.length) validationErrors.push('Languages offered');
     if (!form.ageRange.length) validationErrors.push('Ages served');
@@ -335,7 +336,7 @@ export default function OwnerPortal() {
           ...form,
           openHours: formatOpenHours(form.daysOpen, form.opensAt, form.closesAt),
           maxChildren: Number(form.maxChildren),
-          monthlyPrice: Number(form.monthlyPrice),
+          dailyRate: Number(form.dailyRate),
           coordinates: hasCoordinates ? { lat: latitude, lng: longitude } : undefined,
           complianceAttestation: isEditing ? undefined : attestation,
           licensingStatusAttestationConfirmed: form.licensingStatusAttestationConfirmed,
@@ -465,7 +466,7 @@ export default function OwnerPortal() {
               { label: 'Address', value: myDaycare.address                 },
               { label: 'City',    value: myDaycare.city                    },
               { label: 'Phone',   value: myDaycare.phone                   },
-              { label: 'Price',   value: `$${myDaycare.monthlyPrice}/month` },
+              { label: 'Daily rate', value: formatDailyRate(myDaycare.dailyRate) },
               { label: 'Hours',   value: myDaycare.openHours               },
             ].map(info => (
               <div key={info.label} style={styles.infoItem}>
@@ -557,7 +558,7 @@ export default function OwnerPortal() {
             { label: 'Phone *',             name: 'phone',        type: 'tel'    },
             { label: 'Address *',           name: 'address',      type: 'text'   },
             { label: 'City or community *', name: 'city',         type: 'select' },
-            { label: 'Monthly price ($) *', name: 'monthlyPrice', type: 'number' },
+            { label: 'Daily rate ($) *', name: 'dailyRate', type: 'number' },
             { label: 'Licensing status *',  name: 'licensed',     type: 'licensing' },
           ].map(f => (
             <div key={f.name} style={styles.field}>
@@ -609,8 +610,8 @@ export default function OwnerPortal() {
                   onChange={handleChange}
                   style={styles.input}
                   required
-                  min={f.name === 'monthlyPrice' ? '0' : undefined}
-                  step={f.name === 'monthlyPrice' ? '1' : undefined}
+                  min={f.name === 'dailyRate' ? '0' : undefined}
+                  step={f.name === 'dailyRate' ? '0.01' : undefined}
                 />
               )}
             </div>
