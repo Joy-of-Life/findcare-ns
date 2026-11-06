@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AGE_GROUP_LABELS } from '../constants/ageGroups';
+import { AGE_GROUP_LABELS, AVAILABILITY_AGE_GROUPS } from '../constants/ageGroups';
 import LicensingBadge from '../components/LicensingBadge';
 import ListingDisclaimer from '../components/ListingDisclaimer';
 import { formatDailyRate, hasDailyRate } from '../utils/pricing';
@@ -70,9 +70,10 @@ export default function Compare() {
   }
 
   function spotStatus(daycare) {
-    const total = (daycare.availability?.infant    || 0) +
-                  (daycare.availability?.toddler   || 0) +
-                  (daycare.availability?.preschool || 0);
+    const total = AVAILABILITY_AGE_GROUPS.reduce(
+      (sum, ageGroup) => sum + Number(daycare.availability?.[ageGroup] || 0),
+      0
+    );
     return total > 0
       ? { text: `${total} open`, color: '#2E7D32', bg: '#E8F5E9' }
       : { text: 'Waitlist',      color: '#E65100', bg: '#FFF3E0' };

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth }     from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { AGE_GROUP_LABELS } from '../constants/ageGroups';
+import { AGE_GROUP_LABELS, AVAILABILITY_AGE_GROUPS } from '../constants/ageGroups';
 import LicensingBadge from '../components/LicensingBadge';
 import ListingDisclaimer from '../components/ListingDisclaimer';
 import { formatDailyRate } from '../utils/pricing';
@@ -101,9 +101,10 @@ export default function ParentDashboard() {
   }
 
   function getAvailabilityStatus(daycare) {
-    const total = (daycare.availability?.infant    || 0) +
-                  (daycare.availability?.toddler   || 0) +
-                  (daycare.availability?.preschool || 0);
+    const total = AVAILABILITY_AGE_GROUPS.reduce(
+      (sum, ageGroup) => sum + Number(daycare.availability?.[ageGroup] || 0),
+      0
+    );
     if (total > 0) return { text: `${total} spots open`, bg: '#E8F5E9', color: '#2E7D32' };
     return { text: 'Waitlist only', bg: '#FFF3E0', color: '#E65100' };
   }

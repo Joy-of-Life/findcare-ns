@@ -608,7 +608,7 @@ export default function Home() {
                     <span style={styles.ratingBadge}>★ {daycare.rating || 'New'}</span>
                   </div>
                   <p style={styles.cardAddress}>📍 {daycare.hideAddress ? daycare.city : `${daycare.address}, ${daycare.city}`}</p>
-                  {daycare.distanceFromUser && (
+                  {daycare.distanceFromUser != null && (
                     <p style={{ ...styles.cardAddress, color: '#FF6B35', fontSize: '12px', marginTop: '4px' }}>
                       📍 {daycare.distanceFromUser} km away
                     </p>

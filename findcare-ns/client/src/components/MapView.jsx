@@ -2,7 +2,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import LicensingBadge from './LicensingBadge';
-import { AGE_GROUP_DISPLAY_LABELS, formatDaysOpen } from '../constants/ageGroups';
+import { AGE_GROUP_DISPLAY_LABELS, AVAILABILITY_AGE_GROUPS, formatDaysOpen } from '../constants/ageGroups';
 import { formatDailyRate } from '../utils/pricing';
 
 // Fix Leaflet default marker icon issue with React
@@ -49,18 +49,17 @@ function getPinColor(daycare, ageGroup) {
     if (spots > 0) return '#1D9E75';
     return '#BA7517';
   }
-  const total = (daycare.availability?.infant || 0) +
-                (daycare.availability?.toddler || 0) +
-                (daycare.availability?.preschool || 0);
+  const total = getTotalSpots(daycare);
   if (total > 0) return '#1D9E75';
   if (daycare.language?.includes('French')) return '#534AB7';
   return '#BA7517';
 }
 
 function getTotalSpots(daycare) {
-  return (daycare.availability?.infant    || 0) +
-         (daycare.availability?.toddler   || 0) +
-         (daycare.availability?.preschool || 0);
+  return AVAILABILITY_AGE_GROUPS.reduce(
+    (total, ageGroup) => total + Number(daycare.availability?.[ageGroup] || 0),
+    0
+  );
 }
 
 export default function MapView({ daycares, ageGroup }) {
