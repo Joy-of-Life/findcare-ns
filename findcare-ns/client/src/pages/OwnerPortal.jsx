@@ -92,10 +92,10 @@ function createDaycareForm(daycare = {}) {
     city: daycare.city || '',
     phone: daycare.phone || '',
     dailyRate: daycare.dailyRate ?? '',
-    dailyRateAttestationConfirmed: false,
+    dailyRateAttestationConfirmed: Boolean(daycare._id),
     providerType: daycare.providerType || '',
-    providerStatusAttestationConfirmed: false,
-    capacityAttestationConfirmed: false,
+    providerStatusAttestationConfirmed: Boolean(daycare._id),
+    capacityAttestationConfirmed: Boolean(daycare._id),
     openHours: daycare.openHours || '',
     opensAt: daycare.opensAt || parsedHours.opensAt,
     closesAt: daycare.closesAt || parsedHours.closesAt,
@@ -314,6 +314,9 @@ export default function OwnerPortal() {
     if (!form.address.trim()) validationErrors.push('Address');
     if (!cityOptions.includes(form.city)) validationErrors.push('A city or community in Nova Scotia');
     if (!form.phone.trim()) validationErrors.push('Phone');
+    else if (form.phone.replace(/\D/g, '').length > 10) {
+      validationErrors.push('Phone number must not exceed 10 digits');
+    }
     if (form.dailyRate === '' || !Number.isFinite(Number(form.dailyRate)) || Number(form.dailyRate) < 0) {
       validationErrors.push('Daily rate');
     }

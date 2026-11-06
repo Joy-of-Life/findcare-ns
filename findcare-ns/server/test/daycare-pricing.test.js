@@ -80,6 +80,20 @@ test('daycare creation requires a daily rate and ignores legacy monthly price in
     assert.equal(missingRate.status, 400);
     assert.deepEqual(await missingRate.json(), { error: 'Enter a valid daily rate' });
 
+    const tooManyPhoneDigits = await fetch(`http://127.0.0.1:${server.address().port}/api/daycares`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        ...baseListing,
+        phone: '902-555-01001',
+        dailyRate: 25.5,
+      }),
+    });
+    assert.equal(tooManyPhoneDigits.status, 400);
+    assert.deepEqual(await tooManyPhoneDigits.json(), {
+      error: 'Phone number must not exceed 10 digits',
+    });
+
     const unconfirmedRate = await fetch(`http://127.0.0.1:${server.address().port}/api/daycares`, {
       method: 'POST',
       headers,
