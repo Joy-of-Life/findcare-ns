@@ -314,7 +314,9 @@ export default function OwnerPortal() {
     if (!form.address.trim()) validationErrors.push('Address');
     if (!cityOptions.includes(form.city)) validationErrors.push('A city or community in Nova Scotia');
     if (!form.phone.trim()) validationErrors.push('Phone');
-    else if (form.phone.replace(/\D/g, '').length > 10) {
+    else if (!/^[\d+().\s-]+$/.test(form.phone)) {
+      validationErrors.push('Phone number can contain only digits and common phone formatting characters');
+    } else if (form.phone.replace(/\D/g, '').length > 10) {
       validationErrors.push('Phone number must not exceed 10 digits');
     }
     if (form.dailyRate === '' || !Number.isFinite(Number(form.dailyRate)) || Number(form.dailyRate) < 0) {
@@ -654,6 +656,8 @@ export default function OwnerPortal() {
                     required
                     min={f.name === 'dailyRate' ? '0' : undefined}
                     step={f.name === 'dailyRate' ? '0.01' : undefined}
+                    pattern={f.name === 'phone' ? '[0-9+(). -]+' : undefined}
+                    title={f.name === 'phone' ? 'Use digits and common phone formatting characters only' : undefined}
                   />
                   {f.name === 'dailyRate' && (
                     <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginTop: '10px', fontSize: '13px', lineHeight: 1.5, color: '#2C2C2A' }}>

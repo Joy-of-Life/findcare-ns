@@ -48,6 +48,9 @@ function validateOwnerListing(fields) {
   if (fields.phone.replace(/\D/g, '').length > 10) {
     return 'Phone number must not exceed 10 digits';
   }
+  if (!/^[\d+().\s-]+$/.test(fields.phone)) {
+    return 'Phone number can contain only digits and common phone formatting characters';
+  }
   if (!NOVA_SCOTIA_CITIES.includes(fields.city.trim())) {
     return 'Select a city or community in Nova Scotia';
   }

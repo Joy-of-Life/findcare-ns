@@ -94,6 +94,20 @@ test('daycare creation requires a daily rate and ignores legacy monthly price in
       error: 'Phone number must not exceed 10 digits',
     });
 
+    const phoneWithLetters = await fetch(`http://127.0.0.1:${server.address().port}/api/daycares`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        ...baseListing,
+        phone: '902-ABC-0100',
+        dailyRate: 25.5,
+      }),
+    });
+    assert.equal(phoneWithLetters.status, 400);
+    assert.deepEqual(await phoneWithLetters.json(), {
+      error: 'Phone number can contain only digits and common phone formatting characters',
+    });
+
     const unconfirmedRate = await fetch(`http://127.0.0.1:${server.address().port}/api/daycares`, {
       method: 'POST',
       headers,
