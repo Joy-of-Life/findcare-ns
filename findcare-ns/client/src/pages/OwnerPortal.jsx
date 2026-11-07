@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth }    from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { AGE_GROUP_LABELS, AGE_GROUP_OPTIONS, AVAILABILITY_AGE_GROUPS } from '../constants/ageGroups';
@@ -83,6 +83,20 @@ function formatOpenHours(daysOpen, opensAt, closesAt) {
   return `${daysLabel}, ${formatTime(opensAt)} – ${formatTime(closesAt)}`;
 }
 
+function formatWaitlistDate(value) {
+  if (!value) return '—';
+  const [year, month, day] = String(value).slice(0, 10).split('-').map(Number);
+  if (!year || !month || !day) return '—';
+  return new Date(year, month - 1, day).toLocaleDateString();
+}
+
+function formatWaitlistEnrollment(value) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? '—'
+    : date.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+}
+
 function createDaycareForm(daycare = {}) {
   const parsedHours = parseOpenHours(daycare.openHours);
   return {
@@ -125,6 +139,11 @@ export default function OwnerPortal() {
   const [view, setView]                 = useState('manage');
   const [availability, setAvailability] = useState({ infant: 0, toddler: 0, preschool: 0 });
   const [saveStatus, setSaveStatus]     = useState('');
+  const [waitlistEntries, setWaitlistEntries] = useState([]);
+  const [waitlistFilter, setWaitlistFilter] = useState('all');
+  const [waitlistLoading, setWaitlistLoading] = useState(false);
+  const [waitlistError, setWaitlistError] = useState('');
+  const [waitlistUpdatedAt, setWaitlistUpdatedAt] = useState(null);
 
   const [form, setForm] = useState(createDaycareForm);
   const [status, setStatus]       = useState('');
@@ -139,6 +158,33 @@ export default function OwnerPortal() {
   useEffect(() => {
     if (user) fetchMyDaycare();
   }, [user]);
+
+  const fetchWaitlist = useCallback(async () => {
+    if (!myDaycare?._id || !token) return;
+    setWaitlistLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/waitlist/${myDaycare._id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Unable to load the waitlist');
+      if (!Array.isArray(data)) throw new Error('Unexpected waitlist response');
+      setWaitlistEntries(data);
+      setWaitlistError('');
+      setWaitlistUpdatedAt(new Date());
+    } catch (err) {
+      setWaitlistError(err.message || 'Unable to load the waitlist');
+    } finally {
+      setWaitlistLoading(false);
+    }
+  }, [myDaycare?._id, token]);
+
+  useEffect(() => {
+    if (view !== 'manage' || !myDaycare?._id) return undefined;
+    fetchWaitlist();
+    const intervalId = setInterval(fetchWaitlist, 30000);
+    return () => clearInterval(intervalId);
+  }, [fetchWaitlist, myDaycare?._id, view]);
 
   async function fetchCityOptions() {
     try {
@@ -478,6 +524,10 @@ export default function OwnerPortal() {
 
   // ─── MANAGE VIEW ──────────────────────────────────────────────
   if (view === 'manage' && myDaycare) {
+    const filteredWaitlistEntries = waitlistFilter === 'all'
+      ? waitlistEntries
+      : waitlistEntries.filter(entry => entry.ageGroup === waitlistFilter);
+
     return (
       <div style={styles.page}>
         <div style={styles.header}>
@@ -557,6 +607,88 @@ export default function OwnerPortal() {
           >
             {saveStatus === 'saving' ? 'Saving...' : '💾 Update availability'}
           </button>
+        </div>
+
+        {/* Waitlist queue */}
+        <div style={styles.card}>
+          <div className="owner-waitlist-header">
+            <h2 style={styles.cardTitle}>📋 Real-time waitlist queue</h2>
+            <button
+              type="button"
+              onClick={fetchWaitlist}
+              disabled={waitlistLoading}
+              style={styles.btnOutline}
+            >
+              {waitlistLoading ? 'Refreshing...' : 'Refresh'}
+            </button>
+          </div>
+          <p style={{ fontSize: '13px', color: '#68788A', margin: '0 0 14px' }}>
+            Families are listed in the order they joined. The queue refreshes automatically every 30 seconds.
+          </p>
+          <div className="owner-waitlist-controls">
+            <label htmlFor="owner-waitlist-filter" style={styles.label}>Filter by age group</label>
+            <select
+              id="owner-waitlist-filter"
+              value={waitlistFilter}
+              onChange={event => setWaitlistFilter(event.target.value)}
+              style={styles.input}
+            >
+              <option value="all">All categories</option>
+              {AGE_GROUP_OPTIONS.map(({ value, label }) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </select>
+            <span className="owner-waitlist-count">{waitlistEntries.length} active {waitlistEntries.length === 1 ? 'entry' : 'entries'}</span>
+            {waitlistUpdatedAt && (
+              <span className="owner-waitlist-updated">
+                Updated {waitlistUpdatedAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+              </span>
+            )}
+          </div>
+          {waitlistError && (
+            <div role="alert" style={styles.errorMsg}>
+              {waitlistError}{' '}
+              <button type="button" onClick={fetchWaitlist} style={styles.btnOutline}>Try again</button>
+            </div>
+          )}
+          {waitlistLoading && waitlistEntries.length === 0 ? (
+            <p className="owner-waitlist-empty">Loading waitlist...</p>
+          ) : waitlistError && waitlistEntries.length === 0 ? null : (
+            filteredWaitlistEntries.length === 0 ? (
+              <p className="owner-waitlist-empty">
+                {waitlistEntries.length === 0
+                  ? 'No active waitlist entries yet.'
+                  : 'No active entries for this age group.'}
+              </p>
+            ) : (
+              <div className="owner-waitlist-table-wrap">
+                <table className="owner-waitlist-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">#</th>
+                      <th scope="col">Parent / guardian</th>
+                      <th scope="col">Age group</th>
+                      <th scope="col">Requested start</th>
+                      <th scope="col">Joined (date &amp; time)</th>
+                      <th scope="col">Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredWaitlistEntries.map((entry, index) => (
+                      <tr key={entry._id}>
+                        <td>{index + 1}</td>
+                        <td>{entry.parent?.name || 'Parent'}</td>
+                        <td>{AGE_GROUP_LABELS[entry.ageGroup] || entry.ageGroup}</td>
+                        <td>{formatWaitlistDate(entry.expectedStartDate)}</td>
+                        <td>{formatWaitlistEnrollment(entry.createdAt)}</td>
+                        <td>{entry.notes?.trim() || '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
+          )}
         </div>
 
         {/* View profile */}

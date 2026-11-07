@@ -53,7 +53,7 @@ router.get('/:daycareId', auth, async (req, res) => {
       status:  'active'
     })
     .populate('parent', 'name email')
-    .sort({ createdAt: 1 });
+    .sort({ createdAt: 1, _id: 1 });
     res.json(waitlist);
   } catch (err) {
     res.status(500).json({ error: err.message });

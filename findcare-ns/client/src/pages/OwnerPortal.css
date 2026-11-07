@@ -56,6 +56,77 @@
   font-weight: 600;
 }
 
+.owner-waitlist-header,
+.owner-waitlist-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.owner-waitlist-header {
+  justify-content: space-between;
+}
+
+.owner-waitlist-header h2 {
+  margin: 0;
+}
+
+.owner-waitlist-controls {
+  margin-bottom: 12px;
+}
+
+.owner-waitlist-controls select {
+  min-width: 180px;
+}
+
+.owner-waitlist-count,
+.owner-waitlist-updated {
+  color: #68788A;
+  font-size: 12px;
+}
+
+.owner-waitlist-empty {
+  margin: 12px 0 0;
+  padding: 18px;
+  border: 1px dashed #D8CCBC;
+  border-radius: 9px;
+  color: #68788A;
+  font-size: 13px;
+  text-align: center;
+}
+
+.owner-waitlist-table-wrap {
+  overflow-x: auto;
+}
+
+.owner-waitlist-table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: left;
+}
+
+.owner-waitlist-table th,
+.owner-waitlist-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #EEE7DD;
+  vertical-align: top;
+}
+
+.owner-waitlist-table th {
+  color: #68788A;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.owner-waitlist-table td:first-child {
+  color: #FF6B35;
+  font-weight: 700;
+}
+
 .availBtns button:disabled {
   opacity: 0.45;
   cursor: not-allowed;

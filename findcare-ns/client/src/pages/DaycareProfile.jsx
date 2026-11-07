@@ -24,7 +24,7 @@ export default function DaycareProfile() {
   const [submitting, setSubmitting]     = useState(false);
   const [error, setError]               = useState('');
   const [success, setSuccess]           = useState('');
-  const [waitlistForm, setWaitlistForm] = useState({ ageGroup: '', notes: '' });
+  const [waitlistForm, setWaitlistForm] = useState({ ageGroup: '', expectedStartDate: '', notes: '' });
   const [waitlistMsg, setWaitlistMsg]   = useState('');
   const [onWaitlist, setOnWaitlist]     = useState(false);
 
@@ -85,6 +85,10 @@ export default function DaycareProfile() {
 
   const submitWaitlist = useCallback(async (formData) => {
     setWaitlistMsg('');
+    if (!formData.expectedStartDate) {
+      setWaitlistMsg('Please select your requested start date.');
+      return;
+    }
     try {
       const res = await fetch(`${API_URL}/api/waitlist/${id}`, {
         method: 'POST',
@@ -108,6 +112,7 @@ export default function DaycareProfile() {
 
   function joinWaitlist() {
     if (!waitlistForm.ageGroup) { setWaitlistMsg('Please select an age group.'); return; }
+    if (!waitlistForm.expectedStartDate) { setWaitlistMsg('Please select your requested start date.'); return; }
     if (!user) {
       navigate('/login', {
         state: { returnTo: location.pathname, pendingWaitlist: waitlistForm }
@@ -241,6 +246,17 @@ export default function DaycareProfile() {
                     <option key={value} value={value}>{label} ({range})</option>
                   ))}
                 </select>
+              </div>
+              <div style={{ marginBottom: '12px' }}>
+                <label style={styles.label} htmlFor="waitlist-expected-start-date">Requested start date *</label>
+                <input
+                  id="waitlist-expected-start-date"
+                  type="date"
+                  required
+                  value={waitlistForm.expectedStartDate}
+                  onChange={e => setWaitlistForm({ ...waitlistForm, expectedStartDate: e.target.value })}
+                  style={styles.input}
+                />
               </div>
               <div style={{ marginBottom: '12px' }}>
                 <label style={styles.label}>Notes (optional)</label>
