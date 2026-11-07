@@ -666,11 +666,11 @@ export default function OwnerPortal() {
                   <thead>
                     <tr>
                       <th scope="col">#</th>
-                      <th scope="col">Parent / guardian</th>
-                      <th scope="col">Age group</th>
-                      <th scope="col">Requested start</th>
-                      <th scope="col">Joined (date &amp; time)</th>
-                      <th scope="col">Notes</th>
+                      <th scope="col">Parent / Guardian</th>
+                      <th scope="col">Age Group</th>
+                      <th scope="col">Request Start Date</th>
+                      <th scope="col">Waitlist Joined On</th>
+                      <th scope="col" className="owner-waitlist-notes">Notes</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -681,7 +681,7 @@ export default function OwnerPortal() {
                         <td>{AGE_GROUP_LABELS[entry.ageGroup] || entry.ageGroup}</td>
                         <td>{formatWaitlistDate(entry.expectedStartDate)}</td>
                         <td>{formatWaitlistEnrollment(entry.createdAt)}</td>
-                        <td>{entry.notes?.trim() || '—'}</td>
+                        <td className="owner-waitlist-notes">{entry.notes?.trim() || '—'}</td>
                       </tr>
                     ))}
                   </tbody>

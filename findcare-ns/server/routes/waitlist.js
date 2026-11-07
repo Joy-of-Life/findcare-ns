@@ -7,11 +7,38 @@ const auth     = require('../middleware/auth');
 const toPublicDaycare = require('../daycarePrivacy');
 
 const SUPPORTED_AGE_GROUPS = ['infant', 'toddler', 'preschool', 'kindergarten', 'school-age'];
+const NOVA_SCOTIA_TIME_ZONE = 'America/Halifax';
 const ALLOWED_STATUS_TRANSITIONS = {
   active: ['filled', 'withdrawn'],
   filled: ['active'],
   withdrawn: [],
 };
+
+function getNovaScotiaDate(date = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: NOVA_SCOTIA_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+  const dateParts = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+  return `${dateParts.year}-${dateParts.month}-${dateParts.day}`;
+}
+
+function isValidFutureStartDate(value) {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const [year, month, day] = value.split('-').map(Number);
+  const parsedDate = new Date(Date.UTC(year, month - 1, day));
+  if (
+    parsedDate.getUTCFullYear() !== year ||
+    parsedDate.getUTCMonth() !== month - 1 ||
+    parsedDate.getUTCDate() !== day
+  ) return false;
+
+  const tomorrow = new Date(`${getNovaScotiaDate()}T00:00:00Z`);
+  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+  return value >= tomorrow.toISOString().slice(0, 10);
+}
 
 // GET /api/waitlist/my/all — get all waitlist entries for current parent
 // IMPORTANT: this must be BEFORE /:daycareId or Express will treat 'my' as a daycareId
@@ -75,6 +102,11 @@ router.post('/:daycareId', auth, async (req, res) => {
     if (!SUPPORTED_AGE_GROUPS.includes(ageGroup)) {
       return res.status(400).json({ error: 'Invalid age group' });
     }
+    if (!isValidFutureStartDate(expectedStartDate)) {
+      return res.status(400).json({
+        error: 'Requested start date must be tomorrow or a future date.',
+      });
+    }
 
     // Check if already on waitlist
     const existing = await Waitlist.findOne({
@@ -99,7 +131,7 @@ router.post('/:daycareId', auth, async (req, res) => {
       parent:            req.user.id,
       ageGroup,
       position:          count + 1,
-      expectedStartDate,
+      expectedStartDate: new Date(`${expectedStartDate}T00:00:00.000Z`),
       notes,
       status:            'active'
     });

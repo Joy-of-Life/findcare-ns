@@ -10,6 +10,22 @@ import { formatDailyRate } from '../utils/pricing';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
+function getNovaScotiaTomorrowDate() {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Halifax',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+  const dateParts = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+  const tomorrow = new Date(Date.UTC(
+    Number(dateParts.year),
+    Number(dateParts.month) - 1,
+    Number(dateParts.day) + 1
+  ));
+  return tomorrow.toISOString().slice(0, 10);
+}
+
 export default function DaycareProfile() {
   const { id }              = useParams();
   const { user, token }     = useAuth();
@@ -27,6 +43,7 @@ export default function DaycareProfile() {
   const [waitlistForm, setWaitlistForm] = useState({ ageGroup: '', expectedStartDate: '', notes: '' });
   const [waitlistMsg, setWaitlistMsg]   = useState('');
   const [onWaitlist, setOnWaitlist]     = useState(false);
+  const earliestWaitlistStartDate = getNovaScotiaTomorrowDate();
 
   useEffect(() => { fetchDaycare(); fetchReviews(); }, [id]);
 
@@ -85,8 +102,8 @@ export default function DaycareProfile() {
 
   const submitWaitlist = useCallback(async (formData) => {
     setWaitlistMsg('');
-    if (!formData.expectedStartDate) {
-      setWaitlistMsg('Please select your requested start date.');
+    if (!formData.expectedStartDate || formData.expectedStartDate < earliestWaitlistStartDate) {
+      setWaitlistMsg('Requested start date must be tomorrow or a future date.');
       return;
     }
     try {
@@ -99,7 +116,7 @@ export default function DaycareProfile() {
       if (!res.ok) { setWaitlistMsg(data.error || 'Failed to join waitlist'); }
       else { setOnWaitlist(true); setWaitlistMsg(`You are on the waitlist at position #${data.position}!`); }
     } catch (err) { setWaitlistMsg('Something went wrong.'); }
-  }, [id, token]);
+  }, [earliestWaitlistStartDate, id, token]);
 
   useEffect(() => {
     const pendingWaitlist = location.state?.resumeWaitlist;
@@ -112,7 +129,10 @@ export default function DaycareProfile() {
 
   function joinWaitlist() {
     if (!waitlistForm.ageGroup) { setWaitlistMsg('Please select an age group.'); return; }
-    if (!waitlistForm.expectedStartDate) { setWaitlistMsg('Please select your requested start date.'); return; }
+    if (!waitlistForm.expectedStartDate || waitlistForm.expectedStartDate < earliestWaitlistStartDate) {
+      setWaitlistMsg('Requested start date must be tomorrow or a future date.');
+      return;
+    }
     if (!user) {
       navigate('/login', {
         state: { returnTo: location.pathname, pendingWaitlist: waitlistForm }
@@ -147,7 +167,20 @@ export default function DaycareProfile() {
 
   return (
     <div style={styles.page}>
-      <button onClick={() => navigate(-1)} style={styles.backBtn}>← Back to results</button>
+      <button
+        onClick={() => {
+          const returnTo = location.state?.returnTo;
+          navigate(
+            typeof returnTo === 'string' && returnTo.startsWith('/') && !returnTo.startsWith('//')
+              ? returnTo
+              : '/',
+            { replace: true }
+          );
+        }}
+        style={styles.backBtn}
+      >
+        ← Back to results
+      </button>
 
       {/* Header */}
       <div style={styles.header}>
@@ -253,6 +286,7 @@ export default function DaycareProfile() {
                   id="waitlist-expected-start-date"
                   type="date"
                   required
+                  min={earliestWaitlistStartDate}
                   value={waitlistForm.expectedStartDate}
                   onChange={e => setWaitlistForm({ ...waitlistForm, expectedStartDate: e.target.value })}
                   style={styles.input}

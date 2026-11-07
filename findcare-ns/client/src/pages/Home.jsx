@@ -22,6 +22,7 @@ export default function Home() {
   const [stats, setStats] = useState(null);
   const [browseAllWithLocation, setBrowseAllWithLocation] = useState(false);
   const discoverHandled = useRef(false);
+  const searchRestored = useRef(false);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user, token } = useAuth();
@@ -151,6 +152,9 @@ export default function Home() {
         if (!filters.sortByDistance) params.append('radius', filters.radius || 25);
       }
       if (filters.sortByDistance) params.append('sortByDistance', 'true');
+      const routeParams = new URLSearchParams(params);
+      routeParams.set('searched', '1');
+      setSearchParams(routeParams, { replace: true });
       const res = await fetch(`${API_URL}/api/daycares?${params}`);
       const data = await res.json();
       setResults(Array.isArray(data) ? data : []);
@@ -160,7 +164,33 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  }, [API_URL]);
+  }, [API_URL, setSearchParams]);
+
+  useEffect(() => {
+    if (searchRestored.current) return;
+    searchRestored.current = true;
+    if (searchParams.get('discover') === '1') return;
+    const restoredFilters = {
+      city: searchParams.get('city') || '',
+      ageRange: searchParams.get('ageRange') || '',
+      language: searchParams.get('language') || '',
+      maxPrice: searchParams.get('maxPrice') || '',
+      rating: searchParams.get('rating') || '',
+      availabilityStatus: searchParams.get('availabilityStatus') || '',
+      query: searchParams.get('search') || '',
+      lat: searchParams.has('lat') ? Number(searchParams.get('lat')) : undefined,
+      lng: searchParams.has('lng') ? Number(searchParams.get('lng')) : undefined,
+      radius: searchParams.has('radius') ? Number(searchParams.get('radius')) : undefined,
+      sortByDistance: searchParams.get('sortByDistance') === 'true',
+    };
+    if (
+      searchParams.get('searched') === '1' ||
+      Object.values(restoredFilters).some(value => value !== '' && value !== undefined && value !== false)
+    ) {
+      handleSearch(restoredFilters);
+    }
+  // Restore a search only once; handleSearch updates the URL as it runs.
+  }, [handleSearch, searchParams]);
 
   // Open the full daycare list when requested from the navigation.
   useEffect(() => {
@@ -188,9 +218,6 @@ export default function Home() {
     } else {
       browseAll(null);
     }
-    const nextParams = new URLSearchParams(searchParams);
-    nextParams.delete('discover');
-    setSearchParams(nextParams, { replace: true });
   }, [searchParams, setSearchParams, handleSearch]);
 
   function handleFindNearMe() {
@@ -267,7 +294,18 @@ export default function Home() {
           </div>
 
           <div style={styles.heroSearch}>
-            <SearchBar onSearch={handleSearch} />
+            <SearchBar
+              onSearch={handleSearch}
+              initialFilters={{
+                city: searchParams.get('city') || '',
+                query: searchParams.get('search') || '',
+                ageRange: searchParams.get('ageRange') || '',
+                language: searchParams.get('language') || '',
+                maxPrice: searchParams.get('maxPrice') || '',
+                rating: searchParams.get('rating') || '',
+                availabilityStatus: searchParams.get('availabilityStatus') || '',
+              }}
+            />
           </div>
 
           <div style={styles.popularWrap}>
@@ -590,7 +628,10 @@ export default function Home() {
                         style={{ ...styles.cardName, cursor: 'pointer', color: '#FF6B35' }}
                         onClick={() => {
                           setShowPopup(false);
-                          navigate(`/daycare/${daycare._id}`);
+                          const query = searchParams.toString();
+                          navigate(`/daycare/${daycare._id}`, {
+                            state: { returnTo: query ? `/?${query}` : '/' },
+                          });
                         }}
                       >
                         {daycare.name}

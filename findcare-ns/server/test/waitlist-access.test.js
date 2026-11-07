@@ -15,16 +15,24 @@ const JWT_SECRET = 'waitlist-access-test-secret';
 const originals = {
   daycareFindById: Daycare.findById,
   waitlistFind: Waitlist.find,
+  waitlistFindOne: Waitlist.findOne,
+  waitlistCountDocuments: Waitlist.countDocuments,
   waitlistFindById: Waitlist.findById,
   waitlistFindOneAndUpdate: Waitlist.findOneAndUpdate,
+  waitlistSave: Waitlist.prototype.save,
+  waitlistPopulate: Waitlist.prototype.populate,
   jwtSecret: process.env.JWT_SECRET,
 };
 
 afterEach(() => {
   Daycare.findById = originals.daycareFindById;
   Waitlist.find = originals.waitlistFind;
+  Waitlist.findOne = originals.waitlistFindOne;
+  Waitlist.countDocuments = originals.waitlistCountDocuments;
   Waitlist.findById = originals.waitlistFindById;
   Waitlist.findOneAndUpdate = originals.waitlistFindOneAndUpdate;
+  Waitlist.prototype.save = originals.waitlistSave;
+  Waitlist.prototype.populate = originals.waitlistPopulate;
   if (originals.jwtSecret === undefined) delete process.env.JWT_SECRET;
   else process.env.JWT_SECRET = originals.jwtSecret;
 });
@@ -50,6 +58,23 @@ async function requestWaitlist({ role, userId, method, path, body }) {
   } finally {
     await new Promise((resolve, reject) => server.close(err => err ? reject(err) : resolve()));
   }
+}
+
+function novaScotiaToday() {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Halifax',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+  const dateParts = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+  return `${dateParts.year}-${dateParts.month}-${dateParts.day}`;
+}
+
+function addDays(date, days) {
+  const result = new Date(`${date}T00:00:00.000Z`);
+  result.setUTCDate(result.getUTCDate() + days);
+  return result.toISOString().slice(0, 10);
 }
 
 test('only the daycare owner can list its waitlist; parents and other owners are denied', async () => {
@@ -82,6 +107,62 @@ test('only the daycare owner can list its waitlist; parents and other owners are
   });
   assert.equal(ownerResponse.status, 200);
   assert.equal(waitlistRead, true);
+});
+
+test('joining a waitlist requires a valid requested start date of tomorrow or later', async () => {
+  const today = novaScotiaToday();
+  const invalidDates = [
+    undefined,
+    '',
+    'not-a-date',
+    '2026-02-30',
+    addDays(today, -1),
+    today,
+  ];
+
+  for (const expectedStartDate of invalidDates) {
+    const response = await requestWaitlist({
+      role: 'parent',
+      userId: PARENT_ID,
+      method: 'POST',
+      path: `/${DAYCARE_ID}`,
+      body: { ageGroup: 'infant', expectedStartDate },
+    });
+    assert.equal(response.status, 400);
+    assert.equal(
+      (await response.json()).error,
+      'Requested start date must be tomorrow or a future date.'
+    );
+  }
+});
+
+test('joining a waitlist accepts tomorrow and stores the requested calendar date', async () => {
+  const tomorrow = addDays(novaScotiaToday(), 1);
+  Waitlist.findOne = async () => null;
+  Waitlist.countDocuments = async () => 0;
+  Waitlist.prototype.save = async function save() {};
+  Waitlist.prototype.populate = async function populate() {
+    return {
+      toObject: () => ({
+        _id: ENTRY_ID,
+        position: this.position,
+        expectedStartDate: this.expectedStartDate,
+        daycare: { name: 'Example daycare', city: 'Halifax' },
+      }),
+    };
+  };
+
+  const response = await requestWaitlist({
+    role: 'parent',
+    userId: PARENT_ID,
+    method: 'POST',
+    path: `/${DAYCARE_ID}`,
+    body: { ageGroup: 'infant', expectedStartDate: tomorrow },
+  });
+
+  assert.equal(response.status, 201);
+  const entry = await response.json();
+  assert.equal(entry.expectedStartDate, `${tomorrow}T00:00:00.000Z`);
 });
 
 test('only the daycare owner can update a waitlist entry status', async () => {

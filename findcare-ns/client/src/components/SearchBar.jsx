@@ -2,17 +2,25 @@ import { useState } from 'react';
 import { AGE_GROUP_OPTIONS } from '../constants/ageGroups';
 import './SearchBar.css';
 
-export default function SearchBar({ onSearch }) {
-  const [query, setQuery]                 = useState('');
-  const [ageRange, setAgeRange]           = useState('');
-  const [language, setLanguage]           = useState('');
-  const [maxPrice, setMaxPrice]           = useState('');
-  const [rating, setRating]               = useState('');
-  const [availabilityStatus, setAvailabilityStatus] = useState('');
+export default function SearchBar({ onSearch, initialFilters = {} }) {
+  const [query, setQuery]                 = useState(initialFilters.query || initialFilters.city || '');
+  const [ageRange, setAgeRange]           = useState(initialFilters.ageRange || '');
+  const [language, setLanguage]           = useState(initialFilters.language || '');
+  const [maxPrice, setMaxPrice]           = useState(initialFilters.maxPrice || '');
+  const [rating, setRating]               = useState(initialFilters.rating || '');
+  const [availabilityStatus, setAvailabilityStatus] = useState(initialFilters.availabilityStatus || '');
   const [showFilters, setShowFilters]     = useState(true);
 
   function handleSearch() {
-    onSearch({ query, ageRange, language, maxPrice, rating, availabilityStatus });
+    onSearch({
+      query,
+      ...(initialFilters.city && query === initialFilters.city ? { city: initialFilters.city } : {}),
+      ageRange,
+      language,
+      maxPrice,
+      rating,
+      availabilityStatus,
+    });
   }
 
   function handleKeyDown(e) {
