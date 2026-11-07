@@ -12,7 +12,7 @@ const { sendEmail } = require('../services/emailService');
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, phone } = req.body;
 
     // Check all fields present
     if (!name || !email || !password || !role) {
@@ -26,6 +26,9 @@ router.post('/register', async (req, res) => {
     // Check role is valid
     if (!['parent', 'owner'].includes(role)) {
       return res.status(400).json({ error: 'Role must be parent or owner' });
+    }
+    if (role === 'parent' && (typeof phone !== 'string' || !/^\d{10}$/.test(phone))) {
+      return res.status(400).json({ error: 'Enter a mobile number with exactly 10 digits and no spaces or punctuation' });
     }
 
     // Check if email already exists
@@ -45,6 +48,7 @@ router.post('/register', async (req, res) => {
     const user = new User({
       name,
       email,
+      ...(role === 'parent' ? { phone } : {}),
       password:    hashed,
       role,
       verifyToken

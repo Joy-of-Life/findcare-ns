@@ -52,7 +52,7 @@ test('daycare creation requires a daily rate and ignores legacy monthly price in
       name: 'Daily Rate Daycare',
       address: '1 Main Street',
       city: 'Halifax',
-      phone: '902-555-0100',
+      phone: '9025550100',
       description: 'Care for infants',
       openHours: 'Mon–Fri, 7:00 AM – 5:00 PM',
       dailyRateAttestationConfirmed: true,
@@ -80,33 +80,22 @@ test('daycare creation requires a daily rate and ignores legacy monthly price in
     assert.equal(missingRate.status, 400);
     assert.deepEqual(await missingRate.json(), { error: 'Enter a valid daily rate' });
 
-    const tooManyPhoneDigits = await fetch(`http://127.0.0.1:${server.address().port}/api/daycares`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        ...baseListing,
-        phone: '902-555-01001',
-        dailyRate: 25.5,
-      }),
-    });
-    assert.equal(tooManyPhoneDigits.status, 400);
-    assert.deepEqual(await tooManyPhoneDigits.json(), {
-      error: 'Phone number must not exceed 10 digits',
-    });
-
-    const phoneWithLetters = await fetch(`http://127.0.0.1:${server.address().port}/api/daycares`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        ...baseListing,
-        phone: '902-ABC-0100',
-        dailyRate: 25.5,
-      }),
-    });
-    assert.equal(phoneWithLetters.status, 400);
-    assert.deepEqual(await phoneWithLetters.json(), {
-      error: 'Phone number can contain only digits and common phone formatting characters',
-    });
+    const invalidPhoneNumbers = ['90255501001', '902555010', '902-555-0100', 'abcdefghij'];
+    for (const phone of invalidPhoneNumbers) {
+      const invalidPhone = await fetch(`http://127.0.0.1:${server.address().port}/api/daycares`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          ...baseListing,
+          phone,
+          dailyRate: 25.5,
+        }),
+      });
+      assert.equal(invalidPhone.status, 400);
+      assert.deepEqual(await invalidPhone.json(), {
+        error: 'Phone number must contain exactly 10 digits with no spaces or punctuation',
+      });
+    }
 
     const unconfirmedRate = await fetch(`http://127.0.0.1:${server.address().port}/api/daycares`, {
       method: 'POST',

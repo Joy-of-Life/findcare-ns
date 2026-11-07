@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import Register from './Register';
 
 jest.mock('react-router-dom', () => {
@@ -33,6 +33,21 @@ test('keeps parent as the default for normal registration links', () => {
 
   expect(parentRole.style.borderColor).toBe('#ff6b35');
   expect(ownerRole.style.borderColor).toBe('#ffcc80');
+});
+
+test('requires a 10-digit phone from parents, but not daycare owners', () => {
+  const { rerender } = renderRegister('/register');
+  const parentPhone = screen.getByLabelText('Mobile number (10 digits)');
+  expect(parentPhone.required).toBe(true);
+  expect(parentPhone.pattern).toBe('[0-9]{10}');
+  expect(parentPhone.maxLength).toBe(10);
+
+  fireEvent.click(screen.getByText('🏫 Daycare owner or provider').parentElement);
+  expect(screen.queryByLabelText('Mobile number (10 digits)')).toBeNull();
+
+  window.history.replaceState({}, '', '/register?role=owner');
+  rerender(<Register />);
+  expect(screen.queryByLabelText('Mobile number (10 digits)')).toBeNull();
 });
 
 test('updates the selected role when navigating between Register and List your daycare', async () => {

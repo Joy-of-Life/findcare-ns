@@ -12,6 +12,7 @@ export default function Register() {
     email: '',
     password: '',
     role: requestedRole,
+    phone: '',
   }));
   const [error, setError]     = useState('');
   const [success, setSuccess] = useState('');
@@ -32,10 +33,14 @@ export default function Register() {
     setSuccess('');
     setLoading(true);
     try {
+      const registrationData = {
+        ...form,
+        phone: form.role === 'parent' ? form.phone : undefined,
+      };
       const res  = await fetch(`${API_URL}/api/auth/register`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(form),
+        body:    JSON.stringify(registrationData),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -92,6 +97,27 @@ export default function Register() {
               />
             </div>
 
+            {form.role === 'parent' && (
+              <div style={styles.field}>
+                <label style={styles.label} htmlFor="registration-phone">Mobile number (10 digits)</label>
+                <input
+                  id="registration-phone"
+                  type="tel"
+                  name="phone"
+                  value={form.phone}
+                  onChange={handleChange}
+                  placeholder="10 digits, no spaces or punctuation"
+                  autoComplete="tel"
+                  inputMode="numeric"
+                  pattern="[0-9]{10}"
+                  maxLength={10}
+                  title="Enter exactly 10 digits with no spaces or punctuation"
+                  required
+                  style={styles.input}
+                />
+              </div>
+            )}
+
             <div style={styles.field}>
               <label style={styles.label}>Password</label>
               <input
@@ -115,7 +141,11 @@ export default function Register() {
                 ].map(r => (
                   <div
                     key={r.value}
-                    onClick={() => setForm({ ...form, role: r.value })}
+                    onClick={() => setForm(current => ({
+                      ...current,
+                      role: r.value,
+                      ...(r.value === 'owner' ? { phone: '' } : {}),
+                    }))}
                     style={{
                       ...styles.roleOption,
                       borderColor: form.role === r.value ? '#FF6B35' : '#FFCC80',

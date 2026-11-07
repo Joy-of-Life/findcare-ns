@@ -360,10 +360,8 @@ export default function OwnerPortal() {
     if (!form.address.trim()) validationErrors.push('Address');
     if (!cityOptions.includes(form.city)) validationErrors.push('A city or community in Nova Scotia');
     if (!form.phone.trim()) validationErrors.push('Phone');
-    else if (!/^[\d+().\s-]+$/.test(form.phone)) {
-      validationErrors.push('Phone number can contain only digits and common phone formatting characters');
-    } else if (form.phone.replace(/\D/g, '').length > 10) {
-      validationErrors.push('Phone number must not exceed 10 digits');
+    else if (!/^\d{10}$/.test(form.phone)) {
+      validationErrors.push('Phone number must contain exactly 10 digits with no spaces or punctuation');
     }
     if (form.dailyRate === '' || !Number.isFinite(Number(form.dailyRate)) || Number(form.dailyRate) < 0) {
       validationErrors.push('Daily rate');
@@ -669,6 +667,8 @@ export default function OwnerPortal() {
                       <th scope="col">Parent / Guardian</th>
                       <th scope="col">Age Group</th>
                       <th scope="col">Request Start Date</th>
+                      <th scope="col">Phone</th>
+                      <th scope="col">Email</th>
                       <th scope="col">Waitlist Joined On</th>
                       <th scope="col" className="owner-waitlist-notes">Notes</th>
                     </tr>
@@ -680,6 +680,8 @@ export default function OwnerPortal() {
                         <td>{entry.parent?.name || 'Parent'}</td>
                         <td>{AGE_GROUP_LABELS[entry.ageGroup] || entry.ageGroup}</td>
                         <td>{formatWaitlistDate(entry.expectedStartDate)}</td>
+                        <td>{entry.parent?.phone || '—'}</td>
+                        <td>{entry.parent?.email || '—'}</td>
                         <td>{formatWaitlistEnrollment(entry.createdAt)}</td>
                         <td className="owner-waitlist-notes">{entry.notes?.trim() || '—'}</td>
                       </tr>
@@ -771,6 +773,7 @@ export default function OwnerPortal() {
                   onChange={handleChange}
                   style={styles.input}
                   required
+                  placeholder={f.name === 'phone' ? '10 digits, no spaces or punctuation' : undefined}
                   disabled={!cityOptions.length}
                 >
                   <option value="">Select a Nova Scotia community</option>
@@ -788,8 +791,10 @@ export default function OwnerPortal() {
                     required
                     min={f.name === 'dailyRate' ? '0' : undefined}
                     step={f.name === 'dailyRate' ? '0.01' : undefined}
-                    pattern={f.name === 'phone' ? '[0-9+(). -]+' : undefined}
-                    title={f.name === 'phone' ? 'Use digits and common phone formatting characters only' : undefined}
+                    pattern={f.name === 'phone' ? '[0-9]{10}' : undefined}
+                    maxLength={f.name === 'phone' ? 10 : undefined}
+                    inputMode={f.name === 'phone' ? 'numeric' : undefined}
+                    title={f.name === 'phone' ? 'Enter exactly 10 digits with no spaces or punctuation' : undefined}
                   />
                   {f.name === 'dailyRate' && (
                     <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginTop: '10px', fontSize: '13px', lineHeight: 1.5, color: '#2C2C2A' }}>

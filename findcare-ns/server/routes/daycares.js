@@ -45,11 +45,8 @@ function validateOwnerListing(fields) {
   if (requiredText.some(field => typeof fields[field] !== 'string' || !fields[field].trim())) {
     return 'Complete all required daycare details';
   }
-  if (fields.phone.replace(/\D/g, '').length > 10) {
-    return 'Phone number must not exceed 10 digits';
-  }
-  if (!/^[\d+().\s-]+$/.test(fields.phone)) {
-    return 'Phone number can contain only digits and common phone formatting characters';
+  if (!/^\d{10}$/.test(fields.phone)) {
+    return 'Phone number must contain exactly 10 digits with no spaces or punctuation';
   }
   if (!NOVA_SCOTIA_CITIES.includes(fields.city.trim())) {
     return 'Select a city or community in Nova Scotia';

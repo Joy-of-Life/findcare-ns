@@ -79,13 +79,17 @@ function addDays(date, days) {
 
 test('only the daycare owner can list its waitlist; parents and other owners are denied', async () => {
   let waitlistRead = false;
+  let populatedParentFields = '';
   Daycare.findById = async () => ({ owner: OWNER_ID });
   Waitlist.find = () => {
     waitlistRead = true;
     return {
-      populate: () => ({
+      populate: (path, fields) => {
+        if (path === 'parent') populatedParentFields = fields;
+        return {
         sort: async () => [],
-      }),
+        };
+      },
     };
   };
 
@@ -107,6 +111,7 @@ test('only the daycare owner can list its waitlist; parents and other owners are
   });
   assert.equal(ownerResponse.status, 200);
   assert.equal(waitlistRead, true);
+  assert.equal(populatedParentFields, 'name email phone');
 });
 
 test('joining a waitlist requires a valid requested start date of tomorrow or later', async () => {
