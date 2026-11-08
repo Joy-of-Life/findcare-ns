@@ -14,7 +14,7 @@ const SEARCH_FIELDS = ['name', 'address', 'city', 'description', 'language', 'ag
 const SEARCH_STOP_WORDS = new Set(['a', 'an', 'and', 'care', 'childcare', 'daycare', 'daycares', 'find', 'for', 'in', 'looking', 'me', 'near', 'of', 'please', 'the', 'to', 'want', 'with']);
 const OWNER_EDITABLE_FIELDS = [
   'name', 'address', 'city', 'phone', 'dailyRate', 'openHours', 'description',
-  'language', 'ageRange', 'coordinates', 'availability', 'hideAddress', 'maxChildren',
+  'language', 'ageRange', 'coordinates', 'availability', 'hideAddress', 'facebookPageLink', 'maxChildren',
   'daysOpen', 'opensAt', 'closesAt', 'acceptsSubsidy', 'mealsProvided', 'outdoorPlaySpace',
   'providerType'
 ];
@@ -47,6 +47,19 @@ function validateOwnerListing(fields) {
   }
   if (!/^\d{10}$/.test(fields.phone)) {
     return 'Phone number must contain exactly 10 digits with no spaces or punctuation';
+  }
+  const facebookPageLink = typeof fields.facebookPageLink === 'string'
+    ? fields.facebookPageLink.trim()
+    : '';
+  if (facebookPageLink) {
+    try {
+      const facebookUrl = new URL(facebookPageLink);
+      if (!['http:', 'https:'].includes(facebookUrl.protocol)) {
+        return 'Enter a valid Facebook Page URL';
+      }
+    } catch {
+      return 'Enter a valid Facebook Page URL';
+    }
   }
   if (!NOVA_SCOTIA_CITIES.includes(fields.city.trim())) {
     return 'Select a city or community in Nova Scotia';
@@ -347,6 +360,9 @@ router.post('/', auth, async (req, res) => {
     const availabilityError = validateAvailability(req.body);
     if (availabilityError) return res.status(400).json({ error: availabilityError });
     const listingFields = { ...req.body };
+    if (typeof listingFields.facebookPageLink === 'string') {
+      listingFields.facebookPageLink = listingFields.facebookPageLink.trim();
+    }
     delete listingFields.monthlyPrice;
     delete listingFields.capacityAttestationConfirmed;
     delete listingFields.dailyRateAttestationConfirmed;
@@ -405,6 +421,9 @@ router.patch('/:id', auth, async (req, res) => {
     const updates = Object.fromEntries(
       Object.entries(req.body).filter(([field]) => OWNER_EDITABLE_FIELDS.includes(field))
     );
+    if (typeof updates.facebookPageLink === 'string') {
+      updates.facebookPageLink = updates.facebookPageLink.trim();
+    }
     if (!PROVIDER_TYPES.includes(updates.providerType)) {
       return res.status(400).json({ error: 'Select a provider type' });
     }

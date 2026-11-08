@@ -103,6 +103,7 @@ function createDaycareForm(daycare = {}) {
     name: daycare.name || '',
     address: daycare.address || '',
     hideAddress: Boolean(daycare.hideAddress),
+    facebookPageLink: daycare.facebookPageLink || '',
     city: daycare.city || '',
     phone: daycare.phone || '',
     dailyRate: daycare.dailyRate ?? '',
@@ -829,6 +830,18 @@ export default function OwnerPortal() {
             </span>
           </span>
         </label>
+        <div style={{ ...styles.field, marginTop: '12px' }}>
+          <label style={styles.label} htmlFor="facebookPageLink">Facebook Page Link (optional)</label>
+          <input
+            id="facebookPageLink"
+            type="url"
+            name="facebookPageLink"
+            value={form.facebookPageLink}
+            onChange={handleChange}
+            placeholder="https://www.facebook.com/yourdaycare"
+            style={styles.input}
+          />
+        </div>
         <div style={{ ...styles.field, marginTop: '12px' }}>
           <label style={styles.label}>Description *</label>
           <textarea name="description" value={form.description} onChange={handleChange}

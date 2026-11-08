@@ -53,6 +53,10 @@ const daycareSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  facebookPageLink: {
+    type: String,
+    trim: true
+  },
   city: {
     type:     String,
     required: true,

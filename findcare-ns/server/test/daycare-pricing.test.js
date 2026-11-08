@@ -122,16 +122,34 @@ test('daycare creation requires a daily rate and ignores legacy monthly price in
     const withDailyRate = await fetch(`http://127.0.0.1:${server.address().port}/api/daycares`, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ ...baseListing, dailyRate: 25.5, monthlyPrice: 700 }),
+      body: JSON.stringify({
+        ...baseListing,
+        dailyRate: 25.5,
+        monthlyPrice: 700,
+        facebookPageLink: ' https://www.facebook.com/example-daycare ',
+      }),
     });
     const savedDaycare = await withDailyRate.json();
 
     assert.equal(withDailyRate.status, 201);
     assert.equal(savedDaycare.dailyRate, 25.5);
+    assert.equal(savedDaycare.facebookPageLink, 'https://www.facebook.com/example-daycare');
     assert.equal(savedDaycare.monthlyPrice, undefined);
     assert.equal(savedDaycare.licensed, false);
     assert.equal(savedDaycare.unlicensedHomeProvider, true);
     assert.equal(savedDaycare.providerCapacityAttestations, undefined);
+
+    const invalidFacebookLink = await fetch(`http://127.0.0.1:${server.address().port}/api/daycares`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        ...baseListing,
+        dailyRate: 25.5,
+        facebookPageLink: 'javascript:alert(1)',
+      }),
+    });
+    assert.equal(invalidFacebookLink.status, 400);
+    assert.deepEqual(await invalidFacebookLink.json(), { error: 'Enter a valid Facebook Page URL' });
 
     for (const providerType of ['licensedCentre', 'regulatedFamilyHome']) {
       const missingStatusConfirmation = await fetch(`http://127.0.0.1:${server.address().port}/api/daycares`, {
