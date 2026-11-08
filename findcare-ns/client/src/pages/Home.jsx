@@ -715,6 +715,17 @@ export default function Home() {
                       </button>
                     )}
                   </div>
+                  {daycare.facebookPageLink && (
+                    <div style={styles.facebookPageLink}>
+                      <a
+                        href={daycare.facebookPageLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Facebook Page : Actual Home daycare FB page
+                      </a>
+                    </div>
+                  )}
                 </div>
               ))}
 
@@ -1431,6 +1442,12 @@ const styles = {
     fontSize: '13px',
     color: '#6B7280',
     marginBottom: '10px',
+  },
+  facebookPageLink: {
+    marginTop: '10px',
+    paddingTop: '10px',
+    borderTop: '1px solid #F3E8D8',
+    fontSize: '13px',
   },
   detailRows: {
     display: 'grid',

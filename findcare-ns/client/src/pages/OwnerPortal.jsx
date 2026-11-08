@@ -831,7 +831,7 @@ export default function OwnerPortal() {
           </span>
         </label>
         <div style={{ ...styles.field, marginTop: '12px' }}>
-          <label style={styles.label} htmlFor="facebookPageLink">Facebook Page Link (optional)</label>
+          <label style={styles.label} htmlFor="facebookPageLink">Facebook Page Url/Link (optional)</label>
           <input
             id="facebookPageLink"
             type="url"
