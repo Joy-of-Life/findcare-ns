@@ -220,7 +220,7 @@ export default function ParentDashboard() {
               <div style={{ flex: 1 }}>
                 <div
                   style={{ ...styles.daycareName, cursor: 'pointer' }}
-                  onClick={() => navigate(`/daycare/${daycare._id}`)}
+                  onClick={() => navigate(`/daycare/${daycare._id}`, { state: { returnTo: '/dashboard' } })}
                 >
                   {daycare.name}
                 </div>

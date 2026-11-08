@@ -164,6 +164,7 @@ export default function DaycareProfile() {
     (total, age) => total + (daycare.availability?.[age] || 0),
     0
   );
+  const returnToDashboard = location.state?.returnTo === '/dashboard';
 
   return (
     <div style={styles.page}>
@@ -179,7 +180,7 @@ export default function DaycareProfile() {
         }}
         style={styles.backBtn}
       >
-        ← Back to results
+        {returnToDashboard ? '← Back to dashboard' : '← Back to results'}
       </button>
 
       {/* Header */}
