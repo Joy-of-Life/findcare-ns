@@ -2,11 +2,14 @@ const assert = require('node:assert/strict');
 const { test } = require('node:test');
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 const daycareRoutes = require('../routes/daycares');
 
 test('daycare creation and edits require provider capacity attestation', async () => {
   const originalJwtSecret = process.env.JWT_SECRET;
+  const originalUserFindById = User.findById;
   process.env.JWT_SECRET = 'licensing-attestation-test-secret';
+  User.findById = () => ({ select: async () => ({ authVersion: 0 }) });
   const app = express();
   app.use(express.json());
   app.use('/api/daycares', daycareRoutes);
@@ -78,6 +81,7 @@ test('daycare creation and edits require provider capacity attestation', async (
     });
   } finally {
     await new Promise((resolve, reject) => server.close(err => err ? reject(err) : resolve()));
+    User.findById = originalUserFindById;
     if (originalJwtSecret === undefined) delete process.env.JWT_SECRET;
     else process.env.JWT_SECRET = originalJwtSecret;
   }

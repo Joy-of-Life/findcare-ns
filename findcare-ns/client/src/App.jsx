@@ -11,6 +11,8 @@ import DaycareProfile    from './pages/DaycareProfile';
 import Compare           from './pages/Compare';
 import Messages          from './pages/Messages';
 import VerifyEmail       from './pages/VerifyEmail';
+import ForgotPassword    from './pages/ForgotPassword';
+import ResetPassword     from './pages/ResetPassword';
 
 export default function App() {
   return (
@@ -23,6 +25,8 @@ export default function App() {
           <Route path="/login"       element={<Login />}           />
           <Route path="/register"    element={<Register />}        />
           <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/dashboard"   element={<ParentDashboard />} />
           <Route path="/portal"      element={<OwnerPortal />}     />
           <Route path="/daycare/:id" element={<DaycareProfile />}  />

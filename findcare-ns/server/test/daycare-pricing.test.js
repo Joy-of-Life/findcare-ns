@@ -2,14 +2,17 @@ const assert = require('node:assert/strict');
 const { test } = require('node:test');
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 const Daycare = require('../models/Daycare');
 const daycareRoutes = require('../routes/daycares');
 
 const originalSave = Daycare.prototype.save;
+const originalUserFindById = User.findById;
 const originalJwtSecret = process.env.JWT_SECRET;
 
 test.afterEach(() => {
   Daycare.prototype.save = originalSave;
+  User.findById = originalUserFindById;
   if (originalJwtSecret === undefined) delete process.env.JWT_SECRET;
   else process.env.JWT_SECRET = originalJwtSecret;
 });
@@ -34,6 +37,7 @@ test('daycare schema accepts daily rates and retains monthly rate as unselected 
 
 test('daycare creation requires a daily rate and ignores legacy monthly price input', async () => {
   process.env.JWT_SECRET = 'daily-rate-test-secret';
+  User.findById = () => ({ select: async () => ({ authVersion: 0 }) });
   Daycare.prototype.save = async function save() { return this; };
 
   const app = express();

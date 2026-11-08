@@ -14,6 +14,7 @@ const DAYCARE_ID = '000000000000000000000004';
 const JWT_SECRET = 'alerts-route-test-secret';
 const originals = {
   userFind: User.find,
+  userFindById: User.findById,
   daycareFindById: Daycare.findById,
   waitlistFind: Waitlist.find,
   jwtSecret: process.env.JWT_SECRET,
@@ -21,6 +22,7 @@ const originals = {
 
 afterEach(() => {
   User.find = originals.userFind;
+  User.findById = originals.userFindById;
   Daycare.findById = originals.daycareFindById;
   Waitlist.find = originals.waitlistFind;
   if (originals.jwtSecret === undefined) delete process.env.JWT_SECRET;
@@ -29,6 +31,7 @@ afterEach(() => {
 
 async function notify({ role, userId, token, body }) {
   process.env.JWT_SECRET = JWT_SECRET;
+  User.findById = () => ({ select: async () => ({ authVersion: 0 }) });
   const app = express();
   app.use(express.json());
   app.use('/api/alerts', alertsRoutes);

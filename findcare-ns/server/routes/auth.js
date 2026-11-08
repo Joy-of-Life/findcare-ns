@@ -10,6 +10,17 @@ const auth      = require('../middleware/auth');
 const { sendEmail } = require('../services/emailService');
 
 const VERIFICATION_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
+const PASSWORD_RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
+const passwordResetRequestLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { error: 'Too many password reset requests. Please try again in 15 minutes.' },
+});
+const passwordResetLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: 'Too many password reset attempts. Please try again in 15 minutes.' },
+});
 const resendVerificationLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
@@ -22,6 +33,15 @@ function createVerificationToken() {
     token,
     hash: crypto.createHash('sha256').update(token).digest('hex'),
     expiresAt: new Date(Date.now() + VERIFICATION_TOKEN_TTL_MS),
+  };
+}
+
+function createPasswordResetToken() {
+  const token = crypto.randomBytes(32).toString('hex');
+  return {
+    token,
+    hash: crypto.createHash('sha256').update(token).digest('hex'),
+    expiresAt: new Date(Date.now() + PASSWORD_RESET_TOKEN_TTL_MS),
   };
 }
 
@@ -38,6 +58,23 @@ async function sendVerificationEmail(user, token) {
       </a>
       <p>This link expires in 24 hours.</p>
       <p>If you did not create an account, please ignore this email.</p>
+    `,
+  });
+}
+
+async function sendPasswordResetEmail(user, token) {
+  const resetUrl = `${process.env.CLIENT_URL}/reset-password?token=${token}`;
+  await sendEmail({
+    to: user.email,
+    subject: 'Reset your FindCare NS password',
+    html: `
+      <h2>Password reset request</h2>
+      <p>We received a request to reset the password for this account.</p>
+      <p>Use the link below to choose a new password. This link expires in one hour and can only be used once.</p>
+      <a href="${resetUrl}" style="background:#1D9E75;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block">
+        Reset password
+      </a>
+      <p>If you did not request a password reset, you can ignore this email. Your password will not change.</p>
     `,
   });
 }
@@ -153,6 +190,76 @@ router.post('/resend-verification', resendVerificationLimiter, async (req, res) 
   }
 });
 
+// POST /api/auth/forgot-password
+router.post('/forgot-password', passwordResetRequestLimiter, async (req, res) => {
+  const genericResponse = {
+    message: 'If an account exists for this email, we’ll send password reset instructions.',
+  };
+
+  try {
+    const email = typeof req.body?.email === 'string'
+      ? req.body.email.trim().toLowerCase()
+      : '';
+    if (!email) return res.json(genericResponse);
+
+    const user = await User.findOne({ email });
+    if (!user) return res.json(genericResponse);
+
+    const reset = createPasswordResetToken();
+    user.passwordResetToken = reset.hash;
+    user.passwordResetExpiresAt = reset.expiresAt;
+    await user.save();
+
+    try {
+      await sendPasswordResetEmail(user, reset.token);
+    } catch (err) {
+      console.error('Password reset email failed:', err);
+    }
+
+    return res.json(genericResponse);
+  } catch (err) {
+    console.error('Password reset request failed:', err);
+    return res.status(500).json({ error: 'Unable to process the request right now. Please try again.' });
+  }
+});
+
+// POST /api/auth/reset-password
+router.post('/reset-password', passwordResetLimiter, async (req, res) => {
+  try {
+    const { token, password } = req.body || {};
+    if (typeof token !== 'string' || !/^[a-f\d]{64}$/i.test(token)) {
+      return res.status(400).json({ error: 'This password reset link is invalid or expired. Request a new one to continue.' });
+    }
+    if (typeof password !== 'string' || password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const salt = await bcrypt.genSalt(12);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    const user = await User.findOneAndUpdate(
+      {
+        passwordResetToken: tokenHash,
+        passwordResetExpiresAt: { $gt: new Date() },
+      },
+      {
+        $set: { password: hashedPassword },
+        $unset: { passwordResetToken: 1, passwordResetExpiresAt: 1 },
+        $inc: { authVersion: 1 },
+      },
+      { new: true, runValidators: true },
+    );
+    if (!user) {
+      return res.status(400).json({ error: 'This password reset link is invalid or expired. Request a new one to continue.' });
+    }
+
+    return res.json({ message: 'Your password has been reset. Please log in with your new password.' });
+  } catch (err) {
+    console.error('Password reset failed:', err);
+    return res.status(500).json({ error: 'Unable to reset your password right now. Please try again.' });
+  }
+});
+
 // ─── VERIFY EMAIL ─────────────────────────────────────────────
 // POST /api/auth/verify-email
 router.post('/verify-email', async (req, res) => {
@@ -203,7 +310,7 @@ router.post('/login', async (req, res) => {
     }
 
     // Find user
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select('+authVersion');
     if (!user) {
       return res.status(400).json({ error: 'Invalid email or password' });
     }
@@ -221,7 +328,7 @@ router.post('/login', async (req, res) => {
 
     // Issue JWT
     const token = jwt.sign(
-      { id: user._id, role: user.role, name: user.name },
+      { id: user._id, role: user.role, name: user.name, authVersion: user.authVersion || 0 },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );

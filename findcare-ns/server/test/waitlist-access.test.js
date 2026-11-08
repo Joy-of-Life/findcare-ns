@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const { test, afterEach } = require('node:test');
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 const Daycare = require('../models/Daycare');
 const Waitlist = require('../models/Waitlist');
 const waitlistRoutes = require('../routes/waitlist');
@@ -13,6 +14,7 @@ const DAYCARE_ID = '000000000000000000000004';
 const ENTRY_ID = '000000000000000000000005';
 const JWT_SECRET = 'waitlist-access-test-secret';
 const originals = {
+  userFindById: User.findById,
   daycareFindById: Daycare.findById,
   waitlistFind: Waitlist.find,
   waitlistFindOne: Waitlist.findOne,
@@ -25,6 +27,7 @@ const originals = {
 };
 
 afterEach(() => {
+  User.findById = originals.userFindById;
   Daycare.findById = originals.daycareFindById;
   Waitlist.find = originals.waitlistFind;
   Waitlist.findOne = originals.waitlistFindOne;
@@ -39,6 +42,7 @@ afterEach(() => {
 
 async function requestWaitlist({ role, userId, method, path, body }) {
   process.env.JWT_SECRET = JWT_SECRET;
+  User.findById = () => ({ select: async () => ({ authVersion: 0 }) });
   const app = express();
   app.use(express.json());
   app.use('/api/waitlist', waitlistRoutes);

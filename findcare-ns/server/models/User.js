@@ -21,6 +21,11 @@ const userSchema = new mongoose.Schema({
     type:     String,
     required: true
   },
+  authVersion: {
+    type: Number,
+    default: 0,
+    select: false,
+  },
   role: {
     type:    String,
     enum:    ['parent', 'owner', 'admin'],
@@ -35,6 +40,14 @@ const userSchema = new mongoose.Schema({
     select: false
   },
   verifyTokenExpiresAt: {
+    type: Date,
+    select: false
+  },
+  passwordResetToken: {
+    type: String,
+    select: false
+  },
+  passwordResetExpiresAt: {
     type: Date,
     select: false
   },

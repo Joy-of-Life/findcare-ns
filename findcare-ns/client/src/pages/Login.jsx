@@ -103,6 +103,11 @@ export default function Login() {
               style={styles.input}
             />
           </div>
+          <div style={styles.forgotPassword}>
+            <Link to="/forgot-password" state={{ email: form.email }} style={{ color: '#FF6B35', fontWeight: '500' }}>
+              Forgot password?
+            </Link>
+          </div>
           <button type="submit" disabled={loading} style={styles.btn}>
             {loading ? 'Logging in...' : '🔓 Log in'}
           </button>
@@ -132,6 +137,7 @@ const styles = {
   field:        { marginBottom: '16px', textAlign: 'left' },
   label:        { fontSize: '13px', color: '#555', display: 'block', marginBottom: '6px', fontWeight: '500' },
   input:        { width: '100%', padding: '10px 12px', borderRadius: '10px', border: '1.5px solid #FFCC80', fontSize: '14px', color: '#2C2C2A', background: '#FFFDF9', outline: 'none' },
+  forgotPassword: { textAlign: 'right', fontSize: '13px', marginTop: '-8px', marginBottom: '12px' },
   btn:          { width: '100%', padding: '12px', borderRadius: '10px', border: 'none', background: '#FF6B35', color: '#fff', fontSize: '15px', fontWeight: '600', cursor: 'pointer', marginTop: '8px' },
   registerLink: { textAlign: 'center', fontSize: '13px', color: '#6B7280', marginTop: '20px' },
 };
