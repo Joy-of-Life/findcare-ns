@@ -4,9 +4,43 @@ const bcrypt    = require('bcryptjs');
 const jwt       = require('jsonwebtoken');
 const crypto    = require('crypto');
 const mongoose  = require('mongoose');
+const { rateLimit } = require('express-rate-limit');
 const User      = require('../models/User');
 const auth      = require('../middleware/auth');
 const { sendEmail } = require('../services/emailService');
+
+const VERIFICATION_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
+const resendVerificationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { error: 'Too many verification requests. Please try again in 15 minutes.' },
+});
+
+function createVerificationToken() {
+  const token = crypto.randomBytes(32).toString('hex');
+  return {
+    token,
+    hash: crypto.createHash('sha256').update(token).digest('hex'),
+    expiresAt: new Date(Date.now() + VERIFICATION_TOKEN_TTL_MS),
+  };
+}
+
+async function sendVerificationEmail(user, token) {
+  const verifyUrl = `${process.env.CLIENT_URL}/verify-email?token=${token}`;
+  await sendEmail({
+    to: user.email,
+    subject: 'Welcome to FindCare NS — Please verify your email',
+    html: `
+      <h2>Welcome to FindCare NS, ${user.name}!</h2>
+      <p>Please click the link below to verify your email address:</p>
+      <a href="${verifyUrl}" style="background:#1D9E75;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block">
+        Verify Email
+      </a>
+      <p>This link expires in 24 hours.</p>
+      <p>If you did not create an account, please ignore this email.</p>
+    `,
+  });
+}
 
 // ─── REGISTER ─────────────────────────────────────────────────
 // POST /api/auth/register
@@ -15,7 +49,7 @@ router.post('/register', async (req, res) => {
     const { name, email, password, role, phone } = req.body;
 
     // Check all fields present
-    if (!name || !email || !password || !role) {
+    if (!name || typeof email !== 'string' || !email.trim() || !password || !role) {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
@@ -32,47 +66,52 @@ router.post('/register', async (req, res) => {
     }
 
     // Check if email already exists
-    const existing = await User.findOne({ email });
+    const normalizedEmail = email.trim().toLowerCase();
+    const existing = await User.findOne({ email: normalizedEmail });
     if (existing) {
-      return res.status(400).json({ error: 'Email already registered - please try to Log in' });
+      if (!existing.verified) {
+        return res.status(409).json({
+          code: 'EMAIL_NOT_VERIFIED',
+          error: 'Email already registered but not verified. Please verify your email or request a new verification link.',
+        });
+      }
+      return res.status(409).json({
+        code: 'EMAIL_ALREADY_VERIFIED',
+        error: 'Email already registered - please try to Log in.',
+      });
     }
 
     // Hash password
     const salt     = await bcrypt.genSalt(12);
     const hashed   = await bcrypt.hash(password, salt);
 
-    // Generate verification token
-    const verifyToken = crypto.randomBytes(32).toString('hex');
+    const verification = createVerificationToken();
 
     // Create user
     const user = new User({
       name,
-      email,
+      email: normalizedEmail,
       ...(role === 'parent' ? { phone } : {}),
       password:    hashed,
       role,
-      verifyToken
+      verifyToken: verification.hash,
+      verifyTokenExpiresAt: verification.expiresAt,
     });
     await user.save();
 
-    // Send verification email
-    const verifyUrl = `${process.env.CLIENT_URL}/verify-email?token=${verifyToken}`;
-    await sendEmail({
-      to:      email,
-      subject: 'Welcome to FindCare NS — Please verify your email',
-      html: `
-        <h2>Welcome to FindCare NS, ${name}!</h2>
-        <p>Please click the link below to verify your email address:</p>
-        <a href="${verifyUrl}" style="background:#1D9E75;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block">
-          Verify Email
-        </a>
-        <p>This link expires in 24 hours.</p>
-        <p>If you did not create an account, please ignore this email.</p>
-      `
-    });
+    try {
+      await sendVerificationEmail(user, verification.token);
+    } catch (err) {
+      console.error('Registration verification email failed:', err);
+      return res.status(201).json({
+        message: 'Your account was created, but we couldn’t send the verification email. Please request a new verification link.',
+        verificationEmailSent: false,
+      });
+    }
 
     res.status(201).json({
-      message: 'Account created! Please check your email to verify your account.'
+      message: 'Account created! Please check your email to verify your account.',
+      verificationEmailSent: true,
     });
 
   } catch (err) {
@@ -81,19 +120,68 @@ router.post('/register', async (req, res) => {
   }
 });
 
+// POST /api/auth/resend-verification
+router.post('/resend-verification', resendVerificationLimiter, async (req, res) => {
+  try {
+    const email = typeof req.body?.email === 'string'
+      ? req.body.email.trim().toLowerCase()
+      : '';
+    const genericResponse = {
+      message: 'If an unverified account exists for this email, a new verification link will be sent.',
+    };
+
+    if (!email) return res.json(genericResponse);
+
+    const user = await User.findOne({ email });
+    if (!user || user.verified) return res.json(genericResponse);
+
+    const verification = createVerificationToken();
+    user.verifyToken = verification.hash;
+    user.verifyTokenExpiresAt = verification.expiresAt;
+    await user.save();
+
+    try {
+      await sendVerificationEmail(user, verification.token);
+    } catch (err) {
+      console.error('Verification resend email failed:', err);
+    }
+
+    return res.json(genericResponse);
+  } catch (err) {
+    console.error('Verification resend failed:', err);
+    return res.status(500).json({ error: 'Unable to process the request right now. Please try again.' });
+  }
+});
+
 // ─── VERIFY EMAIL ─────────────────────────────────────────────
 // POST /api/auth/verify-email
 router.post('/verify-email', async (req, res) => {
   try {
     const { token } = req.body;
+    if (typeof token !== 'string' || !/^[a-f\d]{64}$/i.test(token)) {
+      return res.status(400).json({ error: 'Invalid or expired verification link. Request a new verification link to try again.' });
+    }
 
-    const user = await User.findOne({ verifyToken: token });
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const user = await User.findOne({
+      verifyToken: { $in: [tokenHash, token] },
+    }).select('+verifyToken +verifyTokenExpiresAt');
     if (!user) {
-      return res.status(400).json({ error: 'Invalid or expired verification link' });
+      return res.status(400).json({ error: 'Invalid or expired verification link. Request a new verification link to try again.' });
+    }
+
+    const legacyToken = user.verifyToken === token;
+    const expiry = user.verifyTokenExpiresAt ||
+      (legacyToken && user.createdAt
+        ? new Date(user.createdAt.getTime() + VERIFICATION_TOKEN_TTL_MS)
+        : null);
+    if (user.verified || !expiry || expiry <= new Date()) {
+      return res.status(400).json({ error: 'This verification link has expired. Request a new verification link to try again.' });
     }
 
     user.verified    = true;
     user.verifyToken = undefined;
+    user.verifyTokenExpiresAt = undefined;
     await user.save();
 
     res.json({ message: 'Email verified successfully! You can now log in.' });

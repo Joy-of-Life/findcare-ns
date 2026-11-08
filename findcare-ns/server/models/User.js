@@ -31,7 +31,12 @@ const userSchema = new mongoose.Schema({
     default: false
   },
   verifyToken: {
-    type: String
+    type: String,
+    select: false
+  },
+  verifyTokenExpiresAt: {
+    type: Date,
+    select: false
   },
   savedDaycares: [{
     type: mongoose.Schema.Types.ObjectId,

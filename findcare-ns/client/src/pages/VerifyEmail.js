@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import BrandIcon from '../components/BrandIcon';
 
@@ -7,16 +7,14 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 export default function VerifyEmail() {
   const [status, setStatus]   = useState('verifying');
   const [message, setMessage] = useState('');
+  const [email, setEmail] = useState('');
+  const [resending, setResending] = useState(false);
+  const [resendMessage, setResendMessage] = useState('');
   const [searchParams]        = useSearchParams();
   const navigate              = useNavigate();
   const token                 = searchParams.get('token');
 
-  useEffect(() => {
-    if (token) verifyEmail();
-    else { setStatus('error'); setMessage('Invalid verification link — no token found.'); }
-  }, [token]);
-
-  async function verifyEmail() {
+  const verifyEmail = useCallback(async () => {
     try {
       const res  = await fetch(`${API_URL}/api/auth/verify-email`, {
         method:  'POST',
@@ -29,6 +27,31 @@ export default function VerifyEmail() {
     } catch (err) {
       setStatus('error');
       setMessage('Something went wrong. Please try again.');
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (token) verifyEmail();
+    else { setStatus('error'); setMessage('No verification token was found. Request a new link below.'); }
+  }, [token, verifyEmail]);
+
+  async function resendVerification(e) {
+    e.preventDefault();
+    setResending(true);
+    setResendMessage('');
+    try {
+      const res = await fetch(`${API_URL}/api/auth/resend-verification`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Unable to request a verification link.');
+      setResendMessage(data.message || 'If an unverified account exists for this email, a new verification link will be sent.');
+    } catch (err) {
+      setResendMessage(err.message || 'Unable to request a verification link. Please try again.');
+    } finally {
+      setResending(false);
     }
   }
 
@@ -69,8 +92,25 @@ export default function VerifyEmail() {
             </div>
             <h1 style={styles.title}>Verification failed</h1>
             <p style={styles.sub}>{message}</p>
+            <form onSubmit={resendVerification} style={styles.resendForm}>
+              <label htmlFor="verification-email" style={styles.emailLabel}>Email address</label>
+              <input
+                id="verification-email"
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={event => setEmail(event.target.value)}
+                placeholder="you@example.com"
+                required
+                style={styles.emailInput}
+              />
+              <button type="submit" disabled={resending} style={styles.btn}>
+                {resending ? 'Requesting link...' : 'Resend verification link'}
+              </button>
+              {resendMessage && <p role="status" style={styles.resendMessage}>{resendMessage}</p>}
+            </form>
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '8px' }}>
-              <button onClick={() => navigate('/register')} style={styles.btn}>Register again</button>
+              <button onClick={() => navigate('/register')} style={styles.btn}>Create an account</button>
               <button onClick={() => navigate('/')}         style={styles.btnGray}>Go home</button>
             </div>
           </>
@@ -96,4 +136,8 @@ const styles = {
   sub:         { fontSize: '14px', color: '#6B7280', marginBottom: '12px', lineHeight: '1.6' },
   btn:         { padding: '10px 24px', borderRadius: '10px', border: 'none', background: '#FF6B35', color: '#fff', fontSize: '14px', fontWeight: '600', cursor: 'pointer' },
   btnGray:     { padding: '10px 24px', borderRadius: '10px', border: '1.5px solid #FFCC80', background: '#fff', color: '#555', fontSize: '14px', cursor: 'pointer' },
+  resendForm:  { margin: '18px 0', textAlign: 'left' },
+  emailLabel:  { display: 'block', fontSize: '13px', color: '#555', marginBottom: '6px' },
+  emailInput:  { boxSizing: 'border-box', width: '100%', padding: '10px 12px', borderRadius: '10px', border: '1.5px solid #FFCC80', fontSize: '14px', marginBottom: '10px' },
+  resendMessage: { fontSize: '13px', color: '#6B7280', lineHeight: '1.5', textAlign: 'center' },
 };

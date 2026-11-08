@@ -8,6 +8,10 @@ import { formatDailyRate } from '../utils/pricing';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
+function getUserId(value) {
+  return typeof value === 'string' ? value : value?._id || value?.id;
+}
+
 export default function ParentDashboard() {
   const { user, token } = useAuth();
   const navigate        = useNavigate();
@@ -15,6 +19,8 @@ export default function ParentDashboard() {
   const [waitlist, setWaitlist]           = useState([]);
   const [loading, setLoading]             = useState(true);
   const [alertsOn, setAlertsOn]           = useState(false);
+  const [unreadMessages, setUnreadMessages] = useState(null);
+  const [messageError, setMessageError]   = useState('');
 
   useEffect(() => {
     if (user) {
@@ -22,6 +28,42 @@ export default function ParentDashboard() {
       fetchWaitlist();
     }
   }, [user]);
+
+  useEffect(() => {
+    if (!user || user.role !== 'parent' || !token) return undefined;
+    let active = true;
+
+    async function fetchUnreadMessages() {
+      try {
+        const res = await fetch(`${API_URL}/api/messages`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Unable to load unread message count');
+        const data = await res.json();
+        if (!Array.isArray(data)) throw new Error('Unexpected messages response');
+        if (active) {
+          const userId = getUserId(user);
+          if (!userId) throw new Error('Unable to identify the signed-in parent');
+          setUnreadMessages(data.filter(message =>
+            getUserId(message.to) === userId && !message.read
+          ).length);
+          setMessageError('');
+        }
+      } catch (err) {
+        console.error(err);
+        if (active) setMessageError('Unread message count is currently unavailable.');
+      }
+    }
+
+    fetchUnreadMessages();
+    const intervalId = window.setInterval(fetchUnreadMessages, 15000);
+    window.addEventListener('focus', fetchUnreadMessages);
+    return () => {
+      active = false;
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', fetchUnreadMessages);
+    };
+  }, [user, token]);
 
   async function fetchSavedDaycares() {
     try {
@@ -147,7 +189,7 @@ export default function ParentDashboard() {
           { icon: '❤️', label: 'Saved',     value: savedDaycares.length,        sub: 'daycares'     },
           { icon: '📋', label: 'Waitlists', value: waitlist.length,              sub: 'active'       },
           { icon: '🔔', label: 'Alerts',    value: alertsOn ? 'On' : 'Off',      sub: 'email alerts' },
-          { icon: '💬', label: 'Messages',  value: 0,                            sub: 'unread'       },
+          { icon: '💬', label: 'Messages',  value: unreadMessages ?? '—',         sub: 'unread'       },
         ].map(m => (
           <div key={m.label} style={styles.metric}>
             <div style={styles.metricIcon}>{m.icon}</div>
@@ -298,7 +340,16 @@ export default function ParentDashboard() {
       {/* Messages */}
       <div style={styles.card}>
         <div style={styles.sectionTitle}>💬 Messages</div>
-        <p style={styles.emptySectionText}>Messages from daycare owners will appear here.</p>
+        <p
+          style={messageError ? styles.messageError : styles.emptySectionText}
+          role={messageError ? 'alert' : undefined}
+        >
+          {messageError || (unreadMessages === null
+            ? 'Checking for unread messages...'
+            : unreadMessages > 0
+              ? `You have ${unreadMessages} unread message${unreadMessages === 1 ? '' : 's'} from daycare owners.`
+              : 'No unread messages right now.')}
+        </p>
         <button onClick={() => navigate('/messages')} style={styles.btnOrange}>
           Go to messages
         </button>
@@ -339,6 +390,7 @@ const styles = {
   loadingText:    { fontSize: '14px', color: '#9E9E9E' },
   emptySection:   { textAlign: 'center', padding: '20px 0' },
   emptySectionText:{ fontSize: '14px', color: '#9E9E9E', marginBottom: '12px' },
+  messageError:   { fontSize: '14px', color: '#C62828', marginBottom: '12px' },
   emptyCard:      { background: '#fff', borderRadius: '20px', border: '2px solid #FFE0B2', padding: '40px', textAlign: 'center', maxWidth: '440px', margin: '40px auto' },
   emptyIcon:      { fontSize: '48px', marginBottom: '12px' },
   emptyTitle:     { fontSize: '20px', fontWeight: '700', color: '#2C2C2A', marginBottom: '8px' },

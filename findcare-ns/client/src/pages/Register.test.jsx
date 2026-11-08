@@ -65,3 +65,37 @@ test('updates the selected role when navigating between Register and List your d
   await waitFor(() => expect(parentRole.style.borderColor).toBe('#ff6b35'));
   expect(ownerRole.style.borderColor).toBe('#ffcc80');
 });
+
+test('offers a verification resend after an unverified duplicate registration', async () => {
+  const originalFetch = global.fetch;
+  const fetchMock = jest.fn()
+    .mockResolvedValueOnce({
+      ok: false,
+      json: async () => ({
+        code: 'EMAIL_NOT_VERIFIED',
+        error: 'Email already registered but not verified.',
+      }),
+    })
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ message: 'If an unverified account exists, a link will be sent.' }),
+    });
+  global.fetch = fetchMock;
+
+  try {
+    renderRegister('/register');
+    fireEvent.change(screen.getByPlaceholderText('sarah@example.com'), {
+      target: { value: 'parent@example.com' },
+    });
+    fireEvent.submit(screen.getByRole('button', { name: /create account/i }).closest('form'));
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Resend verification link' }));
+    await screen.findByRole('status');
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[1][0]).toContain('/api/auth/resend-verification');
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({ email: 'parent@example.com' });
+  } finally {
+    global.fetch = originalFetch;
+  }
+});

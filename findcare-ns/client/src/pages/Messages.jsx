@@ -207,7 +207,10 @@ export default function Messages() {
       } else {
         setMessages(prev => [data, ...prev]);
         setNewMsg({ daycareId: '', to: '', text: '' });
-        setStatus({ type: 'success', text: 'Message sent to the daycare owner.' });
+        setStatus({
+          type: 'success',
+          text: isOwner ? 'Message sent to the parent.' : 'Message sent to the daycare owner.',
+        });
       }
     } catch (err) {
       setStatus({ type: 'error', text: 'Message could not be sent. Please try again.' });

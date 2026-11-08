@@ -17,6 +17,9 @@ export default function Register() {
   const [error, setError]     = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [canResendVerification, setCanResendVerification] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resendMessage, setResendMessage] = useState('');
   const navigate              = useNavigate();
 
   useEffect(() => {
@@ -31,6 +34,8 @@ export default function Register() {
     e.preventDefault();
     setError('');
     setSuccess('');
+    setCanResendVerification(false);
+    setResendMessage('');
     setLoading(true);
     try {
       const registrationData = {
@@ -45,13 +50,34 @@ export default function Register() {
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || 'Registration failed');
+        setCanResendVerification(data.code === 'EMAIL_NOT_VERIFIED');
       } else {
-        setSuccess('Account created! Please check your email to verify your account. 🎉');
+        setSuccess(data.message || 'Account created! Please check your email to verify your account. 🎉');
+        setCanResendVerification(data.verificationEmailSent === false);
       }
     } catch (err) {
       setError('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function resendVerification() {
+    setResending(true);
+    setResendMessage('');
+    try {
+      const res = await fetch(`${API_URL}/api/auth/resend-verification`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: form.email }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Unable to request a verification link.');
+      setResendMessage(data.message || 'If an unverified account exists for this email, a new verification link will be sent.');
+    } catch (err) {
+      setResendMessage(err.message || 'Unable to request a verification link. Please try again.');
+    } finally {
+      setResending(false);
     }
   }
 
@@ -68,6 +94,14 @@ export default function Register() {
 
         {error   && <div style={styles.error}>{error}</div>}
         {success && <div style={styles.successMsg}>{success}</div>}
+        {canResendVerification && (
+          <div style={{ marginBottom: '16px' }}>
+            <button type="button" onClick={resendVerification} disabled={resending} style={styles.btn}>
+              {resending ? 'Requesting link...' : 'Resend verification link'}
+            </button>
+            {resendMessage && <p role="status" style={styles.resendMessage}>{resendMessage}</p>}
+          </div>
+        )}
 
         {!success && (
           <form onSubmit={handleSubmit}>
@@ -192,6 +226,7 @@ const styles = {
   sub:        { fontSize: '14px', color: '#6B7280', marginBottom: '24px' },
   error:      { background: '#FFEBEE', color: '#C62828', padding: '10px 14px', borderRadius: '8px', fontSize: '13px', marginBottom: '16px', border: '1px solid #EF9A9A' },
   successMsg: { background: '#FFF3E0', color: '#E65100', padding: '10px 14px', borderRadius: '8px', fontSize: '13px', marginBottom: '16px', border: '1px solid #FFCC80' },
+  resendMessage: { color: '#6B7280', fontSize: '13px', lineHeight: '1.5', marginBottom: 0 },
   field:      { marginBottom: '16px', textAlign: 'left' },
   label:      { fontSize: '13px', color: '#555', display: 'block', marginBottom: '6px', fontWeight: '500' },
   input:      { width: '100%', padding: '10px 12px', borderRadius: '10px', border: '1.5px solid #FFCC80', fontSize: '14px', color: '#2C2C2A', background: '#FFFDF9', outline: 'none' },
