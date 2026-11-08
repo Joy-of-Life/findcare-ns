@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import BrandIcon from '../components/BrandIcon';
+import PasswordInput from '../components/PasswordInput';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -93,12 +94,13 @@ export default function Login() {
           </div>
           <div style={styles.field}>
             <label style={styles.label}>Password</label>
-            <input
-              type="password"
+            <PasswordInput
+              id="login-password"
               name="password"
               value={form.password}
               onChange={handleChange}
               placeholder="Your password"
+              autoComplete="current-password"
               required
               style={styles.input}
             />

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import BrandIcon from '../components/BrandIcon';
+import PasswordInput from '../components/PasswordInput';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -66,9 +67,8 @@ export default function ResetPassword() {
             <form onSubmit={handleSubmit}>
               <div style={styles.field}>
                 <label htmlFor="new-password" style={styles.label}>New password</label>
-                <input
+                <PasswordInput
                   id="new-password"
-                  type="password"
                   autoComplete="new-password"
                   value={password}
                   onChange={event => setPassword(event.target.value)}
@@ -79,9 +79,8 @@ export default function ResetPassword() {
               </div>
               <div style={styles.field}>
                 <label htmlFor="confirm-password" style={styles.label}>Confirm new password</label>
-                <input
+                <PasswordInput
                   id="confirm-password"
-                  type="password"
                   autoComplete="new-password"
                   value={confirmPassword}
                   onChange={event => setConfirmPassword(event.target.value)}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import BrandIcon from '../components/BrandIcon';
+import PasswordInput from '../components/PasswordInput';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -154,12 +155,13 @@ export default function Register() {
 
             <div style={styles.field}>
               <label style={styles.label}>Password</label>
-              <input
-                type="password"
+              <PasswordInput
+                id="registration-password"
                 name="password"
                 value={form.password}
                 onChange={handleChange}
                 placeholder="At least 6 characters"
+                autoComplete="new-password"
                 minLength={6}
                 required
                 style={styles.input}
