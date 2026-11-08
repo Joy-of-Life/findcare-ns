@@ -250,6 +250,19 @@ export default function DaycareProfile() {
         </div>
       )}
 
+      {daycare.facebookPageLink && (
+        <div style={styles.facebookPageCard}>
+          <a
+            href={daycare.facebookPageLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={styles.facebookPageLink}
+          >
+            ✨ Facebook Page of {daycare.name}
+          </a>
+        </div>
+      )}
+
       {/* Map */}
       {daycare.coordinates?.lat && (
         <div style={styles.card}>
@@ -411,6 +424,21 @@ const styles = {
   infoValue:    { fontSize: '15px', fontWeight: '600', color: '#2C2C2A' },
   card:         { background: '#fff', border: '1.5px solid #FFE0B2', borderRadius: '16px', padding: '20px', marginBottom: '16px' },
   cardTitle:    { fontSize: '16px', fontWeight: '600', color: '#2C2C2A', marginBottom: '14px' },
+  facebookPageCard: {
+    marginBottom: '16px',
+    padding: '14px 18px',
+    border: '1px solid #C7D7FE',
+    borderRadius: '14px',
+    background: 'linear-gradient(110deg, #EEF4FF, #F5F0FF)',
+  },
+  facebookPageLink: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    color: '#3157A4',
+    fontSize: '15px',
+    fontWeight: '700',
+    textDecoration: 'none',
+  },
   availGrid:    { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' },
   availItem:    { border: '1.5px solid #FFE0B2', borderRadius: '10px', padding: '14px', textAlign: 'center', background: '#FFFDF9' },
   availAge:     { fontSize: '12px', color: '#9E9E9E', marginBottom: '6px', textTransform: 'capitalize' },

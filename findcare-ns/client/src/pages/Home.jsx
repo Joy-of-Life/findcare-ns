@@ -721,8 +721,9 @@ export default function Home() {
                         href={daycare.facebookPageLink}
                         target="_blank"
                         rel="noopener noreferrer"
+                        style={styles.facebookPageAnchor}
                       >
-                        Facebook Page : Actual Home daycare FB page
+                        ✨ Facebook Page of {daycare.name}
                       </a>
                     </div>
                   )}
@@ -1447,7 +1448,18 @@ const styles = {
     marginTop: '10px',
     paddingTop: '10px',
     borderTop: '1px solid #F3E8D8',
+  },
+  facebookPageAnchor: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: '8px 13px',
+    borderRadius: '20px',
+    background: '#EEF4FF',
+    border: '1px solid #C7D7FE',
+    color: '#3157A4',
     fontSize: '13px',
+    fontWeight: '700',
+    textDecoration: 'none',
   },
   detailRows: {
     display: 'grid',
