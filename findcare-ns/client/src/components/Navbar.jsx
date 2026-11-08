@@ -1,15 +1,70 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import BrandIcon from './BrandIcon';
 import './Navbar.css';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 export default function Navbar() {
-  const { user, logout } = useAuth();
+  const { user, token, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [hoveredBtn, setHoveredBtn] = useState(null);
+  const [unreadMessageCount, setUnreadMessageCount] = useState(null);
   const isHomePage = location.pathname === '/';
+
+  useEffect(() => {
+    if (!user || user.role !== 'owner' || !token) {
+      setUnreadMessageCount(null);
+      return undefined;
+    }
+
+    let active = true;
+    async function fetchUnreadMessageCount() {
+      try {
+        const response = await fetch(`${API_URL}/api/messages/unread-count`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!response.ok) throw new Error('Unable to load unread message count');
+        const data = await response.json();
+        if (!Number.isInteger(data.count) || data.count < 0) {
+          throw new Error('Unexpected unread message count response');
+        }
+        if (active) setUnreadMessageCount(data.count);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    fetchUnreadMessageCount();
+    const intervalId = window.setInterval(fetchUnreadMessageCount, 15000);
+    window.addEventListener('focus', fetchUnreadMessageCount);
+    return () => {
+      active = false;
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', fetchUnreadMessageCount);
+    };
+  }, [user, token, location.pathname]);
+
+  function renderMessagesLink() {
+    const hasUnreadMessages = user?.role === 'owner' && unreadMessageCount > 0;
+    return (
+      <Link
+        to="/messages"
+        className="findcare-navbar__message-link"
+        style={styles.link}
+        aria-label={hasUnreadMessages ? `Messages, ${unreadMessageCount} unread` : 'Messages'}
+      >
+        Messages
+        {hasUnreadMessages && (
+          <span className="findcare-navbar__unread-badge" aria-hidden="true">
+            {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
+          </span>
+        )}
+      </Link>
+    );
+  }
 
   function handleLogout() {
     logout();
@@ -118,14 +173,14 @@ export default function Navbar() {
               {user.role === 'parent' && (
                 <>
                   <Link to="/dashboard" className="findcare-navbar__dashboard-link" style={styles.link}>My dashboard</Link>
-                  <Link to="/messages" className="findcare-navbar__message-link" style={styles.link}>Messages</Link>
+                  {renderMessagesLink()}
                   <Link to="/compare" className="findcare-navbar__compare-link" style={styles.link}>Compare</Link>
                 </>
               )}
               {user.role === 'owner' && (
                 <>
                   <Link to="/portal" className="findcare-navbar__dashboard-link" style={styles.link}>My portal</Link>
-                  <Link to="/messages" className="findcare-navbar__message-link" style={styles.link}>Messages</Link>
+                  {renderMessagesLink()}
                 </>
               )}
               <span className="findcare-navbar__user-name" style={styles.userName}>Hi, {user.name.split(' ')[0]} 👋</span>

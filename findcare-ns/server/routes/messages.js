@@ -42,6 +42,21 @@ router.get('/contacts', auth, async (req, res) => {
   }
 });
 
+// GET /api/messages/unread-count — owner-only unread message count
+router.get('/unread-count', auth, async (req, res) => {
+  if (req.user.role !== 'owner') {
+    return res.status(403).json({ error: 'Only daycare owners can view the owner unread-message count' });
+  }
+
+  try {
+    const count = await Message.countDocuments({ to: req.user.id, read: false });
+    return res.json({ count });
+  } catch (err) {
+    console.error('Unable to load owner unread-message count:', err);
+    return res.status(500).json({ error: 'Unable to load unread message count' });
+  }
+});
+
 // GET /api/messages — get all messages for current user
 router.get('/', auth, async (req, res) => {
   try {
