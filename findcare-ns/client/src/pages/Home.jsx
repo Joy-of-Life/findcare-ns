@@ -647,14 +647,19 @@ export default function Home() {
                         )}
                       </div>
                     </div>
-                    <span style={styles.ratingBadge}>
-                      {(() => {
-                        const ratingStatus = getDaycareRatingStatus(daycare);
-                        return ratingStatus.type === 'rated'
-                          ? `★ ${ratingStatus.rating}`
-                          : ratingStatus.label;
-                      })()}
-                    </span>
+                    {(() => {
+                      const ratingStatus = getDaycareRatingStatus(daycare);
+                      return (
+                        <span style={{
+                          ...styles.ratingBadge,
+                          ...(ratingStatus.type === 'rated' ? {} : styles.newRatingBadge),
+                        }}>
+                          {ratingStatus.type === 'rated'
+                            ? `★ ${ratingStatus.rating}`
+                            : ratingStatus.label}
+                        </span>
+                      );
+                    })()}
                   </div>
                   <p style={styles.cardAddress}>📍 {daycare.hideAddress ? daycare.city : `${daycare.address}, ${daycare.city}`}</p>
                   {daycare.distanceFromUser != null && (
@@ -1446,6 +1451,11 @@ const styles = {
     padding: '2px 10px',
     borderRadius: '20px',
     border: '1px solid #FFCC80',
+  },
+  newRatingBadge: {
+    fontSize: '11px',
+    whiteSpace: 'nowrap',
+    flexShrink: 0,
   },
   cardAddress: {
     fontSize: '13px',
