@@ -4,6 +4,7 @@ import { AGE_GROUP_LABELS, AVAILABILITY_AGE_GROUPS } from '../constants/ageGroup
 import LicensingBadge from '../components/LicensingBadge';
 import ListingDisclaimer from '../components/ListingDisclaimer';
 import { formatDailyRate, hasDailyRate } from '../utils/pricing';
+import { getDaycareRatingStatus } from '../utils/daycareRating';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -199,8 +200,17 @@ export default function Compare() {
             <div style={styles.labelCell}>⭐ Rating</div>
             {selected.map(d => (
               <div key={d._id} style={styles.valueCell}>
-                <div style={{ display: 'flex', gap: '1px', fontSize: '14px' }}>{renderStars(d.rating)}</div>
-                <span style={{ fontSize: '12px', color: '#9E9E9E' }}>{d.rating || 'New'}</span>
+                {(() => {
+                  const ratingStatus = getDaycareRatingStatus(d);
+                  return ratingStatus.type === 'rated' ? (
+                    <>
+                      <div style={{ display: 'flex', gap: '1px', fontSize: '14px' }}>{renderStars(ratingStatus.rating)}</div>
+                      <span style={{ fontSize: '12px', color: '#9E9E9E' }}>{ratingStatus.rating}</span>
+                    </>
+                  ) : (
+                    <span style={{ fontSize: '12px', color: '#9E9E9E' }}>{ratingStatus.label}</span>
+                  );
+                })()}
               </div>
             ))}
 
@@ -249,11 +259,13 @@ export default function Compare() {
               </div>
             ))}
 
-            {/* Reviews */}
-            <div style={styles.labelCell}>💬 Reviews</div>
+            {/* Ratings */}
+            <div style={styles.labelCell}>💬 Ratings</div>
             {selected.map(d => (
               <div key={d._id} style={styles.valueCell}>
-                <span style={{ fontSize: '13px' }}>{d.reviewCount || 0} reviews</span>
+                <span style={{ fontSize: '13px' }}>
+                  {d.reviewCount || 0} {(d.reviewCount || 0) === 1 ? 'rating' : 'ratings'}
+                </span>
               </div>
             ))}
 

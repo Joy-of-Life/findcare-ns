@@ -10,6 +10,7 @@ import LicensingBadge from '../components/LicensingBadge';
 import ListingDisclaimer from '../components/ListingDisclaimer';
 import { AGE_GROUP_DISPLAY_LABELS, AGE_GROUP_OPTIONS, formatDaysOpen } from '../constants/ageGroups';
 import { formatDailyRate } from '../utils/pricing';
+import { getDaycareRatingStatus } from '../utils/daycareRating';
 
 export default function Home() {
   const [results, setResults] = useState([]);
@@ -646,7 +647,14 @@ export default function Home() {
                         )}
                       </div>
                     </div>
-                    <span style={styles.ratingBadge}>★ {daycare.rating || 'New'}</span>
+                    <span style={styles.ratingBadge}>
+                      {(() => {
+                        const ratingStatus = getDaycareRatingStatus(daycare);
+                        return ratingStatus.type === 'rated'
+                          ? `★ ${ratingStatus.rating}`
+                          : ratingStatus.label;
+                      })()}
+                    </span>
                   </div>
                   <p style={styles.cardAddress}>📍 {daycare.hideAddress ? daycare.city : `${daycare.address}, ${daycare.city}`}</p>
                   {daycare.distanceFromUser != null && (

@@ -4,10 +4,11 @@ const Review  = require('../models/Review');
 const Daycare = require('../models/Daycare');
 const auth    = require('../middleware/auth');
 
-// GET /api/reviews/:daycareId — get all reviews for a daycare
+// GET /api/reviews/:daycareId — get all ratings for a daycare
 router.get('/:daycareId', async (req, res) => {
   try {
     const reviews = await Review.find({ daycare: req.params.daycareId })
+      .select('-text')
       .populate('parent', 'name')
       .sort({ createdAt: -1 });
     res.json(reviews);
@@ -16,20 +17,21 @@ router.get('/:daycareId', async (req, res) => {
   }
 });
 
-// POST /api/reviews/:daycareId — submit a review (parent only)
+// POST /api/reviews/:daycareId — submit a star rating (parent only)
 router.post('/:daycareId', auth, async (req, res) => {
   try {
-    const { rating, text } = req.body;
+    if (req.user.role !== 'parent') {
+      return res.status(403).json({ error: 'Only parents can submit ratings' });
+    }
 
-    // Validate
-    if (!rating || !text) {
-      return res.status(400).json({ error: 'Rating and review text are required' });
-    }
-    if (text.length < 20) {
-      return res.status(400).json({ error: 'Review must be at least 20 characters' });
-    }
-    if (rating < 1 || rating > 5) {
-      return res.status(400).json({ error: 'Rating must be between 1 and 5' });
+    const { rating } = req.body || {};
+
+    if (
+      !Number.isInteger(rating) ||
+      rating < 1 ||
+      rating > 5
+    ) {
+      return res.status(400).json({ error: 'Rating must be a whole number between 1 and 5' });
     }
 
     // Check if already reviewed
@@ -38,15 +40,14 @@ router.post('/:daycareId', auth, async (req, res) => {
       parent:  req.user.id
     });
     if (existing) {
-      return res.status(400).json({ error: 'You have already reviewed this daycare' });
+      return res.status(400).json({ error: 'You have already rated this daycare' });
     }
 
-    // Save review
+    // Save rating
     const review = new Review({
       daycare:  req.params.daycareId,
       parent:   req.user.id,
-      rating:   Number(rating),
-      text,
+      rating,
       verified: true
     });
     await review.save();
@@ -65,21 +66,34 @@ router.post('/:daycareId', auth, async (req, res) => {
 
   } catch (err) {
     if (err.code === 11000) {
-      return res.status(400).json({ error: 'You have already reviewed this daycare' });
+      return res.status(400).json({ error: 'You have already rated this daycare' });
     }
     res.status(500).json({ error: err.message });
   }
 });
 
-// DELETE /api/reviews/:id — delete a review (owner of review only)
+// DELETE /api/reviews/:id — delete the parent's rating
 router.delete('/:id', auth, async (req, res) => {
   try {
+    if (req.user.role !== 'parent') {
+      return res.status(403).json({ error: 'Only parents can delete ratings' });
+    }
+
     const review = await Review.findById(req.params.id);
     if (!review) return res.status(404).json({ error: 'Review not found' });
     if (review.parent.toString() !== req.user.id) {
       return res.status(403).json({ error: 'Not authorized' });
     }
+    const daycareId = review.daycare;
     await review.deleteOne();
+    const remainingReviews = await Review.find({ daycare: daycareId });
+    const rating = remainingReviews.length
+      ? remainingReviews.reduce((sum, item) => sum + item.rating, 0) / remainingReviews.length
+      : 0;
+    await Daycare.findByIdAndUpdate(daycareId, {
+      rating: Math.round(rating * 10) / 10,
+      reviewCount: remainingReviews.length
+    });
     res.json({ message: 'Review deleted' });
   } catch (err) {
     res.status(500).json({ error: err.message });

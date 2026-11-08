@@ -7,6 +7,7 @@ import LicensingBadge from '../components/LicensingBadge';
 import ListingDisclaimer from '../components/ListingDisclaimer';
 import { AGE_GROUP_LABELS, AGE_GROUP_OPTIONS, AVAILABILITY_AGE_GROUPS } from '../constants/ageGroups';
 import { formatDailyRate } from '../utils/pricing';
+import { getDaycareRatingStatus } from '../utils/daycareRating';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -36,7 +37,7 @@ export default function DaycareProfile() {
   const [reviews, setReviews]           = useState([]);
   const [loading, setLoading]           = useState(true);
   const [loadError, setLoadError]       = useState('');
-  const [form, setForm]                 = useState({ rating: 5, text: '' });
+  const [form, setForm]                 = useState({ rating: 5 });
   const [submitting, setSubmitting]     = useState(false);
   const [error, setError]               = useState('');
   const [success, setSuccess]           = useState('');
@@ -82,21 +83,28 @@ export default function DaycareProfile() {
       const res  = await fetch(`${API_URL}/api/reviews/${id}`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body:    JSON.stringify(form)
+        body:    JSON.stringify({ rating: form.rating })
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error || 'Failed to submit review'); }
-      else { setSuccess('Review submitted! 🎉'); setReviews(prev => [data, ...prev]); setForm({ rating: 5, text: '' }); }
+      else {
+        setSuccess('Rating submitted! 🎉');
+        setReviews(prev => [data, ...prev]);
+        setForm({ rating: 5 });
+        await fetchDaycare();
+      }
     } catch (err) { setError('Something went wrong.'); }
     finally { setSubmitting(false); }
   }
 
   async function deleteReview(reviewId) {
     try {
-      await fetch(`${API_URL}/api/reviews/${reviewId}`, {
+      const res = await fetch(`${API_URL}/api/reviews/${reviewId}`, {
         method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` }
       });
+      if (!res.ok) throw new Error('Unable to delete your rating');
       setReviews(prev => prev.filter(r => r._id !== reviewId));
+      await fetchDaycare();
     } catch (err) { console.error(err); }
   }
 
@@ -164,6 +172,12 @@ export default function DaycareProfile() {
     (total, age) => total + (daycare.availability?.[age] || 0),
     0
   );
+  const ratingStatus = getDaycareRatingStatus(daycare);
+  const ratingCount = daycare.reviewCount || reviews.length;
+  const currentUserId = user?.id || user?._id;
+  const hasRated = Boolean(currentUserId && reviews.some(
+    review => String(review.parent?._id || review.parent) === String(currentUserId)
+  ));
   const returnToDashboard = location.state?.returnTo === '/dashboard';
 
   return (
@@ -196,9 +210,15 @@ export default function DaycareProfile() {
           </div>
         </div>
         <div style={styles.ratingBlock}>
-          <div style={styles.ratingNumber}>{daycare.rating || 'New'}</div>
-          <div style={{ display: 'flex' }}>{renderStars(daycare.rating)}</div>
-          <div style={styles.reviewCount}>{daycare.reviewCount || 0} reviews</div>
+          {ratingStatus.type === 'rated' ? (
+            <>
+              <div style={styles.ratingNumber}>{ratingStatus.rating}</div>
+              <div style={{ display: 'flex' }}>{renderStars(ratingStatus.rating)}</div>
+              <div style={styles.reviewCount}>{ratingCount} {ratingCount === 1 ? 'rating' : 'ratings'}</div>
+            </>
+          ) : (
+            <div style={{ ...styles.ratingNumber, fontSize: '14px' }}>{ratingStatus.label}</div>
+          )}
         </div>
       </div>
 
@@ -342,43 +362,38 @@ export default function DaycareProfile() {
         </div>
       )}
 
-      {/* Reviews */}
+      {/* Parent ratings */}
       <div style={styles.card}>
-        <h2 style={styles.cardTitle}>⭐ Parent reviews ({reviews.length})</h2>
+        <h2 style={styles.cardTitle}>⭐ Parent ratings ({reviews.length})</h2>
 
-        {user && user.role === 'parent' && (
+        {success && <div style={styles.successMsg}>{success}</div>}
+
+        {user && user.role === 'parent' && !hasRated && (
           <div style={styles.reviewForm}>
-            <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#2C2C2A', marginBottom: '14px' }}>Leave a review</h3>
+            <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#2C2C2A', marginBottom: '14px' }}>Rate this daycare</h3>
             <div style={{ marginBottom: '12px' }}>
               <label style={styles.label}>Your rating</label>
               <div style={{ display: 'flex', gap: '4px', marginTop: '6px' }}>
                 {renderStars(form.rating, true)}
               </div>
             </div>
-            <div style={{ marginBottom: '12px' }}>
-              <label style={styles.label}>Your review</label>
-              <textarea
-                value={form.text}
-                onChange={e => setForm({ ...form, text: e.target.value })}
-                placeholder="Share your experience (minimum 20 characters)..."
-                style={{ ...styles.input, height: '100px', resize: 'vertical' }}
-              />
-              <div style={{ fontSize: '11px', color: '#9E9E9E', marginTop: '4px' }}>
-                {form.text.length} / 1000 characters
-              </div>
-            </div>
             {error   && <div style={styles.errorMsg}>{error}</div>}
-            {success && <div style={styles.successMsg}>{success}</div>}
             <button onClick={submitReview} disabled={submitting} style={styles.btnOrange}>
-              {submitting ? 'Submitting...' : '⭐ Submit review'}
+              {submitting ? 'Submitting...' : '⭐ Submit rating'}
             </button>
           </div>
+        )}
+
+        {user?.role === 'parent' && hasRated && (
+          <p style={{ fontSize: '14px', color: '#2E7D32', marginBottom: '16px' }}>
+            You have already rated this daycare.
+          </p>
         )}
 
         {!user && (
           <div style={{ background: '#FFF3E0', borderRadius: '10px', padding: '16px', marginBottom: '16px', textAlign: 'center', border: '1px solid #FFCC80' }}>
             <p style={{ fontSize: '14px', color: '#E65100', marginBottom: '10px' }}>
-              Log in as a parent to leave a review.
+              Log in as a parent to rate this daycare.
             </p>
             <button onClick={() => navigate('/login')} style={styles.btnOrange}>Log in</button>
           </div>
@@ -386,12 +401,12 @@ export default function DaycareProfile() {
 
         {reviews.length === 0 ? (
           <p style={{ fontSize: '14px', color: '#9E9E9E', marginTop: '16px' }}>
-            No reviews yet — be the first to review this daycare! ⭐
+            No ratings yet — be the first to rate this daycare! ⭐
           </p>
         ) : (
           <div style={{ marginTop: '16px' }}>
             {reviews.map(review => (
-              <ReviewCard key={review._id} review={review} onDelete={deleteReview} currentUserId={user?.id} />
+              <ReviewCard key={review._id} review={review} onDelete={deleteReview} currentUserId={currentUserId} />
             ))}
           </div>
         )}

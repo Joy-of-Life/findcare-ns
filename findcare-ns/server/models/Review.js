@@ -17,11 +17,11 @@ const reviewSchema = new mongoose.Schema({
     min:      1,
     max:      5
   },
+  // Retained for legacy records; new ratings do not capture or expose comments.
   text: {
     type:      String,
-    required:  true,
-    minlength: 20,
-    maxlength: 1000
+    maxlength: 1000,
+    select:    false
   },
   verified: {
     type:    Boolean,
@@ -33,7 +33,7 @@ const reviewSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-// One review per parent per daycare
+// One rating per parent per daycare
 reviewSchema.index({ daycare: 1, parent: 1 }, { unique: true });
 
 module.exports = mongoose.model('Review', reviewSchema);

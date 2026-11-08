@@ -4,6 +4,7 @@ import 'leaflet/dist/leaflet.css';
 import LicensingBadge from './LicensingBadge';
 import { AGE_GROUP_DISPLAY_LABELS, AVAILABILITY_AGE_GROUPS, formatDaysOpen } from '../constants/ageGroups';
 import { formatDailyRate } from '../utils/pricing';
+import { getDaycareRatingStatus } from '../utils/daycareRating';
 
 // Fix Leaflet default marker icon issue with React
 delete L.Icon.Default.prototype._getIconUrl;
@@ -137,7 +138,14 @@ export default function MapView({ daycares, ageGroup }) {
                     fontSize: '12px', borderTop: '1px solid #F3F4F6', paddingTop: '8px'
                   }}>
                     <span style={{ fontWeight: '500' }}>{formatDailyRate(daycare.dailyRate)}</span>
-                    <span style={{ color: '#854F0B' }}>★ {daycare.rating}</span>
+                    <span style={{ color: '#854F0B' }}>
+                      {(() => {
+                        const ratingStatus = getDaycareRatingStatus(daycare);
+                        return ratingStatus.type === 'rated'
+                          ? `★ ${ratingStatus.rating}`
+                          : ratingStatus.label;
+                      })()}
+                    </span>
                     <span style={{ color: spots > 0 ? '#085041' : '#854F0B' }}>
                       {spots > 0 ? `${spots} spots open` : 'Waitlist'}
                     </span>
