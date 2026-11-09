@@ -793,7 +793,12 @@ export default function OwnerPortal() {
                     min={f.name === 'dailyRate' ? '0' : undefined}
                     step={f.name === 'dailyRate' ? '0.01' : undefined}
                     pattern={f.name === 'phone' ? '[0-9]{10}' : undefined}
-                    maxLength={f.name === 'phone' ? 10 : undefined}
+                    maxLength={
+                      f.name === 'phone' ? 10 :
+                      f.name === 'name' ? 65 :
+                      f.name === 'address' ? 75 :
+                      undefined
+                    }
                     inputMode={f.name === 'phone' ? 'numeric' : undefined}
                     title={f.name === 'phone' ? 'Enter exactly 10 digits with no spaces or punctuation' : undefined}
                   />

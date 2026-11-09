@@ -43,11 +43,13 @@ const daycareSchema = new mongoose.Schema({
   name: {
     type:     String,
     required: true,
-    trim:     true
+    trim:     true,
+    maxlength: 65
   },
   address: {
     type:     String,
-    required: true
+    required: true,
+    maxlength: 75
   },
   hideAddress: {
     type: Boolean,

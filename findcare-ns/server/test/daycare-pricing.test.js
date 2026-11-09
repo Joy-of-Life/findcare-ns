@@ -35,6 +35,24 @@ test('daycare schema accepts daily rates and retains monthly rate as unselected 
   );
 });
 
+test('daycare name is limited to 65 characters and address to 75 characters', async () => {
+  const daycare = new Daycare({
+    owner: '000000000000000000000001',
+    name: 'N'.repeat(65),
+    address: 'A'.repeat(75),
+    city: 'Halifax',
+  });
+  await assert.doesNotReject(daycare.validate());
+
+  daycare.name = 'N'.repeat(66);
+  daycare.address = 'A'.repeat(76);
+  await assert.rejects(daycare.validate(), error =>
+    error.name === 'ValidationError' &&
+    Boolean(error.errors.name) &&
+    Boolean(error.errors.address)
+  );
+});
+
 test('daycare creation requires a daily rate and ignores legacy monthly price input', async () => {
   process.env.JWT_SECRET = 'daily-rate-test-secret';
   User.findById = () => ({ select: async () => ({ authVersion: 0 }) });
@@ -83,6 +101,19 @@ test('daycare creation requires a daily rate and ignores legacy monthly price in
     });
     assert.equal(missingRate.status, 400);
     assert.deepEqual(await missingRate.json(), { error: 'Enter a valid daily rate' });
+
+    for (const [field, value, message] of [
+      ['name', 'N'.repeat(66), 'Daycare name must be 65 characters or fewer'],
+      ['address', 'A'.repeat(76), 'Address must be 75 characters or fewer'],
+    ]) {
+      const tooLong = await fetch(`http://127.0.0.1:${server.address().port}/api/daycares`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ ...baseListing, dailyRate: 25.5, [field]: value }),
+      });
+      assert.equal(tooLong.status, 400);
+      assert.deepEqual(await tooLong.json(), { error: message });
+    }
 
     const invalidPhoneNumbers = ['90255501001', '902555010', '902-555-0100', 'abcdefghij'];
     for (const phone of invalidPhoneNumbers) {

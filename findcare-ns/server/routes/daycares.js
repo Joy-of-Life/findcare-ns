@@ -45,6 +45,8 @@ function validateOwnerListing(fields) {
   if (requiredText.some(field => typeof fields[field] !== 'string' || !fields[field].trim())) {
     return 'Complete all required daycare details';
   }
+  if (fields.name.trim().length > 65) return 'Daycare name must be 65 characters or fewer';
+  if (fields.address.length > 75) return 'Address must be 75 characters or fewer';
   if (!/^\d{10}$/.test(fields.phone)) {
     return 'Phone number must contain exactly 10 digits with no spaces or punctuation';
   }
