@@ -1,4 +1,4 @@
-export default function ReviewCard({ review, onDelete, currentUserId }) {
+export default function ReviewCard({ review }) {
   function renderStars(rating) {
     return Array.from({ length: 5 }, (_, i) => (
       <span key={i} style={{ color: i < rating ? '#FF6B35' : '#FFE0B2', fontSize: '16px' }}>★</span>
@@ -32,9 +32,6 @@ export default function ReviewCard({ review, onDelete, currentUserId }) {
           {review.verified && <span style={styles.verifiedBadge}>✓ Verified</span>}
         </div>
       </div>
-      {currentUserId === review.parent?._id && (
-        <button onClick={() => onDelete(review._id)} style={styles.deleteBtn}>Delete</button>
-      )}
     </div>
   );
 }
@@ -49,5 +46,4 @@ const styles = {
   right:         { display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' },
   stars:         { display: 'flex', gap: '1px' },
   verifiedBadge: { fontSize: '11px', color: '#2E7D32', background: '#E8F5E9', padding: '2px 7px', borderRadius: '20px', border: '1px solid #A5D6A7' },
-  deleteBtn:     { fontSize: '12px', color: '#C62828', background: 'none', border: 'none', cursor: 'pointer', marginTop: '8px', padding: '0' },
 };

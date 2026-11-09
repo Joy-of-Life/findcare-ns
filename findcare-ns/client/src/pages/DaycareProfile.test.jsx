@@ -74,7 +74,10 @@ test('hides stored legacy comments and prevents duplicate parent ratings', async
   expect(await screen.findByRole('heading', { name: /Parent ratings \(1\)/ })).not.toBeNull();
   expect(screen.queryByText('This legacy comment must not appear')).toBeNull();
   expect(screen.queryByText('Your review')).toBeNull();
-  expect(screen.getByText('You have already rated this daycare.')).not.toBeNull();
+  expect(screen.getByText(/You have already rated this daycare/)).not.toBeNull();
+  expect(screen.getByRole('link', { name: 'support@findcarens.com' }).getAttribute('href'))
+    .toBe('mailto:support@findcarens.com');
+  expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull();
 });
 
 test('submits only a star rating', async () => {
@@ -121,6 +124,7 @@ test('submits only a star rating', async () => {
 
   await waitFor(() => expect(submittedBody).toEqual({ rating: 5 }));
   expect(await screen.findByText(/Rating submitted!/)).not.toBeNull();
-  expect(await screen.findByText('You have already rated this daycare.')).not.toBeNull();
+  expect(await screen.findByText(/You have already rated this daycare/)).not.toBeNull();
+  expect(screen.getByRole('link', { name: 'support@findcarens.com' })).not.toBeNull();
   expect(screen.queryByText(/Your review|review text|comments/i)).toBeNull();
 });

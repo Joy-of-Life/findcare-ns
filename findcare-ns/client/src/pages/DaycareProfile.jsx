@@ -97,17 +97,6 @@ export default function DaycareProfile() {
     finally { setSubmitting(false); }
   }
 
-  async function deleteReview(reviewId) {
-    try {
-      const res = await fetch(`${API_URL}/api/reviews/${reviewId}`, {
-        method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (!res.ok) throw new Error('Unable to delete your rating');
-      setReviews(prev => prev.filter(r => r._id !== reviewId));
-      await fetchDaycare();
-    } catch (err) { console.error(err); }
-  }
-
   const submitWaitlist = useCallback(async (formData) => {
     setWaitlistMsg('');
     if (!formData.expectedStartDate || formData.expectedStartDate < earliestWaitlistStartDate) {
@@ -386,7 +375,10 @@ export default function DaycareProfile() {
 
         {user?.role === 'parent' && hasRated && (
           <p style={{ fontSize: '14px', color: '#2E7D32', marginBottom: '16px' }}>
-            You have already rated this daycare.
+            You have already rated this daycare. To request a rating update, email{' '}
+            <a href="mailto:support@findcarens.com" style={{ color: 'inherit', fontWeight: '600' }}>
+              support@findcarens.com
+            </a>.
           </p>
         )}
 
@@ -406,7 +398,7 @@ export default function DaycareProfile() {
         ) : (
           <div style={{ marginTop: '16px' }}>
             {reviews.map(review => (
-              <ReviewCard key={review._id} review={review} onDelete={deleteReview} currentUserId={currentUserId} />
+              <ReviewCard key={review._id} review={review} />
             ))}
           </div>
         )}

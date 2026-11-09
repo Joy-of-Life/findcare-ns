@@ -72,32 +72,11 @@ router.post('/:daycareId', auth, async (req, res) => {
   }
 });
 
-// DELETE /api/reviews/:id — delete the parent's rating
+// DELETE /api/reviews/:id — ratings are immutable; contact support for changes
 router.delete('/:id', auth, async (req, res) => {
-  try {
-    if (req.user.role !== 'parent') {
-      return res.status(403).json({ error: 'Only parents can delete ratings' });
-    }
-
-    const review = await Review.findById(req.params.id);
-    if (!review) return res.status(404).json({ error: 'Review not found' });
-    if (review.parent.toString() !== req.user.id) {
-      return res.status(403).json({ error: 'Not authorized' });
-    }
-    const daycareId = review.daycare;
-    await review.deleteOne();
-    const remainingReviews = await Review.find({ daycare: daycareId });
-    const rating = remainingReviews.length
-      ? remainingReviews.reduce((sum, item) => sum + item.rating, 0) / remainingReviews.length
-      : 0;
-    await Daycare.findByIdAndUpdate(daycareId, {
-      rating: Math.round(rating * 10) / 10,
-      reviewCount: remainingReviews.length
-    });
-    res.json({ message: 'Review deleted' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  res.status(403).json({
+    error: 'Ratings cannot be changed or deleted. Contact support@findcarens.com to request an update.'
+  });
 });
 
 module.exports = router;

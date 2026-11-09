@@ -14,7 +14,6 @@ const originalReviewFindOne = Review.findOne;
 const originalReviewFindById = Review.findById;
 const originalReviewSave = Review.prototype.save;
 const originalReviewPopulate = Review.prototype.populate;
-const originalReviewDeleteOne = Review.prototype.deleteOne;
 const originalDaycareUpdate = Daycare.findByIdAndUpdate;
 const originalUserFindById = User.findById;
 
@@ -26,7 +25,6 @@ afterEach(() => {
   Review.findById = originalReviewFindById;
   Review.prototype.save = originalReviewSave;
   Review.prototype.populate = originalReviewPopulate;
-  Review.prototype.deleteOne = originalReviewDeleteOne;
   Daycare.findByIdAndUpdate = originalDaycareUpdate;
   User.findById = originalUserFindById;
 });
@@ -143,7 +141,7 @@ test('only parents can delete ratings', async () => {
   const { response, data } = await request('DELETE', '/rating-1', { role: 'owner' });
 
   assert.equal(response.status, 403);
-  assert.equal(data.error, 'Only parents can delete ratings');
+  assert.match(data.error, /Ratings cannot be changed or deleted/);
 });
 
 test('ratings must be whole stars from one through five', async () => {
@@ -155,39 +153,16 @@ test('ratings must be whole stars from one through five', async () => {
   }
 });
 
-test('deleting a rating recalculates the daycare aggregate', async () => {
-  const daycareId = new mongoose.Types.ObjectId();
-  const review = {
-    _id: new mongoose.Types.ObjectId(),
-    daycare: daycareId,
-    parent: { toString: () => 'parent-1' },
-    deleteOne: async () => {},
-  };
-  let aggregateUpdate;
-  Review.findById = async () => review;
-  Review.find = async () => [{ rating: 3 }, { rating: 5 }];
-  Daycare.findByIdAndUpdate = async (id, update) => {
-    aggregateUpdate = { id, update };
+test('a parent cannot delete an existing rating', async () => {
+  let reviewLookupAttempted = false;
+  Review.findById = async () => {
+    reviewLookupAttempted = true;
+    return { deleteOne: async () => assert.fail('rating must not be deleted') };
   };
 
-  process.env.JWT_SECRET = 'test-secret';
-  User.findById = () => ({ select: async () => ({ authVersion: 0 }) });
-  const app = express();
-  app.use('/api/reviews', reviewRoutes);
-  const server = app.listen(0);
-  await new Promise(resolve => server.once('listening', resolve));
+  const { response, data } = await request('DELETE', '/rating-1');
 
-  try {
-    const token = jwt.sign({ id: 'parent-1', role: 'parent', authVersion: 0 }, process.env.JWT_SECRET);
-    const response = await fetch(`http://127.0.0.1:${server.address().port}/api/reviews/${review._id}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    assert.equal(response.status, 200);
-    assert.equal(aggregateUpdate.id, daycareId);
-    assert.deepEqual(aggregateUpdate.update, { rating: 4, reviewCount: 2 });
-  } finally {
-    await new Promise((resolve, reject) => server.close(err => err ? reject(err) : resolve()));
-  }
+  assert.equal(response.status, 403);
+  assert.match(data.error, /support@findcarens\.com/);
+  assert.equal(reviewLookupAttempted, false);
 });
