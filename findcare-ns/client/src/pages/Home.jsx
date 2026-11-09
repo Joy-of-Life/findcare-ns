@@ -1421,15 +1421,16 @@ const styles = {
   cardTop: {
     display: 'flex',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: '10px',
     marginBottom: '6px',
   },
   cardHeading: {
     display: 'flex',
-    alignItems: 'center',
-    flexWrap: 'wrap',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
     gap: '8px',
+    flex: '1 1 auto',
     minWidth: 0,
   },
   cardName: {
@@ -1456,6 +1457,7 @@ const styles = {
     fontSize: '11px',
     whiteSpace: 'nowrap',
     flexShrink: 0,
+    alignSelf: 'flex-start',
   },
   cardAddress: {
     fontSize: '13px',
