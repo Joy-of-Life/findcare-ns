@@ -2,8 +2,8 @@ const RESEND_API_URL = 'https://api.resend.com/emails';
 
 function addEmailFooter(html) {
   return `${html}
-    <div style="font-family:sans-serif;max-width:600px;margin:20px auto 0;padding:12px 24px 0;border-top:1px solid #E5E7EB;color:#6B7280;font-size:12px;line-height:1.5">
-      <p style="margin:0">
+    <div style="font-family:sans-serif;max-width:600px;margin:20px auto 0;padding:12px 24px 0;border-top:1px solid #E5E7EB;color:#6B7280;font-size:12px;line-height:1.5;text-align:left">
+      <p style="margin:0;text-align:left">
         This is an automated email from FindCare NS. Please don’t reply to this message. Need help? Email us at
         <a href="mailto:support@findcarens.com" style="color:#6B7280;text-decoration:underline">support@findcarens.com</a>.
       </p>
