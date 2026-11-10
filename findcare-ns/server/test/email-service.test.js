@@ -36,7 +36,7 @@ test('email service sends messages through the Resend HTTPS API', async () => {
       from: 'FindCare NS <alerts@example.com>',
       to: 'parent@example.com',
       subject: 'Test alert',
-      html: '<p>There is an opening.</p>',
+      html: expectEmailHtml('<p>There is an opening.</p>'),
     });
     return { ok: true, json: async () => ({ id: 'email-id' }) };
   };
@@ -48,6 +48,37 @@ test('email service sends messages through the Resend HTTPS API', async () => {
   });
 
   assert.deepEqual(result, { id: 'email-id' });
+});
+
+function expectEmailHtml(content) {
+  return `${content}
+    <div style="font-family:sans-serif;max-width:600px;margin:20px auto 0;padding:12px 24px 0;border-top:1px solid #E5E7EB;color:#6B7280;font-size:12px;line-height:1.5">
+      <p style="margin:0">
+        This is an automated email from FindCare NS. Please don’t reply to this message. Need help? Email us at
+        <a href="mailto:support@findcarens.com" style="color:#6B7280;text-decoration:underline">support@findcarens.com</a>.
+      </p>
+    </div>`;
+}
+
+test('email footer includes the requested automated-email notice and support mailto link', async () => {
+  process.env.RESEND_API_KEY = 'test-api-key';
+  process.env.RESEND_FROM_EMAIL = 'FindCare NS <noreply@findcarens.com>';
+  let sentEmail;
+  global.fetch = async (url, options) => {
+    sentEmail = JSON.parse(options.body);
+    return { ok: true, json: async () => ({ id: 'email-id' }) };
+  };
+
+  await sendEmail({
+    to: 'parent@example.com',
+    subject: 'Test',
+    html: '<p>Message body</p>',
+  });
+
+  assert.equal(sentEmail.from, 'FindCare NS <noreply@findcarens.com>');
+  assert.match(sentEmail.html, /This is an automated email from FindCare NS\. Please don’t reply to this message\. Need help\? Email us at/);
+  assert.match(sentEmail.html, /href="mailto:support@findcarens\.com"/);
+  assert.match(sentEmail.html, /border-top:1px solid #E5E7EB/);
 });
 
 test('email service surfaces provider errors', async () => {
