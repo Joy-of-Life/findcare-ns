@@ -52,10 +52,9 @@ test('email service sends messages through the Resend HTTPS API', async () => {
 
 function expectEmailHtml(content) {
   return `${content}
-    <div style="font-family:sans-serif;max-width:600px;margin:20px auto 0;padding:12px 24px 0;border-top:1px solid #E5E7EB;color:#6B7280;font-size:12px;line-height:1.5;text-align:left">
-      <p style="margin:0;text-align:left">
-        This is an automated email from FindCare NS. Please don’t reply to this message. Need help? Email us at
-        <a href="mailto:support@findcarens.com" style="color:#6B7280;text-decoration:underline">support@findcarens.com</a>.
+    <div style="font-family:sans-serif;width:100%;margin:20px 0 0;padding:12px 0 0;border-top:1px solid #E5E7EB;color:#6B7280;font-size:12px;line-height:1.5;text-align:left">
+      <p style="margin:0;text-align:left;white-space:nowrap">
+        This is an automated email from FindCare NS. Please don’t reply to this message. Need help? Email us at <a href="mailto:support@findcarens.com" style="color:#6B7280;text-decoration:underline">support@findcarens.com</a>.
       </p>
     </div>`;
 }
@@ -79,6 +78,9 @@ test('email footer includes the requested automated-email notice and support mai
   assert.match(sentEmail.html, /This is an automated email from FindCare NS\. Please don’t reply to this message\. Need help\? Email us at/);
   assert.match(sentEmail.html, /href="mailto:support@findcarens\.com"/);
   assert.match(sentEmail.html, /border-top:1px solid #E5E7EB/);
+  assert.match(sentEmail.html, /width:100%;margin:20px 0 0/);
+  assert.match(sentEmail.html, /white-space:nowrap/);
+  assert.doesNotMatch(sentEmail.html, /max-width:600px;margin:20px auto/);
 });
 
 test('email service surfaces provider errors', async () => {
