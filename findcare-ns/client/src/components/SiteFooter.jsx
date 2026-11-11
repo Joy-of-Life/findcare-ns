@@ -14,7 +14,7 @@ export default function SiteFooter() {
               <BrandIcon size={22} />
               <span>FindCare NS</span>
             </Link>
-            <p>Find daycare options and compare care across Nova Scotia.</p>
+            <p>Find daycare options with search, comparison tools and spot alerts.</p>
             <a href="mailto:support@findcarens.com">support@findcarens.com</a>
           </div>
 
@@ -59,7 +59,14 @@ export default function SiteFooter() {
         <p className="site-footer__disclaimer">
           FindCare NS is an independent directory. Provider details, including licensing status, are
           submitted by providers and not verified by us. Please confirm directly with the provider or
-          check the Nova Scotia Child Care Directory.
+          check the{' '}
+          <a
+            href="https://nsbr-online-services.novascotia.ca/DCSOnline/ECDS/loadSearchPage.action"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Nova Scotia Child Care Directory
+          </a>.
         </p>
 
         <div className="site-footer__bottom">
