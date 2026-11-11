@@ -487,7 +487,9 @@ export default function OwnerPortal() {
         </p>
 
         <section className="owner-attestation__guidance" aria-labelledby="owner-attestation-rules">
-          <h2 id="owner-attestation-rules">{PROVIDER_TYPES.find(type => type.value === form.providerType)?.label} — Nova Scotia</h2>
+          {form.providerType !== 'unlicensedHome' && (
+            <h2 id="owner-attestation-rules">{PROVIDER_TYPES.find(type => type.value === form.providerType)?.label} — Nova Scotia</h2>
+          )}
           {form.providerType === 'licensedCentre' && (
             <p>Your current facility licence determines the approved capacity. Any program- or age-specific limits also apply.</p>
           )}
@@ -495,7 +497,7 @@ export default function OwnerPortal() {
             <p>Regulated family home care is limited to 7 children at a time, including the provider’s own children. Age-mix limits also apply.</p>
           )}
           {form.providerType === 'unlicensedHome' && (
-            <p>Unlicensed care is limited to 6 children at a time, including the provider’s own children.</p>
+            <p>I confirm that I am listing as an unlicensed home child care provider, that my home is not provincially licensed or regulated, and that I will not describe it as licensed or regulated. I will stay within the limits for unlicensed home care.</p>
           )}
           <a href={form.providerType === 'licensedCentre'
             ? 'https://childcarenovascotia.ca/operators/current-operators/licensing'
