@@ -12,6 +12,8 @@ const availabilitySchema = new mongoose.Schema({
 }, { _id: false });
 
 const complianceAttestationSchema = new mongoose.Schema({
+  providerType: { type: String, enum: PROVIDER_TYPES, required: true },
+  providerTypeConfirmed: { type: Boolean, required: true },
   capacityConfirmed: { type: Boolean, required: true },
   unlicensedDisclosureConfirmed: { type: Boolean, default: false },
   guidanceRead: { type: Boolean, default: false },

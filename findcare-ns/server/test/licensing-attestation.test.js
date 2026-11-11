@@ -45,11 +45,34 @@ test('daycare creation and edits require provider capacity attestation', async (
         dailyRateAttestationConfirmed: true,
         providerType: 'licensedCentre',
         capacityAttestationConfirmed: true,
-        providerStatusAttestationConfirmed: false,
+        complianceAttestation: {
+          providerType: 'licensedCentre',
+          providerTypeConfirmed: false,
+          termsAccepted: true,
+        },
       }),
     });
     assert.equal(missingStatusResponse.status, 400);
     assert.deepEqual(await missingStatusResponse.json(), {
+      error: 'Confirm the provider status attestation',
+    });
+
+    const mismatchedStatusResponse = await fetch(baseUrl, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        dailyRateAttestationConfirmed: true,
+        providerType: 'licensedCentre',
+        capacityAttestationConfirmed: true,
+        complianceAttestation: {
+          providerType: 'unlicensedHome',
+          providerTypeConfirmed: true,
+          termsAccepted: true,
+        },
+      }),
+    });
+    assert.equal(mismatchedStatusResponse.status, 400);
+    assert.deepEqual(await mismatchedStatusResponse.json(), {
       error: 'Confirm the provider status attestation',
     });
 

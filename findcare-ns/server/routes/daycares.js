@@ -344,14 +344,18 @@ router.post('/', auth, async (req, res) => {
     if (req.body.capacityAttestationConfirmed !== true) {
       return res.status(400).json({ error: 'Confirm the provider capacity attestation' });
     }
-    if (req.body.providerStatusAttestationConfirmed !== true) {
-      return res.status(400).json({ error: 'Confirm the provider status attestation' });
-    }
     const attestation = req.body.complianceAttestation;
     if (!attestation) {
       return res.status(400).json({ error: 'Complete all required compliance attestations' });
     }
+    if (
+      attestation.providerTypeConfirmed !== true
+      || attestation.providerType !== req.body.providerType
+    ) {
+      return res.status(400).json({ error: 'Confirm the provider status attestation' });
+    }
     const requiredAttestations = [
+      attestation.providerTypeConfirmed,
       attestation.termsAccepted,
     ];
     if (requiredAttestations.some(confirmed => confirmed !== true)) {
@@ -377,6 +381,7 @@ router.post('/', auth, async (req, res) => {
       unlicensedHomeProvider: !licensed,
       complianceAttestation: {
         ...attestation,
+        providerType: req.body.providerType,
         capacityConfirmed: true,
         unlicensedDisclosureConfirmed: req.body.providerType === 'unlicensedHome',
         marketingOptIn: attestation.marketingOptIn === true,
@@ -390,7 +395,7 @@ router.post('/', auth, async (req, res) => {
         providerType: req.body.providerType,
         maxChildren: Number(req.body.maxChildren),
         ageRange: req.body.ageRange,
-        providerStatusConfirmed: true,
+        providerStatusConfirmed: attestation.providerTypeConfirmed,
         unlicensedDisclosureConfirmed: req.body.providerType === 'unlicensedHome',
         acceptedAt: new Date(),
       }],

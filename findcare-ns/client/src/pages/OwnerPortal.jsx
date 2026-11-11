@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth }    from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { AGE_GROUP_LABELS, AGE_GROUP_OPTIONS, AVAILABILITY_AGE_GROUPS } from '../constants/ageGroups';
 import LicensingBadge from '../components/LicensingBadge';
 import { formatDailyRate } from '../utils/pricing';
@@ -13,6 +13,11 @@ const PROVIDER_TYPES = [
   { value: 'regulatedFamilyHome', label: 'Regulated family home child care provider' },
   { value: 'unlicensedHome', label: 'Unlicensed home child care provider' },
 ];
+const PROVIDER_TYPE_CONFIRMATIONS = {
+  licensedCentre: 'I confirm that I am listing as a licensed child care centre, that my centre currently holds a valid provincial child care licence, and that I will update this listing if my licensing status changes.',
+  regulatedFamilyHome: 'I confirm that I operate this home daycare as a regulated family home child care provider under a licensed family home day care agency, that I will not exceed the maximum number of children permitted for my approval, and that I will update this listing if my approval status changes.',
+  unlicensedHome: 'I confirm that I am listing as an unlicensed home child care provider, that my home is not provincially licensed or regulated, and that I will not describe it as licensed or regulated. I will stay within the limits for unlicensed home care.',
+};
 const PROVIDER_FEATURES = [
   { name: 'acceptsSubsidy', label: 'Accepts subsidy' },
   { name: 'mealsProvided', label: 'Meals provided' },
@@ -152,6 +157,8 @@ export default function OwnerPortal() {
   const [submitting, setSubmitting] = useState(false);
   const [showAttestation, setShowAttestation] = useState(false);
   const [attestation, setAttestation] = useState({
+    providerType: '',
+    providerTypeConfirmed: false,
     termsAccepted: false,
     marketingOptIn: false,
   });
@@ -261,6 +268,7 @@ export default function OwnerPortal() {
         providerStatusAttestationConfirmed: false,
         capacityAttestationConfirmed: false,
       }));
+      setAttestation(current => ({ ...current, providerType: '', providerTypeConfirmed: false }));
       return;
     }
     if (name === 'maxChildren') {
@@ -373,7 +381,7 @@ export default function OwnerPortal() {
     if (!PROVIDER_TYPES.some(providerType => providerType.value === form.providerType)) {
       validationErrors.push('Provider type');
     }
-    if (form.providerType && !form.providerStatusAttestationConfirmed) {
+    if (isEditing && form.providerType && !form.providerStatusAttestationConfirmed) {
       validationErrors.push('Provider status confirmation');
     }
     if (!form.ageRange.length) validationErrors.push('Ages served');
@@ -404,7 +412,11 @@ export default function OwnerPortal() {
       setShowAttestation(true);
       return;
     }
-    if (!isEditing && !attestation.termsAccepted) {
+    if (!isEditing && (
+      !attestation.providerTypeConfirmed
+      || attestation.providerType !== form.providerType
+      || !attestation.termsAccepted
+    )) {
       setStatus('attestation-error');
       setSubmitError('');
       return;
@@ -421,7 +433,9 @@ export default function OwnerPortal() {
           openHours: formatOpenHours(form.daysOpen, form.opensAt, form.closesAt),
           maxChildren: Number(form.maxChildren),
           capacityAttestationConfirmed: form.capacityAttestationConfirmed,
-          providerStatusAttestationConfirmed: form.providerStatusAttestationConfirmed,
+          providerStatusAttestationConfirmed: isEditing
+            ? form.providerStatusAttestationConfirmed
+            : attestation.providerTypeConfirmed,
           dailyRate: Number(form.dailyRate),
           coordinates: hasCoordinates ? { lat: latitude, lng: longitude } : undefined,
           complianceAttestation: isEditing ? undefined : attestation,
@@ -469,7 +483,7 @@ export default function OwnerPortal() {
       <div className="owner-attestation" aria-labelledby="owner-attestation-title">
         <h1 id="owner-attestation-title" className="owner-attestation__title">Compliance attestation</h1>
         <p className="owner-attestation__intro">
-          Confirm the statements that apply to your selected provider type. They help keep your listing accurate and protect families.
+          Please confirm the statements below to publish your listing. They help families see accurate information.
         </p>
 
         <section className="owner-attestation__guidance" aria-labelledby="owner-attestation-rules">
@@ -493,8 +507,21 @@ export default function OwnerPortal() {
 
         <div className="owner-attestation__checks">
           <label className="owner-attestation__check">
-            <input type="checkbox" checked={attestation.termsAccepted} onChange={event => setAttestation(current => ({ ...current, termsAccepted: event.target.checked }))} />
-            <span>I agree to FindCare NS's Terms of Service and Privacy Policy.</span>
+            <input
+              type="checkbox"
+              required
+              checked={attestation.providerTypeConfirmed && attestation.providerType === form.providerType}
+              onChange={event => setAttestation(current => ({
+                ...current,
+                providerType: event.target.checked ? form.providerType : '',
+                providerTypeConfirmed: event.target.checked,
+              }))}
+            />
+            <span>{PROVIDER_TYPE_CONFIRMATIONS[form.providerType]}</span>
+          </label>
+          <label className="owner-attestation__check">
+            <input type="checkbox" required checked={attestation.termsAccepted} onChange={event => setAttestation(current => ({ ...current, termsAccepted: event.target.checked }))} />
+            <span>I agree to FindCare NS's <Link to="/about">Terms of Service</Link> and <Link to="/about">Privacy Policy</Link>.</span>
           </label>
           <label className="owner-attestation__check">
             <input type="checkbox" checked={attestation.marketingOptIn} onChange={event => setAttestation(current => ({ ...current, marketingOptIn: event.target.checked }))} />
@@ -750,7 +777,7 @@ export default function OwnerPortal() {
                       <option key={providerType.value} value={providerType.value}>{providerType.label}</option>
                     ))}
                   </select>
-                  {form.providerType && (
+                  {form.providerType && isEditing && (
                     <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginTop: '10px', fontSize: '13px', lineHeight: 1.5, color: '#2C2C2A' }}>
                       <input
                         type="checkbox"

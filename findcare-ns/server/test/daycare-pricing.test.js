@@ -87,6 +87,8 @@ test('daycare creation requires a daily rate and ignores legacy monthly price in
       opensAt: '07:00',
       closesAt: '17:00',
       complianceAttestation: {
+        providerType: 'unlicensedHome',
+        providerTypeConfirmed: true,
         unlicensedDisclosureConfirmed: true,
         guidanceRead: true,
         termsAccepted: true,
@@ -146,7 +148,10 @@ test('daycare creation requires a daily rate and ignores legacy monthly price in
       body: JSON.stringify({
         ...baseListing,
         dailyRate: 25.5,
-        providerStatusAttestationConfirmed: false,
+        complianceAttestation: {
+          ...baseListing.complianceAttestation,
+          providerTypeConfirmed: false,
+        },
       }),
     });
     assert.equal(unconfirmedProviderStatus.status, 400);
@@ -194,7 +199,11 @@ test('daycare creation requires a daily rate and ignores legacy monthly price in
           ...baseListing,
           dailyRate: 25.5,
           providerType,
-          providerStatusAttestationConfirmed: false,
+          complianceAttestation: {
+            ...baseListing.complianceAttestation,
+            providerTypeConfirmed: false,
+            providerType,
+          },
         }),
       });
       assert.equal(missingStatusConfirmation.status, 400);
@@ -227,6 +236,10 @@ test('daycare creation requires a daily rate and ignores legacy monthly price in
         dailyRate: 25.5,
         providerType: 'regulatedFamilyHome',
         maxChildren: 8,
+        complianceAttestation: {
+          ...baseListing.complianceAttestation,
+          providerType: 'regulatedFamilyHome',
+        },
       }),
     });
     assert.equal(regulatedFamilyOverCapacity.status, 400);
@@ -242,6 +255,10 @@ test('daycare creation requires a daily rate and ignores legacy monthly price in
         dailyRate: 25.5,
         providerType: 'licensedCentre',
         maxChildren: 24,
+        complianceAttestation: {
+          ...baseListing.complianceAttestation,
+          providerType: 'licensedCentre',
+        },
       }),
     });
     assert.equal(licensedCentreCapacity.status, 201);
@@ -285,6 +302,10 @@ test('daycare creation requires a daily rate and ignores legacy monthly price in
         providerType: 'regulatedFamilyHome',
         maxChildren: 8,
         ageRange: ['school-age'],
+        complianceAttestation: {
+          ...baseListing.complianceAttestation,
+          providerType: 'regulatedFamilyHome',
+        },
       }),
     });
     assert.equal(regulatedFamilySchoolAgeOverCapacity.status, 400);
@@ -301,6 +322,10 @@ test('daycare creation requires a daily rate and ignores legacy monthly price in
         providerType: 'regulatedFamilyHome',
         maxChildren: 7,
         ageRange: ['school-age'],
+        complianceAttestation: {
+          ...baseListing.complianceAttestation,
+          providerType: 'regulatedFamilyHome',
+        },
       }),
     });
     assert.equal(regulatedFamilySchoolAgeAtCapacity.status, 201);
