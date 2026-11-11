@@ -521,7 +521,7 @@ export default function OwnerPortal() {
           </label>
           <label className="owner-attestation__check">
             <input type="checkbox" required checked={attestation.termsAccepted} onChange={event => setAttestation(current => ({ ...current, termsAccepted: event.target.checked }))} />
-            <span>I agree to FindCare NS's <Link to="/about">Terms of Service</Link> and <Link to="/about">Privacy Policy</Link>.</span>
+            <span>I agree to FindCare NS's <Link className="owner-attestation__policy-link" to="/about" target="_blank" rel="noreferrer">Terms of Service</Link> and <Link className="owner-attestation__policy-link" to="/about" target="_blank" rel="noreferrer">Privacy Policy</Link>.</span>
           </label>
           <label className="owner-attestation__check">
             <input type="checkbox" checked={attestation.marketingOptIn} onChange={event => setAttestation(current => ({ ...current, marketingOptIn: event.target.checked }))} />

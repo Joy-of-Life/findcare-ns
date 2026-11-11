@@ -302,6 +302,17 @@
   cursor: pointer;
 }
 
+.owner-attestation__policy-link {
+  color: #287E70;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.owner-attestation__policy-link:focus-visible {
+  outline: 2px solid #287E70;
+  outline-offset: 2px;
+}
+
 .owner-attestation__check input {
   width: 16px;
   height: 16px;
