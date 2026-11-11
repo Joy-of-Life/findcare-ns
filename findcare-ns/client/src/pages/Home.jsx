@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import SearchBar from '../components/SearchBar';
 import AISearchBar from '../components/AISearchBar';
@@ -509,56 +509,6 @@ export default function Home() {
           </button>
         </div>
       )}
-
-      <footer style={styles.siteFooter}>
-        <div style={styles.siteFooterInner}>
-          <div style={styles.footerBrand}>
-            <div style={styles.brandRow}>
-              <span style={styles.brandIcon}>🏠</span>
-              <span style={styles.brandName}>FindCare NS</span>
-            </div>
-            <p style={styles.brandText}>
-              Helping families discover licensed daycare options across Nova Scotia with search,
-              comparison tools, and alert tracking built for real-world decision-making.
-            </p>
-            <a href="mailto:hello@findcare.ns" style={styles.footerEmail}>hello@findcare.ns</a>
-          </div>
-
-          <div style={styles.footerColumn}>
-            <h4 style={styles.footerTitle}>Quick Links</h4>
-            <div style={styles.footerList}>
-              <Link to="/?discover=1" style={styles.footerLink}>Browse All Daycares</Link>
-              <Link to="/compare" style={styles.footerLink}>Compare daycares</Link>
-              <Link to="/about" style={styles.footerLink}>About Us</Link>
-              <Link to="/#faq" style={styles.footerLink}>FAQ</Link>
-            </div>
-          </div>
-
-          <div style={styles.footerColumn}>
-            <h4 style={styles.footerTitle}>Legal & Help</h4>
-            <div style={styles.footerList}>
-              <Link to="/register?role=owner" style={styles.footerLink}>List your daycare</Link>
-              <Link to="/login" style={styles.footerLink}>Login</Link>
-              <Link to="/register" style={styles.footerLink}>Register</Link>
-              <Link to="/about" style={styles.footerLink}>Support</Link>
-            </div>
-          </div>
-
-          <div style={styles.footerColumn}>
-            <h4 style={styles.footerTitle}>Popular Areas</h4>
-            <div style={styles.footerList}>
-              <Link to="/?discover=1" style={styles.footerLink}>Halifax</Link>
-              <Link to="/?discover=1" style={styles.footerLink}>Dartmouth</Link>
-              <Link to="/?discover=1" style={styles.footerLink}>Bedford</Link>
-              <Link to="/?discover=1" style={styles.footerLink}>Lower Sackville</Link>
-            </div>
-          </div>
-        </div>
-
-        <div style={styles.footerBottom}>
-          © 2026 FindCare NS. All rights reserved.
-        </div>
-      </footer>
 
       {showPopup && (
         <>
@@ -1265,83 +1215,6 @@ const styles = {
     maxWidth: '760px',
     fontFamily: 'Recoleta, serif',
     fontWeight: 700,
-  },
-  siteFooter: {
-    background: '#1D2A39',
-    color: '#E5E7EB',
-    marginTop: '48px',
-    borderTop: '1px solid rgba(255,255,255,0.08)',
-  },
-  siteFooterInner: {
-    maxWidth: '1180px',
-    margin: '0 auto',
-    padding: '52px 24px 22px',
-    display: 'grid',
-    gridTemplateColumns: '1.6fr 1fr 1fr 1fr',
-    gap: '28px',
-  },
-  footerBrand: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '16px',
-  },
-  brandRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-  },
-  brandIcon: {
-    fontSize: '26px',
-  },
-  brandName: {
-    fontSize: '24px',
-    fontWeight: 800,
-    color: '#fff',
-    letterSpacing: '-0.04em',
-  },
-  brandText: {
-    margin: 0,
-    color: '#D1D5DB',
-    lineHeight: 1.8,
-    fontSize: '0.96rem',
-    maxWidth: '420px',
-  },
-  footerEmail: {
-    color: '#FFB199',
-    textDecoration: 'none',
-    fontWeight: 600,
-  },
-  footerColumn: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '12px',
-  },
-  footerTitle: {
-    margin: 0,
-    fontSize: '0.82rem',
-    fontWeight: 800,
-    textTransform: 'uppercase',
-    letterSpacing: '0.12em',
-    color: '#FFB199',
-  },
-  footerList: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '10px',
-  },
-  footerLink: {
-    color: '#E5E7EB',
-    textDecoration: 'none',
-    fontSize: '0.96rem',
-    transition: 'color 0.2s ease',
-  },
-  footerBottom: {
-    maxWidth: '1180px',
-    margin: '0 auto',
-    padding: '0 24px 26px',
-    color: '#C7CED8',
-    fontSize: '0.9rem',
-    borderTop: '1px solid rgba(255,255,255,0.08)',
   },
   backdrop: {
     position: 'fixed',

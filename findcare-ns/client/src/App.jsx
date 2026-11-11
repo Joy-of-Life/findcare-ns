@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider }  from './context/AuthContext';
 import Navbar            from './components/Navbar';
+import SiteFooter        from './components/SiteFooter';
 import Home              from './pages/Home';
 import About             from './pages/About';
 import Login             from './pages/Login';
@@ -33,6 +34,7 @@ export default function App() {
           <Route path="/compare"     element={<Compare />}         />
           <Route path="/messages"    element={<Messages />} />          
         </Routes>
+        <SiteFooter />
       </BrowserRouter>
     </AuthProvider>
   );
