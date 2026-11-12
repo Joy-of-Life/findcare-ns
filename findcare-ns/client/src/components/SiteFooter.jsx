@@ -2,7 +2,19 @@ import { Link } from 'react-router-dom';
 import BrandIcon from './BrandIcon';
 import './SiteFooter.css';
 
-const popularAreas = ['Halifax', 'Dartmouth', 'Bedford', 'Lower Sackville'];
+const popularAreas = ['Halifax', 'Dartmouth', 'Bedford', 'Lower Sackville', 'Truro', 'Sydney'];
+
+function scrollToTop() {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function focusSpotAlerts() {
+  window.setTimeout(() => {
+    const spotAlerts = document.getElementById('spot-alerts');
+    if (spotAlerts) spotAlerts.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    else scrollToTop();
+  }, 0);
+}
 
 export default function SiteFooter() {
   return (
@@ -21,16 +33,16 @@ export default function SiteFooter() {
           <nav className="site-footer__column" aria-label="For parents">
             <h2>For Parents</h2>
             <Link to="/?discover=1">Browse daycares</Link>
-            <Link to="/compare">Compare daycares</Link>
-            <Link to="/dashboard">Spot alerts</Link>
-            <Link to="/login">Parent login</Link>
-            <Link to="/register">Create account</Link>
+            <Link to="/compare" onClick={scrollToTop}>Compare daycare</Link>
+            <Link to="/dashboard#spot-alerts" onClick={focusSpotAlerts}>Spot alerts</Link>
+            <Link to="/login" onClick={scrollToTop}>Parent login</Link>
+            <Link to="/register" onClick={scrollToTop}>Create account</Link>
           </nav>
 
           <nav className="site-footer__column" aria-label="For providers">
             <h2>For Providers</h2>
-            <Link to="/register?role=owner">List your daycare</Link>
-            <Link to="/login">Provider login</Link>
+            <Link to="/register?role=owner" onClick={scrollToTop}>List your daycare</Link>
+            <Link to="/login" onClick={scrollToTop}>Provider login</Link>
             <Link to="/about">Provider guidelines</Link>
           </nav>
 
@@ -39,8 +51,7 @@ export default function SiteFooter() {
               <h2>Company &amp; Legal</h2>
               <Link to="/about">About Us</Link>
               <Link to="/#faq">FAQ</Link>
-              <Link to="/about">Contact</Link>
-              <Link to="/about">Support</Link>
+              <a href="mailto:support@findcarens.com">Contact Support</a>
               <Link to="/about">Terms of Service</Link>
               <Link to="/about">Privacy Policy</Link>
               <Link to="/about">Disclaimer</Link>

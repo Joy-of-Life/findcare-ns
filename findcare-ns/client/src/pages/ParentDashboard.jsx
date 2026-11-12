@@ -287,7 +287,7 @@ export default function ParentDashboard() {
       </div>
 
       {/* Spot alerts */}
-      <div style={styles.card}>
+      <div id="spot-alerts" style={{ ...styles.card, scrollMarginTop: '90px' }}>
         <div style={styles.sectionTitle}>
           <span>🔔 Spot alerts</span>
           <span style={{
