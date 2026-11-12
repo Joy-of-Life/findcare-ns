@@ -1,5 +1,5 @@
 .site-footer {
-  margin-top: 48px;
+  margin-top: 32px;
   border-top: 3px solid #ff6b35;
   background: linear-gradient(145deg, #1d2a39 0%, #172231 100%);
   color: #e5e7eb;
@@ -14,8 +14,8 @@
 .site-footer__main {
   display: grid;
   grid-template-columns: 1.35fr 0.95fr 0.95fr 1.7fr;
-  gap: 36px;
-  padding: 42px 0 32px;
+  gap: 30px;
+  padding: 24px 0 18px;
 }
 
 .site-footer__brand,
@@ -27,11 +27,11 @@
 }
 
 .site-footer__brand {
-  gap: 16px;
+  gap: 12px;
 }
 
 .site-footer__column {
-  gap: 11px;
+  gap: 5px;
 }
 
 .site-footer__other-links {
@@ -63,7 +63,7 @@
 }
 
 .site-footer__column h2 {
-  margin: 4px 0 12px;
+  margin: 2px 0 7px;
   color: #fff;
   font-size: 0.82rem;
   font-weight: 700;
@@ -93,7 +93,7 @@
 
 .site-footer__disclaimer {
   margin: 0;
-  padding: 18px 0;
+  padding: 12px 0;
   border-top: 1px solid rgba(255, 255, 255, 0.12);
   color: #d1d5db;
   font-size: 0.9rem;
@@ -106,7 +106,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 16px;
-  padding: 16px 0 22px;
+  padding: 12px 0 14px;
   border-top: 1px solid rgba(255, 255, 255, 0.12);
   color: #c7ced8;
   font-size: 0.88rem;
@@ -136,19 +136,19 @@
   }
 
   .site-footer__main {
-    gap: 28px 20px;
-    padding: 36px 0 24px;
+    gap: 22px 20px;
+    padding: 22px 0 18px;
   }
 
   .site-footer__other-links {
     flex-direction: column;
-    gap: 28px;
+    gap: 20px;
   }
 
   .site-footer__bottom {
     align-items: flex-start;
     flex-direction: column;
-    padding: 16px 0 22px;
+    padding: 12px 0 16px;
   }
 
   .site-footer__legal {
