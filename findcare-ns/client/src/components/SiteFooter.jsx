@@ -4,6 +4,11 @@ import './SiteFooter.css';
 
 const popularAreas = ['Halifax', 'Dartmouth', 'Bedford', 'Lower Sackville', 'Truro', 'Sydney'];
 
+function getPopularAreaLink(area) {
+  const params = new URLSearchParams({ city: area, discover: '1' });
+  return `/?${params.toString()}`;
+}
+
 function scrollToTop() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -60,9 +65,8 @@ export default function SiteFooter() {
             <nav className="site-footer__column" aria-label="Popular areas">
               <h2>Popular Areas</h2>
               {popularAreas.map(area => (
-                <Link key={area} to={`/?city=${encodeURIComponent(area)}&discover=1`}>{area}</Link>
+                <Link key={area} to={getPopularAreaLink(area)}>{area}</Link>
               ))}
-              <Link to="/?discover=1">…</Link>
             </nav>
           </div>
         </div>

@@ -22,7 +22,7 @@ export default function Home() {
   const [hoveredBtn, setHoveredBtn] = useState(null);
   const [stats, setStats] = useState(null);
   const [browseAllWithLocation, setBrowseAllWithLocation] = useState(false);
-  const discoverHandled = useRef(false);
+  const discoverHandled = useRef(null);
   const searchRestored = useRef(false);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -196,11 +196,17 @@ export default function Home() {
   // Open the full daycare list when requested from the navigation.
   useEffect(() => {
     if (searchParams.get('discover') !== '1') {
-      discoverHandled.current = false;
+      discoverHandled.current = null;
       return;
     }
-    if (discoverHandled.current) return;
-    discoverHandled.current = true;
+    const city = searchParams.get('city') || '';
+    if (discoverHandled.current === city) return;
+    discoverHandled.current = city;
+
+    if (city) {
+      handleSearch({ city });
+      return;
+    }
 
     const browseAll = (position) => {
       const filters = { sortByDistance: Boolean(position) };

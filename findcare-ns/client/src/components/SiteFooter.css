@@ -1,21 +1,21 @@
 .site-footer {
   margin-top: 48px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  background: #1d2a39;
+  border-top: 3px solid #ff6b35;
+  background: linear-gradient(145deg, #1d2a39 0%, #172231 100%);
   color: #e5e7eb;
 }
 
 .site-footer__inner {
-  max-width: 1180px;
+  max-width: 1240px;
   margin: 0 auto;
   padding: 0 24px;
 }
 
 .site-footer__main {
   display: grid;
-  grid-template-columns: 1.4fr 1fr 1fr 1.5fr;
-  gap: 32px;
-  padding: 48px 0 30px;
+  grid-template-columns: 1.35fr 0.95fr 0.95fr 1.7fr;
+  gap: 36px;
+  padding: 42px 0 32px;
 }
 
 .site-footer__brand,
@@ -31,7 +31,7 @@
 }
 
 .site-footer__column {
-  gap: 10px;
+  gap: 11px;
 }
 
 .site-footer__other-links {
@@ -50,7 +50,7 @@
 }
 
 .site-footer__brand p {
-  max-width: 260px;
+  max-width: 280px;
   margin: 0;
   color: #d1d5db;
   font-size: 0.95rem;
@@ -65,10 +65,10 @@
 .site-footer__column h2 {
   margin: 4px 0 12px;
   color: #fff;
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.09em;
 }
 
 .site-footer__column a,
@@ -77,6 +77,7 @@
   font-size: 0.94rem;
   line-height: 1.45;
   text-decoration: none;
+  transition: color 160ms ease, transform 160ms ease;
 }
 
 .site-footer__other-links .site-footer__column:last-child {
@@ -85,14 +86,14 @@
 
 .site-footer a:hover,
 .site-footer a:focus-visible {
-  color: #fff;
+  color: #ffb199;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 
 .site-footer__disclaimer {
   margin: 0;
-  padding: 20px 0;
+  padding: 18px 0;
   border-top: 1px solid rgba(255, 255, 255, 0.12);
   color: #d1d5db;
   font-size: 0.9rem;
