@@ -33,42 +33,97 @@ export default function Home() {
     {
       question: 'How current is the daycare information?',
       answer:
-        'We keep listings updated using official licensing data, province information, and recent public updates for local operators. We always recommend confirming current availability and details directly with the daycare before applying.',
+        'Daycare providers create and update their own listings, including their rates, spots and availability. Each listing shows when it was last updated, but FindCare NS does not verify the details. Please confirm current availability, fees and licensing directly with the provider before you apply.',
     },
     {
       question: 'Where does Findcare NS get its information?',
       answer:
-        'Our listings are gathered from local childcare licensing records, geographic data, and public provider information so families can compare daycares in one place. We aim to keep the information clear, useful, and easy to verify.',
+        'Daycare providers create their own listings on FindCare NS, entering details such as location, rates, ages served, languages and availability. We use location information to show listings on a map. We don’t verify provider information, so please confirm details directly with the daycare, and check licensing in the Nova Scotia Child Care Directory.',
+      link: {
+        label: 'Nova Scotia Child Care Directory',
+        href: 'https://nsbr-online-services.novascotia.ca/DCSOnline/ECDS/loadSearchPage.action',
+      },
+    },
+    {
+      question: 'How do I check if a daycare is licensed?',
+      answer:
+        'A listing’s licensing status is reported by the provider, and FindCare NS does not verify it. To check for yourself, search the Nova Scotia Child Care Directory, which is run by the Government of Nova Scotia. You can also ask the daycare to share its licence or agency approval details.',
+      link: {
+        label: 'Nova Scotia Child Care Directory',
+        href: 'https://nsbr-online-services.novascotia.ca/DCSOnline/ECDS/loadSearchPage.action',
+      },
+    },
+    {
+      question: 'What do “Licensed”, “Regulated family home” and “Unlicensed” mean?',
+      answer:
+        'A licensed child care centre says it holds a valid provincial child care licence. A regulated family home child care provider says it operates a home daycare under a licensed family home day care agency. An unlicensed home child care provider is a home daycare that is not provincially licensed or regulated. Providers choose their own type when they list, and we do not verify it, so please confirm directly with the daycare and check the Nova Scotia Child Care Directory.',
+      link: {
+        label: 'Nova Scotia Child Care Directory',
+        href: 'https://nsbr-online-services.novascotia.ca/DCSOnline/ECDS/loadSearchPage.action',
+      },
+    },
+    {
+      question: 'Can I apply or reserve a spot through FindCare NS?',
+      answer:
+        'No. FindCare NS does not submit applications, hold spots or manage enrolment. Our tools, such as spot alerts and the Waitlist Tracker, help you stay organized, but each daycare handles its own applications and waitlist. Please contact the daycare directly to apply and to confirm a spot.',
     },
     {
       question: 'What is the Waitlist Tracker?',
       answer:
-        'The Waitlist Tracker helps parents organize daycare applications, compare their status, and keep notes on follow-up dates. It is designed to reduce the stress of juggling multiple daycare submissions at once.',
+        'The Waitlist Tracker helps you keep track of the daycares you’re interested in and your follow-up dates. When you join a provider’s waitlist through FindCare NS, that provider receives your contact details so they can respond. Joining a waitlist doesn’t guarantee a spot. Each daycare manages its own waitlist and enrolment.',
     },
     {
       question: 'How do waitlist alerts work?',
       answer:
-        'When you save a daycare or choose to monitor a location, we can notify you when that provider updates contact details, capacity information, or related availability signals. This keeps you informed without having to check every provider manually.',
+        'Save a daycare and turn on spot alerts, and we’ll email you when that provider updates its availability to show an open spot. Alerts depend on providers keeping their listings current, so an alert doesn’t guarantee a spot. Please confirm directly with the daycare. You can turn alerts off at any time from your dashboard or with the unsubscribe link in any alert email.',
     },
     {
       question: 'Is Findcare NS affiliated with any daycare providers?',
       answer:
-        'No. We are an independent search and comparison platform designed to help families explore licensed childcare options. We are not affiliated with any specific daycare, government body, or provider network.',
+        'No. FindCare NS is an independent directory that helps families explore daycare centres and home daycares across Nova Scotia. We are not affiliated with any daycare, provider network or government body, and a listing doesn’t mean we endorse or recommend a provider. Providers create their own listings, and we don’t verify them.',
+    },
+    {
+      question: 'Does the daily rate include government fee reductions or subsidies?',
+      answer:
+        'Providers enter their standard daily fee before any government fee reductions or subsidies, so what you pay may be lower. Rates can change, so please confirm current fees, and any extra charges, directly with the daycare. A listing marked “Accepts subsidy” means the provider says it accepts subsidies. We do not verify this.',
     },
     {
       question: 'Is Findcare NS free to use?',
       answer:
-        'Yes. The directory and search tools are intended to be free for parents exploring childcare options in their area. We focus on helping you find the right fit without unnecessary friction.',
-    },
-    {
-      question: 'Can I suggest updates or corrections to listings?',
-      answer:
-        'Yes. If a daycare profile looks outdated, missing, or incorrect, we encourage parents to get in touch so the listing can be reviewed and updated. Accurate information helps everyone make better decisions.',
+        'Yes. FindCare NS is free for parents to use today. Running the service has ongoing costs, so we may introduce paid features or optional plans in the future. If anything changes, we’ll let you know in advance and update our Terms.',
     },
     {
       question: 'How do I filter daycares by distance from my location?',
       answer:
-        'Use the location-based search or the “Find Daycare Near Me” option to search by your current area. You can combine this with filters like age range, language, price, and availability to narrow the list to the best options nearby.',
+        'Choose “Find Daycare Near Me” and allow your browser to share your location. We’ll show nearby daycares with approximate distances. If you’d rather not share your location, you can search by city or community instead. You can combine either search with filters such as age group, language and availability to narrow the list. Distances are approximate, because some providers hide their exact street address.',
+    },
+    {
+      question: 'Can I suggest updates or corrections to listings?',
+      answer:
+        'Yes. If a listing looks outdated, incomplete or incorrect, email us at support@findcarens.com with the daycare’s name and what needs changing. We’ll review your report and may ask the provider to update their listing. Providers manage their own listings, so we can’t promise a particular outcome or timeline. You can also contact the daycare directly to let them know.',
+    },
+    {
+      question: 'Is my personal information shared with daycares?',
+      answer:
+        'Only what you choose to send. If you message a provider or join its waitlist, that provider receives your message and the contact details needed to reply. We do not sell personal information, and we do not share your email address with providers or other parents otherwise. See our Privacy Policy for details.',
+      link: {
+        label: 'Privacy Policy',
+        href: '/privacy-policy',
+      },
+    },
+    {
+      question: 'What should I ask when visiting a daycare?',
+      answer:
+        'Good questions to ask include: Are you licensed or approved by an agency, and can I see the details? How many children are in each group, and what are the adult-to-child ratios? What does a typical day look like? What is your sick-day policy? How do you handle emergencies, and how do you keep parents informed? What are your fees, including any extra charges? Can I speak with other families? Visiting in person and trusting your instincts matter too.',
+    },
+    {
+      question: 'How do I list my daycare, and can unlicensed home daycares list?',
+      answer:
+        'Select “List your daycare” and complete the listing form with your daycare’s details, provider type, rate, capacity and availability. Licensed centres, regulated family homes and unlicensed home daycares can all list, as long as they choose the right provider type and do not describe themselves as licensed or regulated if they are not. Listing is free today. We may introduce paid options in the future and will give notice. Please read our Provider Guidelines before you publish.',
+      link: {
+        label: 'Provider Guidelines',
+        href: '/provider-guidelines',
+      },
     },
   ];
 
@@ -451,7 +506,8 @@ export default function Home() {
               style={{
                 ...styles.faqItem,
                 borderColor: openFaq === index ? '#F4D7BF' : '#F3E1D4',
-                boxShadow: openFaq === index ? '0 12px 28px rgba(31, 41, 55, 0.06)' : 'none',
+                boxShadow: openFaq === index ? '0 18px 32px rgba(31, 41, 55, 0.08)' : '0 8px 20px rgba(31, 41, 55, 0.03)',
+                transform: openFaq === index ? 'translateY(-1px)' : 'translateY(0)',
               }}
             >
               <button
@@ -460,11 +516,23 @@ export default function Home() {
                 style={styles.faqButton}
               >
                 <span style={styles.faqQuestion}>{item.question}</span>
-                <span style={styles.faqIcon}>{openFaq === index ? '−' : '+'}</span>
+                <span style={openFaq === index ? styles.faqIconOpen : styles.faqIcon}>{openFaq === index ? '−' : '+'}</span>
               </button>
 
               {openFaq === index && (
-                <p style={styles.faqAnswer}>{item.answer}</p>
+                <div style={styles.faqAnswer}>
+                  <p style={styles.faqAnswerText}>{item.answer}</p>
+                  {item.link && (
+                    <a
+                      href={item.link.href}
+                      target={item.link.href.startsWith('http') ? '_blank' : undefined}
+                      rel={item.link.href.startsWith('http') ? 'noreferrer' : undefined}
+                      style={styles.faqLink}
+                    >
+                      {item.link.label}
+                    </a>
+                  )}
+                </div>
               )}
             </div>
           ))}
@@ -1045,46 +1113,61 @@ const styles = {
     maxWidth: '980px',
     margin: '0 auto',
     display: 'grid',
-    gap: '12px',
+    gap: '14px',
   },
   faqItem: {
     background: '#fff',
-    borderRadius: '16px',
+    borderRadius: '18px',
     border: '1px solid #F3E1D4',
     overflow: 'hidden',
-    transition: 'all 0.2s ease',
+    transition: 'all 0.25s ease',
   },
   faqButton: {
     width: '100%',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: '12px',
-    padding: '20px 24px',
-    background: 'transparent',
+    gap: '16px',
+    padding: '22px 24px',
+    background: 'linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,249,246,0.9) 100%)',
     border: 'none',
     textAlign: 'left',
     cursor: 'pointer',
     color: '#1D2A39',
     fontWeight: 700,
-    fontSize: '1.02rem',
+    fontSize: '1.04rem',
   },
   faqQuestion: {
     flex: 1,
     lineHeight: 1.5,
   },
   faqIcon: {
-    width: '28px',
-    height: '28px',
+    width: '30px',
+    height: '30px',
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: '50%',
     background: '#FFF1EA',
     color: '#F06A38',
-    fontSize: '1.4rem',
+    fontSize: '1.45rem',
     fontWeight: 700,
     flexShrink: 0,
+    boxShadow: 'inset 0 0 0 1px rgba(240,106,56,0.08)',
+  },
+  faqIconOpen: {
+    width: '30px',
+    height: '30px',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: '50%',
+    background: '#FDE9DF',
+    color: '#E85A1F',
+    fontSize: '1.45rem',
+    fontWeight: 700,
+    flexShrink: 0,
+    boxShadow: 'inset 0 0 0 1px rgba(232,90,31,0.08)',
   },
   faqAnswer: {
     margin: 0,
@@ -1092,6 +1175,23 @@ const styles = {
     color: '#4B5563',
     fontSize: '0.97rem',
     lineHeight: 1.8,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+  },
+  faqAnswerText: {
+    margin: 0,
+    color: '#4B5563',
+    fontSize: '0.97rem',
+    lineHeight: 1.8,
+  },
+  faqLink: {
+    alignSelf: 'flex-start',
+    color: '#F06A38',
+    fontWeight: 700,
+    textDecoration: 'none',
+    borderBottom: '2px solid rgba(240,106,56,0.35)',
+    transition: 'all 0.2s ease',
   },
   callout: {
     maxWidth: '1180px',
