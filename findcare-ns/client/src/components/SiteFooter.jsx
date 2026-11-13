@@ -81,7 +81,7 @@ export default function SiteFooter() {
         </p>
 
         <div className="site-footer__bottom">
-          <span>© 2026 FindCare NS. All rights reserved.</span>
+          <span>© {new Date().getFullYear()} FindCare NS. All rights reserved.</span>
           <nav className="site-footer__legal" aria-label="Legal links">
             <Link to="/about">Terms</Link>
             <span aria-hidden="true">·</span>

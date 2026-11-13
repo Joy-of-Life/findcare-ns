@@ -438,34 +438,6 @@ export default function Home() {
         </div>
       </div>
 
-      <div style={styles.storyWrap}>
-        <div style={styles.sectionHeader}>
-          <p style={styles.sectionEyebrow}>Parent Tips & Stories</p>
-          <h2 style={styles.sectionTitle}>Helpful guidance from families across Canada.</h2>
-        </div>
-        <div style={styles.storyGrid}>
-          {[
-            'Finding Daycare Near Me: The Complete Guide for Canadian Parents (2026)',
-            'Secure Your Child\'s Spot in Top Canadian Daycares for 2026',
-            'The Junction Daycare Survival Guide: Waitlists, $10-a-Day, and 18-Month Reality Checks',
-          ].map((title, index) => (
-            <article key={title} style={styles.storyCard}>
-              <div style={styles.storyBadge}>Parent Tips</div>
-              <h3 style={styles.storyTitle}>{title}</h3>
-              <p style={styles.storyText}>Practical notes to help families navigate waitlists, affordability, and local program availability.</p>
-              <button 
-                style={hoveredBtn === `story-${index}` ? styles.storyLinkHover : styles.storyLink}
-                onMouseEnter={() => setHoveredBtn(`story-${index}`)}
-                onMouseLeave={() => setHoveredBtn(null)}
-              >
-                Read More
-              </button>
-              {index === 0 && <div style={styles.storyAccent} />}
-            </article>
-          ))}
-        </div>
-      </div>
-
       <div id="faq" style={{ ...styles.faqWrap, scrollMarginTop: '90px' }}>
         <div style={styles.sectionHeader}>
           <p style={styles.sectionEyebrow}>Frequently Asked Questions</p>
@@ -954,11 +926,6 @@ const styles = {
     margin: '0 auto',
     padding: '40px 24px 10px',
   },
-  storyWrap: {
-    maxWidth: '1180px',
-    margin: '0 auto',
-    padding: '40px 24px 10px',
-  },
   sectionHeader: {
     textAlign: 'center',
     maxWidth: '760px',
@@ -1068,72 +1035,6 @@ const styles = {
     fontSize: '0.96rem',
     color: '#4B5563',
     lineHeight: 1.7,
-  },
-  storyGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-    gap: '20px',
-  },
-  storyCard: {
-    background: '#fff',
-    border: '1px solid #F4D7BF',
-    borderRadius: '18px',
-    padding: '22px',
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  storyBadge: {
-    display: 'inline-block',
-    fontSize: '11px',
-    fontWeight: 700,
-    letterSpacing: '0.09em',
-    textTransform: 'uppercase',
-    color: '#F06A38',
-    marginBottom: '12px',
-  },
-  storyTitle: {
-    fontSize: '1.3rem',
-    color: '#1D2A39',
-    lineHeight: 1.35,
-    marginBottom: '12px',
-    fontFamily: 'Recoleta, serif',
-    fontWeight: 700,
-  },
-  storyText: {
-    fontSize: '0.96rem',
-    lineHeight: 1.7,
-    color: '#4B5563',
-    marginBottom: '14px',
-  },
-  storyLink: {
-    background: 'transparent',
-    border: 'none',
-    color: '#F06A38',
-    fontWeight: 700,
-    padding: 0,
-    cursor: 'pointer',
-    transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-    transform: 'translateX(0)',
-    borderBottom: '2px solid transparent',
-  },
-  storyLinkHover: {
-    background: 'transparent',
-    border: 'none',
-    color: '#E85A1F',
-    fontWeight: 700,
-    padding: 0,
-    cursor: 'pointer',
-    transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-    transform: 'translateX(4px)',
-    borderBottom: '2px solid #E85A1F',
-  },
-  storyAccent: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: '4px',
-    background: 'linear-gradient(90deg, #FFB199 0%, #FF6B35 100%)',
   },
   faqWrap: {
     maxWidth: '1180px',
