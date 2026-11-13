@@ -495,7 +495,8 @@ export default function Home() {
 
       <div id="faq" style={{ ...styles.faqWrap, scrollMarginTop: '90px' }}>
         <div style={styles.sectionHeader}>
-          <p style={styles.sectionEyebrow}>Everything parents and providers need to know before getting started</p>
+          <p style={styles.sectionEyebrow}>FAQ</p>
+          <h2 style={styles.sectionTitle}>Everything parents and providers need to know before getting started</h2>
         </div>
 
         <div style={styles.faqGrid}>
