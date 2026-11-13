@@ -101,6 +101,13 @@
   text-align: center;
 }
 
+.site-footer__disclaimer a {
+  color: #ffb199;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .site-footer__bottom {
   display: flex;
   justify-content: space-between;
