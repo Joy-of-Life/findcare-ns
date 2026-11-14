@@ -1,13 +1,14 @@
-import './ProviderGuidelines.css';
+import { Link } from 'react-router-dom';
+import './LegalDocument.css';
 
 const childCareDirectoryUrl = 'https://nsbr-online-services.novascotia.ca/DCSOnline/ECDS/loadSearchPage.action';
 
 export default function ProviderGuidelines() {
   return (
-    <main className="provider-guidelines">
-      <header className="provider-guidelines__hero">
-        <div className="provider-guidelines__hero-inner">
-          <p className="provider-guidelines__eyebrow">For providers</p>
+    <main className="legal-document">
+      <header className="legal-document__hero">
+        <div className="legal-document__hero-inner">
+          <p className="legal-document__eyebrow">For providers</p>
           <h1>Provider Guidelines</h1>
           <p>
             Help families see accurate, up-to-date information about your child care service.
@@ -15,15 +16,16 @@ export default function ProviderGuidelines() {
         </div>
       </header>
 
-      <article className="provider-guidelines__content">
-        <p className="provider-guidelines__updated"><strong>Last updated:</strong> January 01, 2027</p>
-        <p className="provider-guidelines__intro">
+      <article className="legal-document__content">
+        <p className="legal-document__updated"><strong>Last updated:</strong> January 01, 2027</p>
+        <p className="legal-document__intro">
           Thank you for listing on FindCare NS. These guidelines help families see accurate,
-          up-to-date information. They work alongside our Terms of Service, Privacy Policy and
-          Disclaimer. If anything here conflicts with the Terms, the Terms apply.
+          up-to-date information. They work alongside our Terms of Service, Privacy Policy and{' '}
+          <Link to="/disclaimer">Disclaimer</Link>. If anything here conflicts with the Terms, the
+          Terms apply.
         </p>
 
-        <section className="provider-guidelines__section">
+        <section className="legal-document__section">
           <h2>1. Choose the right provider type</h2>
           <p>Select the option that accurately describes your service:</p>
           <ul>
@@ -38,7 +40,7 @@ export default function ProviderGuidelines() {
           </p>
         </section>
 
-        <section className="provider-guidelines__section">
+        <section className="legal-document__section">
           <h2>2. Describe your licensing honestly</h2>
           <ul>
             <li>Do not claim to be licensed or regulated if you are not.</li>
@@ -59,7 +61,7 @@ export default function ProviderGuidelines() {
           </ul>
         </section>
 
-        <section className="provider-guidelines__section">
+        <section className="legal-document__section">
           <h2>3. Keep rates clear and accurate</h2>
           <ul>
             <li>Enter your standard daily fee <strong>before</strong> any government fee reductions or subsidies.</li>
@@ -68,7 +70,7 @@ export default function ProviderGuidelines() {
           </ul>
         </section>
 
-        <section className="provider-guidelines__section">
+        <section className="legal-document__section">
           <h2>4. Stay within your capacity</h2>
           <ul>
             <li>Enter the maximum number of children you are permitted to care for. Do not list more than your approval, or the rules for your provider type, allow.</li>
@@ -77,7 +79,7 @@ export default function ProviderGuidelines() {
           </ul>
         </section>
 
-        <section className="provider-guidelines__section">
+        <section className="legal-document__section">
           <h2>5. Keep availability current</h2>
           <p>
             Availability is our main feature, and parents rely on it. Update your open spots
@@ -86,7 +88,7 @@ export default function ProviderGuidelines() {
           </p>
         </section>
 
-        <section className="provider-guidelines__section">
+        <section className="legal-document__section">
           <h2>6. Write a helpful description</h2>
           <p>
             Tell families about your routines, approach, hours, meals, outdoor space and languages.
@@ -95,7 +97,7 @@ export default function ProviderGuidelines() {
           </p>
         </section>
 
-        <section className="provider-guidelines__section">
+        <section className="legal-document__section">
           <h2>7. Protect children’s privacy</h2>
           <ul>
             <li>Do not post photos or videos showing identifiable children unless you have <strong>written consent</strong> from their parent or guardian.</li>
@@ -104,7 +106,7 @@ export default function ProviderGuidelines() {
           </ul>
         </section>
 
-        <section className="provider-guidelines__section">
+        <section className="legal-document__section">
           <h2>8. Communicate respectfully</h2>
           <ul>
             <li>Respond to parent enquiries promptly and honestly.</li>
@@ -114,7 +116,7 @@ export default function ProviderGuidelines() {
           </ul>
         </section>
 
-        <section className="provider-guidelines__section">
+        <section className="legal-document__section">
           <h2>9. Ratings</h2>
           <p>Parents may give your listing a star rating. Written comments are not part of the Service.</p>
           <ul>
@@ -128,7 +130,7 @@ export default function ProviderGuidelines() {
           </ul>
         </section>
 
-        <section className="provider-guidelines__section">
+        <section className="legal-document__section">
           <h2>10. What is not allowed</h2>
           <ul>
             <li>False or misleading information about your licensing, rates, capacity, services or availability</li>
@@ -139,7 +141,7 @@ export default function ProviderGuidelines() {
           </ul>
         </section>
 
-        <section className="provider-guidelines__section">
+        <section className="legal-document__section">
           <h2>11. What we may do</h2>
           <p>
             We may remove or suspend a listing, or ask you to correct it, if it breaks these
@@ -149,7 +151,7 @@ export default function ProviderGuidelines() {
           </p>
         </section>
 
-        <section className="provider-guidelines__section">
+        <section className="legal-document__section">
           <h2>12. Keep your listing up to date</h2>
           <p>
             We may email you from time to time to reconfirm your provider type, rate and capacity.
@@ -157,7 +159,7 @@ export default function ProviderGuidelines() {
           </p>
         </section>
 
-        <section className="provider-guidelines__section">
+        <section className="legal-document__section">
           <h2>13. Report a concern</h2>
           <p>
             If you see a listing that looks inaccurate or misleading, or you have a question about

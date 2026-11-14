@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 export default function ListingDisclaimer() {
   return (
     <p
@@ -17,6 +19,10 @@ export default function ListingDisclaimer() {
       >
         check Nova Scotia’s official licensed-provider information
       </a>
+      .{' '}
+      <Link to="/disclaimer" style={{ color: 'inherit', textDecoration: 'underline' }}>
+        Read our full Disclaimer
+      </Link>
       .
     </p>
   );

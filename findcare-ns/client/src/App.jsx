@@ -16,6 +16,7 @@ import VerifyEmail       from './pages/VerifyEmail';
 import ForgotPassword    from './pages/ForgotPassword';
 import ResetPassword     from './pages/ResetPassword';
 import ProviderGuidelines from './pages/ProviderGuidelines';
+import Disclaimer        from './pages/Disclaimer';
 
 export default function App() {
   return (
@@ -37,6 +38,7 @@ export default function App() {
           <Route path="/compare"     element={<Compare />}         />
           <Route path="/messages"    element={<Messages />} />
           <Route path="/provider-guidelines" element={<ProviderGuidelines />} />
+          <Route path="/disclaimer" element={<Disclaimer />} />
         </Routes>
         <SiteFooter />
       </BrowserRouter>

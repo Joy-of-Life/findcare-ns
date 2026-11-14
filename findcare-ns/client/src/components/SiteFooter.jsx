@@ -54,7 +54,7 @@ export default function SiteFooter() {
                 <td><Link to="/dashboard#spot-alerts" onClick={focusSpotAlerts}>Spot alerts</Link></td>
                 <td><Link to="/provider-guidelines">Provider guidelines</Link></td>
                 <td><a href="mailto:support@findcarens.com">Contact Us</a></td>
-                <td><Link to="/about">Disclaimer</Link></td>
+                <td><Link to="/disclaimer">Disclaimer</Link></td>
                 <td><Link to={getPopularAreaLink(popularAreas[2])}>{popularAreas[2]}</Link></td>
               </tr>
             </tbody>
@@ -77,7 +77,8 @@ export default function SiteFooter() {
             rel="noopener noreferrer"
           >
             Nova Scotia Child Care Directory
-          </a>.
+          </a>.{' '}
+          <Link to="/disclaimer">Read our full Disclaimer</Link>.
         </p>
 
         <div className="site-footer__bottom">
@@ -87,7 +88,7 @@ export default function SiteFooter() {
             <span aria-hidden="true">·</span>
             <Link to="/about">Privacy</Link>
             <span aria-hidden="true">·</span>
-            <Link to="/about">Disclaimer</Link>
+            <Link to="/disclaimer">Disclaimer</Link>
           </nav>
         </div>
       </div>
