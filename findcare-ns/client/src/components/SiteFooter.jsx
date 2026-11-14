@@ -52,7 +52,7 @@ export default function SiteFooter() {
               </tr>
               <tr>
                 <td><Link to="/dashboard#spot-alerts" onClick={focusSpotAlerts}>Spot alerts</Link></td>
-                <td><Link to="/about">Provider guidelines</Link></td>
+                <td><Link to="/provider-guidelines">Provider guidelines</Link></td>
                 <td><a href="mailto:support@findcarens.com">Contact Us</a></td>
                 <td><Link to="/about">Disclaimer</Link></td>
                 <td><Link to={getPopularAreaLink(popularAreas[2])}>{popularAreas[2]}</Link></td>

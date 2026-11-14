@@ -1,0 +1,119 @@
+.provider-guidelines {
+  min-height: 60vh;
+  padding-bottom: 56px;
+  background: #F7F4EE;
+}
+
+.provider-guidelines__hero {
+  padding: 54px 24px;
+  color: #fff;
+  background: linear-gradient(135deg, #FF6B35 0%, #E65100 100%);
+}
+
+.provider-guidelines__hero-inner {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.provider-guidelines__eyebrow {
+  margin-bottom: 10px;
+  color: #FFF3E0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.provider-guidelines__hero h1 {
+  margin-bottom: 12px;
+  font-size: clamp(32px, 5vw, 44px);
+  line-height: 1.15;
+}
+
+.provider-guidelines__hero p:last-child {
+  max-width: 680px;
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+.provider-guidelines__content {
+  max-width: 900px;
+  margin: 32px auto 0;
+  padding: 36px 42px;
+  border: 1px solid #E8E1D5;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(31, 41, 55, 0.06);
+}
+
+.provider-guidelines__updated {
+  margin-bottom: 20px;
+  color: #68788A;
+  font-size: 14px;
+}
+
+.provider-guidelines__intro,
+.provider-guidelines__section p,
+.provider-guidelines__section li {
+  color: #4B5563;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.provider-guidelines__intro {
+  margin-bottom: 28px;
+}
+
+.provider-guidelines__section {
+  padding: 24px 0;
+  border-top: 1px solid #F0E7D8;
+}
+
+.provider-guidelines__section h2 {
+  margin-bottom: 12px;
+  color: #244B3D;
+  font-size: 21px;
+  line-height: 1.35;
+}
+
+.provider-guidelines__section p {
+  margin-bottom: 10px;
+}
+
+.provider-guidelines__section p:last-child {
+  margin-bottom: 0;
+}
+
+.provider-guidelines__section ul {
+  display: grid;
+  gap: 8px;
+  padding-left: 22px;
+  margin: 10px 0 14px;
+}
+
+.provider-guidelines__section li {
+  padding-left: 3px;
+}
+
+.provider-guidelines__section a {
+  color: #C34F27;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.provider-guidelines__section a:hover,
+.provider-guidelines__section a:focus-visible {
+  color: #8F391D;
+}
+
+@media (max-width: 640px) {
+  .provider-guidelines__hero {
+    padding: 42px 20px;
+  }
+
+  .provider-guidelines__content {
+    margin: 20px 14px 0;
+    padding: 26px 20px;
+  }
+}
