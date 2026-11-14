@@ -879,7 +879,16 @@ export default function OwnerPortal() {
         <div style={{ ...styles.field, marginTop: '12px' }}>
           <label style={styles.label}>Description *</label>
           <textarea name="description" value={form.description} onChange={handleChange}
-            placeholder="Describe your daycare..." style={{ ...styles.input, height: '80px', resize: 'none' }} required />
+            placeholder="Tell families about your routines, approach, hours, meals and outdoor space…"
+            style={{ ...styles.input, height: '80px', resize: 'none' }} required />
+          <p className="owner-description-note">
+            Keep it truthful and respectful. Please don’t include children’s names or personal details.
+          </p>
+          {form.providerType === 'unlicensedHome' && (
+            <p className="owner-description-note">
+              Please don’t describe your service as licensed or regulated.
+            </p>
+          )}
         </div>
         <div style={{ marginTop: '14px' }}>
           <label style={styles.label}>Languages offered *</label>

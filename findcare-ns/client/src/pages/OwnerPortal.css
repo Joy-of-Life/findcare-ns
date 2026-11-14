@@ -49,6 +49,13 @@
   line-height: 1.5;
 }
 
+.owner-description-note {
+  margin: 6px 0 0;
+  color: #68788A;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .owner-availability-total {
   margin: 12px 0 0;
   color: #68788A;
