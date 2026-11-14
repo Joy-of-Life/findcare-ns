@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider }  from './context/AuthContext';
 import Navbar            from './components/Navbar';
 import SiteFooter        from './components/SiteFooter';
+import ScrollToTop       from './components/ScrollToTop';
 import Home              from './pages/Home';
 import About             from './pages/About';
 import Login             from './pages/Login';
@@ -20,6 +21,7 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <ScrollToTop />
         <Navbar />
         <Routes>
           <Route path="/"            element={<Home />}            />
